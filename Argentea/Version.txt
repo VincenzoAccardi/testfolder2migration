@@ -1,0 +1,17 @@
+s3.5.2.1 GE
+	- Creation
+3.5.2.2 GE
+	- Integration of the library version 1.0.6 by Argentea
+3.5.2.3 GE
+	- Integration of the library version 1.0.7 by Argentea
+3.5.2.4 GE
+	- Some bugfix about receipt printing
+50.17.02.14 20151001
+	- Fix: Print additional receipt copies on non fiscal printer 
+	- Log: Payfast payment function call
+50.17.02.15 20151001
+	- Fix: GiftCard and PhoneRecharge: activation must not be performed for voided lines.
+50.17.02.16
+	- Change: Replace TaBaseRec in TPDotNet.Pos.TaBaseRec
+50.17.02.17
+	- Change: Don't execute the GetTotal function call

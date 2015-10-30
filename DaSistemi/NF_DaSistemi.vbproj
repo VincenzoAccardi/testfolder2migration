@@ -1,0 +1,182 @@
+﻿<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="3.5">
+  <PropertyGroup>
+    <ProjectType>Local</ProjectType>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{CFF3C84A-7830-4759-B2B9-DD4F30C2B58C}</ProjectGuid>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <AssemblyName>TPDotnet.Italy.Common.Pos.DaSistemi</AssemblyName>
+    <AssemblyOriginatorKeyMode>None</AssemblyOriginatorKeyMode>
+    <DefaultClientScript>JScript</DefaultClientScript>
+    <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
+    <DefaultTargetSchema>IE50</DefaultTargetSchema>
+    <DelaySign>false</DelaySign>
+    <OutputType>Library</OutputType>
+    <OptionCompare>Binary</OptionCompare>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionStrict>Off</OptionStrict>
+    <RootNamespace>TPDotnet.Italy.Common.Pos</RootNamespace>
+    <StartupObject>TPDotnet.Pos.%2528None%2529</StartupObject>
+    <MyType>Windows</MyType>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>2.0</OldToolsVersion>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DebugType>full</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <OutputPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\</OutputPath>
+    <BaseAddress>285212672</BaseAddress>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>1</WarningLevel>
+    <NoWarn>42016,42017,42018,42019,42032</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
+    <OutputPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\</OutputPath>
+    <BaseAddress>285212672</BaseAddress>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <RemoveIntegerChecks>false</RemoveIntegerChecks>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningLevel>1</WarningLevel>
+    <NoWarn>42016,42017,42018,42019,42032</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic.Compatibility">
+      <Name>Microsoft.VisualBasic.Compatibility</Name>
+    </Reference>
+    <Reference Include="System">
+      <Name>System</Name>
+    </Reference>
+    <Reference Include="System.Design" />
+    <Reference Include="System.Drawing">
+      <Name>System.Drawing</Name>
+    </Reference>
+    <Reference Include="System.Web" />
+    <Reference Include="System.Windows.Forms">
+      <Name>System.Windows.Forms</Name>
+    </Reference>
+    <Reference Include="System.XML" />
+    <Reference Include="TPDotnet.GUIControls">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.GUIControls.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Italy.Common.Pos.Constants, Version=3.5.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.ADODB">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ADODB.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.BarcodeTemplate">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.BarcodeTemplate.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.clsEncrypt">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.clsEncrypt.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.clsSelectMedia">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.clsSelectMedia.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.Constants">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Constants.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.FormBase, Version=3.7.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.IUpos, Version=3.7.0.0, Culture=neutral, processorArchitecture=MSIL" />
+    <Reference Include="TPDotnet.Pos.ModCntr, Version=3.5.2.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.ModUtils">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModUtils.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.Shared">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Shared.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.taproj, Version=3.5.2.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.Utilities">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Utilities.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.Pos.clsMedia">
+      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.clsMedia.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.vb" />
+    <Compile Include="clsMedia_DaSistemi.vb">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DaSistemi.vb" />
+    <Compile Include="frmOpenDevice.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="frmShowError.vb">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="thePosEFT.vb">
+      <SubType>Code</SubType>
+    </Compile>
+    <EmbeddedResource Include="frmOpenDevice.resX">
+      <DependentUpon>frmOpenDevice.vb</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="frmShowError.resX">
+      <DependentUpon>frmShowError.vb</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="My Project\Resources.resx">
+      <SubType>Designer</SubType>
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Import Include="System.IO.Ports" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Version.txt" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
+</Project>
