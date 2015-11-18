@@ -81,31 +81,18 @@ Public Class ART : Inherits TPDotnet.Pos.ART
 
             LOG_FuncStart(getLocationString("DBRead"))
 
+
             ' to do : improve the dbread 
-            SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " & _
-                         "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType, POSIdentity.szITSpecialItemType1 as szITSpecialItemType1,POSIdentity.szITMasterEan as szITMasterEan FROM Item " & _
-                         "INNER JOIN POSIdentity ON Item.szItemID = POSIdentity.szItemId " & _
-                         "WHERE szPOSItemID = '" & ArtKey.Replace("'", "''") & "'" & _
-                          " AND lRetailStoreID = " & lRetailStoreID
+            SqlString = "SELECT * FROM ItemLookupCode " & _
+                            "WHERE szItemLookupCode = '" & ArtKey.Replace("'", "''") & "'" & _
+                             " AND lRetailStoreID = " & lRetailStoreID & _
+                             " AND bLocked = 0"
+            ARTRECSET.Close()
             LOG_Debug(getLocationString("DBRead"), SqlString)
             ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
-            ' here we init the values coming only from ArtEan
+            Dim szItemLookupCode As String = String.Empty
 
-            If ARTRECSET.EOF Then ' no Article found, we try ItemLookupCode
-                SqlString = "SELECT * FROM ItemLookupCode " & _
-                             "WHERE szItemLookupCode = '" & ArtKey.Replace("'", "''") & "'" & _
-                              " AND lRetailStoreID = " & lRetailStoreID & _
-                              " AND bLocked = 0"
-                ARTRECSET.Close()
-                LOG_Debug(getLocationString("DBRead"), SqlString)
-                ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
-                If ARTRECSET.EOF Then
-                    DBRead = 0 ' also nothing found in ArtEan
-                    Exit Function
-                End If
-
-                Dim szItemLookupCode As String = String.Empty
-
+            If Not ARTRECSET.EOF Then
                 If Not IsDBNull(ARTRECSET.Fields_value("szItemLookupCode")) Then
                     szItemLookupCode = ARTRECSET.Fields_value("szItemLookupCode")
                 End If
@@ -118,26 +105,85 @@ Public Class ART : Inherits TPDotnet.Pos.ART
                 End If
 
                 ArtKey = ARTRECSET.Fields_value("szPOSItemID") ' with this key now to Art
-                ' with the ArtNmbr from ArtEan , we read in Art
-                ARTRECSET.Close()
-                SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " & _
-                             "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType , POSIdentity.szITSpecialItemType1 as szITSpecialItemType1  FROM Item " & _
-                             "INNER JOIN POSIdentity ON Item.szItemID = POSIdentity.szItemId " & _
-                             "WHERE szPOSItemID = '" & ArtKey.Replace("'", "''") & "'" & _
-                              " AND lRetailStoreID = " & lRetailStoreID
-                LOG_Debug(getLocationString("DBRead"), SqlString)
-                ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
-                If ARTRECSET.EOF Then
-                    DBRead = 0 ' ScanNumber also not in Art
-                    Exit Function
-                End If
-                ArtKey = szItemLookupCode
+            End If
+
+            ' with the ArtNmbr from ArtEan , we read in Art
+            ARTRECSET.Close()
+            SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " & _
+                         "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType , POSIdentity.szITSpecialItemType1 as szITSpecialItemType1  FROM Item " & _
+                         "INNER JOIN POSIdentity ON Item.szItemID = POSIdentity.szItemId " & _
+                         "WHERE szPOSItemID = '" & ArtKey.Replace("'", "''") & "'" & _
+                          " AND lRetailStoreID = " & lRetailStoreID
+            LOG_Debug(getLocationString("DBRead"), SqlString)
+            ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+            If ARTRECSET.EOF Then
+                DBRead = 0 ' ScanNumber also not in Art
+                Exit Function
             Else
                 ' ok , we have found the article in table Art
-                If Not IsDBNull(ARTRECSET.Fields_value("szITMasterEan")) Then
-                    ArtKey = ARTRECSET.Fields_value("szITMasterEan")
+                If Not IsDBNull(ARTRECSET.Fields_value("szITMasterEan")) AndAlso String.IsNullOrEmpty(szItemLookupCode) Then
+                    szItemLookupCode = ARTRECSET.Fields_value("szITMasterEan")
                 End If
             End If
+            ArtKey = szItemLookupCode
+            ' to do : improve the dbread 
+            'SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " & _
+            '             "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType, POSIdentity.szITSpecialItemType1 as szITSpecialItemType1,POSIdentity.szITMasterEan as szITMasterEan FROM Item " & _
+            '             "INNER JOIN POSIdentity ON Item.szItemID = POSIdentity.szItemId " & _
+            '             "WHERE szPOSItemID = '" & ArtKey.Replace("'", "''") & "'" & _
+            '              " AND lRetailStoreID = " & lRetailStoreID
+            'LOG_Debug(getLocationString("DBRead"), SqlString)
+            'ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+            '' here we init the values coming only from ArtEan
+
+            'If ARTRECSET.EOF Then ' no Article found, we try ItemLookupCode
+            '    SqlString = "SELECT * FROM ItemLookupCode " & _
+            '                 "WHERE szItemLookupCode = '" & ArtKey.Replace("'", "''") & "'" & _
+            '                  " AND lRetailStoreID = " & lRetailStoreID & _
+            '                  " AND bLocked = 0"
+            '    ARTRECSET.Close()
+            '    LOG_Debug(getLocationString("DBRead"), SqlString)
+            '    ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+            '    If ARTRECSET.EOF Then
+            '        DBRead = 0 ' also nothing found in ArtEan
+            '        Exit Function
+            '    End If
+
+            '    Dim szItemLookupCode As String = String.Empty
+
+            '    If Not IsDBNull(ARTRECSET.Fields_value("szItemLookupCode")) Then
+            '        szItemLookupCode = ARTRECSET.Fields_value("szItemLookupCode")
+            '    End If
+
+            '    If Not IsDBNull(ARTRECSET.Fields_value("szSizeCode")) Then
+            '        Me.szSizeCode = ARTRECSET.Fields_value("szSizeCode")
+            '    End If
+            '    If Not IsDBNull(ARTRECSET.Fields_value("szColorCode")) Then
+            '        Me.szColorCode = ARTRECSET.Fields_value("szColorCode")
+            '    End If
+
+            '    ArtKey = ARTRECSET.Fields_value("szPOSItemID") ' with this key now to Art
+            '    ' with the ArtNmbr from ArtEan , we read in Art
+            '    ARTRECSET.Close()
+            '    SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " & _
+            '                 "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType , POSIdentity.szITSpecialItemType1 as szITSpecialItemType1  FROM Item " & _
+            '                 "INNER JOIN POSIdentity ON Item.szItemID = POSIdentity.szItemId " & _
+            '                 "WHERE szPOSItemID = '" & ArtKey.Replace("'", "''") & "'" & _
+            '                  " AND lRetailStoreID = " & lRetailStoreID
+            '    LOG_Debug(getLocationString("DBRead"), SqlString)
+            '    ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+            '    If ARTRECSET.EOF Then
+            '        DBRead = 0 ' ScanNumber also not in Art
+            '        Exit Function
+            '    End If
+            '    ArtKey = szItemLookupCode
+            'Else
+            '    ' ok , we have found the article in table Art
+            '    If Not IsDBNull(ARTRECSET.Fields_value("szITMasterEan")) Then
+            '        ArtKey = ARTRECSET.Fields_value("szITMasterEan")
+            '    End If
+            'End If
+
 
             ' check the livetime of this article
             ' ----------------------------------
@@ -243,7 +289,7 @@ Public Class ART : Inherits TPDotnet.Pos.ART
             Else
                 m.Fields_Value("szITSpecialItemType1") = ARTRECSET.Fields_value("szITSpecialItemType1")
             End If
-            
+
 
 
         Catch ex As Exception
