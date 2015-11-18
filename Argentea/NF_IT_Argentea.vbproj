@@ -57,7 +57,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032,42353,42354,42355</NoWarn>
-    <DocumentationFile>TPDotnet.IT.Common.Pos.EFT.Argentea.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DefineDebug>false</DefineDebug>
@@ -73,7 +74,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032,42353,42354,42355</NoWarn>
-    <DocumentationFile>TPDotnet.IT.Common.Pos.EFT.Argentea.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'DebugSco|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
@@ -81,7 +83,8 @@
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\DebugSco\</OutputPath>
     <BaseAddress>285212672</BaseAddress>
-    <DocumentationFile>TPDotnet.IT.Common.Pos.EFT.Argentea.xml</DocumentationFile>
+    <DocumentationFile>
+    </DocumentationFile>
     <WarningLevel>1</WarningLevel>
     <NoWarn>42016,42017,42018,42019,42032,42353,42354,42355</NoWarn>
     <DebugType>full</DebugType>
@@ -135,6 +138,7 @@
     <Reference Include="TPDotnet.IT.Common.Pos.IPhoneRecharge, Version=50.17.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IPhoneRecharge.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.IT.Common.Pos.usr_taproj, Version=50.17.0.1, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.usr_taproj.dll</HintPath>
@@ -174,7 +178,9 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.GUICntr, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86" />
+    <Reference Include="TPDotnet.Pos.GUICntr, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="TPDotnet.Pos.IEFT, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>

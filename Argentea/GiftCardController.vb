@@ -261,7 +261,6 @@ Public Class GiftCardController
                 CheckRedeemGiftCard = IGiftCardReturnCode.OK
                 CSV = "OK" & ";" & p.MessageOut & ";" & p.ErrorMessage
             End If
-
             Dim objTPTAHelperArgentea As New TPTAHelperArgentea()
             objTPTAHelperArgentea.HandleReturnString(p.Transaction, _
                                                      p.Controller, _

@@ -15,3 +15,8 @@ s3.5.2.1 GE
 	- Change: Replace TaBaseRec in TPDotNet.Pos.TaBaseRec
 50.17.02.17
 	- Change: Don't execute the GetTotal function call
+50.17.02.18 - VA 20151020
+	- Imrovements: Allow cancellation gifcard in transaction voided
+50.17.02.19 - VA 20151023
+	- Fix: Add check overpaid for giftcard
+	- Improvements: set focus on giftcard text amount when the serial number is not empty

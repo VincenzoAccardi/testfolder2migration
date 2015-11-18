@@ -176,8 +176,18 @@ Public Class clsMedia
                     Exit Function
                 End If
 
+                If Not MyTaMediaRec.PAYMENTinMedia.bPayOverpaid AndAlso taobj.GetReturnValue > 0 Then
+                    TPMsgBox(PosDef.TARMessageTypes.TPERROR, _
+                         String.Concat(getPosTxtNew(theModCntr.contxt, "Message", ERR_NO_OVERPAY), " ", MyTaMediaRec.dTaPaidTotal.ToString), _
+                         ERR_NO_OVERPAY, theModCntr, "Message")
+                    LOG_Info(getLocationString("DoPostChecks"), "overpayment for that payment not allowed")
+                    DoSpecialHandling4Vouchers1 = False
+                    Exit Function
+                End If
+
                 If MyTaMediaRec.dTaPaidTotal > dBalance Then
                     ' Gift card does not contains enough money!
+                    DoSpecialHandling4Vouchers1 = False
                     Exit Function
                 End If
 
@@ -323,7 +333,10 @@ Public Class clsMedia
             m_FormVoucher.txt_VoucherAmount.NumberDecimalDigits = MyTaMediaRec.PAYMENTinMedia.lPayDecNmbr
             m_FormVoucher.lbl_VoucherDesc.Text = MyTaMediaRec.PAYMENTinMedia.szDesc
             m_FormVoucher.bDialogActive = True
-
+            If Not String.IsNullOrEmpty(m_FormVoucher.txt_VoucherNmbr.Text) Then
+                m_FormVoucher.txt_VoucherAmount.SelectionLength = m_FormVoucher.txt_VoucherAmount.Text.Length
+                m_FormVoucher.txt_VoucherAmount.Focus()
+            End If
             ' dialog is running, we will wait until Dialog is completed
             'Wait until dialog is completed
             Do While m_FormVoucher.bDialogActive = True
