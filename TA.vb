@@ -493,7 +493,9 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                             If Not myTaBase.DataFieldObject.ExistField("lOriginalOperatorID") Then
                                 myTaBase.DataFieldObject.AddField("lOriginalOperatorID", TPDotnet.Pos.DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
                             End If
-                            myTaBase.DataFieldObject.SetPropertybyName("lOriginalOperatorID", CType(myXmlTaBase, TPDotnet.Pos.TaHdrRec).lOperatorID)
+                            Dim doc As XDocument = XDocument.Parse(myXMLValueNode.ToString(), LoadOptions.None)
+                            Dim xElement As XElement = doc.XPathSelectElement("//lOperatorID")
+                            myTaBase.DataFieldObject.SetPropertybyName("lOriginalOperatorID", CInt(xElement.Value))
                         End If
                         Dim xDoc As XDocument = XDocument.Parse(myXMLValueNode.ToString(), LoadOptions.None)
                         Dim xElements As List(Of XElement) = xDoc.XPathSelectElements("//*[@Type]").ToList
