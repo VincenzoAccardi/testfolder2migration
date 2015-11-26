@@ -178,7 +178,8 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.GUICntr, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
+    <Reference Include="TPDotnet.Pos.GUICntr, Version=5.0.1.7, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.Pos.IEFT, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
