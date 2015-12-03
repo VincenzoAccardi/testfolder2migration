@@ -20,3 +20,5 @@ s3.5.2.1 GE
 50.17.02.19 - VA 20151023
 	- Fix: Add check overpaid for giftcard
 	- Improvements: set focus on giftcard text amount when the serial number is not empty
+50.17.02.20 - VA 20151202
+	- Fix: Don't print the barcode on all Argentea related receipts. The barcodes will be printed only within the sale transaction

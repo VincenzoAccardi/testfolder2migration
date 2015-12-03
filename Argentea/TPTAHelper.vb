@@ -60,7 +60,12 @@ Public Class TPTAHelper
 
             ' add out eft record
             CreateTA.Add(MyTaRec)
-            CreateTA.TAEnd(fillFooterLines(TheModCntr.con, CreateTA, TheModCntr))
+            Dim ftr As TPDotnet.Pos.TaFtrRec = fillFooterLines(TheModCntr.con, CreateTA, TheModCntr)
+            ftr.szBarcode1 = ""
+            ftr.szBarcode2 = ""
+            ftr.szBarcodeComplete = ""
+            CreateTA.TAEnd(ftr)
+            'CreateTA.TAEnd(fillFooterLines(TheModCntr.con, CreateTA, TheModCntr))
 
             If updTANmbr AndAlso CreateTA.lactTaNmbr = taobj.lactTaNmbr Then
 
