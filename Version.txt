@@ -68,3 +68,5 @@
 	- Added TaVLLPrize
 50.17.02.14 - VA 20151106
 	- Improvements : Search article in itemlookupcode table for first.
+50.17.02.15 - VA 20151211
+	- Improvements : Added szLinkToFileName in TAExternalTaRec
