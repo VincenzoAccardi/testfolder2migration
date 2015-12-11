@@ -56,6 +56,14 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
+    Public Overridable Property szLinkToFileName() As String
+        Get
+            szLinkToFileName = m.Fields_Value("szLinkToFileName")
+        End Get
+        Set(ByVal Value As String)
+            m.Fields_Value("szLinkToFileName") = Value
+        End Set
+    End Property
     ''' <summary>
     ''' sets / gets the external transactionnumber
     ''' </summary>
@@ -252,6 +260,7 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("szDeleteFile", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("bConfirmEndRescan", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("bAllowVoidLine", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("szLinkToFileName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
@@ -340,6 +349,8 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
                 m.Fields_Value("szDeleteFile") = myCloneObj.szDeleteFile
                 m.Fields_Value("bConfirmEndRescan") = myCloneObj.bConfirmEndRescan
                 m.Fields_Value("bAllowVoidLine") = myCloneObj.bAllowVoidLine
+                m.Fields_Value("szLinkToFileName") = myCloneObj.szLinkToFileName
+
 
                 theHdr.bTaValid = myCloneObj.theHdr.bTaValid
                 theHdr.lTaRefToCreateNmbr = iCreateNmbr
