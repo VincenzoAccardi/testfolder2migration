@@ -154,18 +154,15 @@ Public Class TaVLLCouponRec
         End Set
     End Property
 
-
-    Private _isVisible As Boolean
-
-    Public Property bIsVisible() As Boolean
+    Public Overridable Property bIsVisible() As Integer
         Get
-            Return _isVisible
+            Return m.Fields_Value("bIsVisible")
         End Get
-        Set(ByVal Value As Boolean)
-            _isVisible = Value
+        Set(ByVal Value As Integer)
+            m.Fields_Value("bIsVisible") = Value
         End Set
     End Property
-    
+
 #End Region
 
 #Region "New/Finalize"
@@ -193,6 +190,7 @@ Public Class TaVLLCouponRec
             m.Append("dValue", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
             m.Append("lTemplateNumber", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("lCodeType", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("bIsVisible", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
         Catch ex As Exception
             Try
