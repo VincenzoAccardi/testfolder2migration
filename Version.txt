@@ -72,3 +72,5 @@
 	- Improvements : Added szLinkToFileName in TAExternalTaRec
 50.17.02.16 - VA 20160211
 	- Improvements : Added bIsVisible property in TAVLLCustomer
+50.17.02.17 - VA 20160211
+	- Improvements : Added szMovePath in TAExternalTaRec

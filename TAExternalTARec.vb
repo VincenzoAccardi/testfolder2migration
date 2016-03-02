@@ -127,6 +127,14 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
             m.Fields_Value("szExternalTaType") = Value
         End Set
     End Property
+    Public Overridable Property szMovePath As String
+        Get
+            szMovePath = m.Fields_Value("szMovePath")
+        End Get
+        Set(ByVal Value As String)
+            m.Fields_Value("szMovePath") = Value
+        End Set
+    End Property
 
     ' Start / End
     Public Shared OPERATION_TYPE_START_EXTERNAL As String = "Start"
@@ -135,6 +143,8 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
     Public Shared DELETE_FILE_NO As String = "NO"
     Public Shared DELETE_FILE_AFTER_IMPORT As String = "AFTER_IMPORT"
     Public Shared DELETE_FILE_END_TA As String = "END_TA"
+    Public Shared MOVE_FILE_AFTER_IMPORT As String = "MOVE_AFTER_IMPORT"
+    Public Shared MOVE_FILE_END_TA As String = "MOVE_END_TA"
 
     Public Overridable Property szOperationType() As String
         Get
@@ -261,6 +271,7 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("bConfirmEndRescan", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("bAllowVoidLine", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("szLinkToFileName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szMovePath", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
@@ -350,6 +361,7 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
                 m.Fields_Value("bConfirmEndRescan") = myCloneObj.bConfirmEndRescan
                 m.Fields_Value("bAllowVoidLine") = myCloneObj.bAllowVoidLine
                 m.Fields_Value("szLinkToFileName") = myCloneObj.szLinkToFileName
+                m.Fields_Value("szMovePath") = myCloneObj.szMovePath
 
 
                 theHdr.bTaValid = myCloneObj.theHdr.bTaValid
