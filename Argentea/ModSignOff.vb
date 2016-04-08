@@ -20,6 +20,19 @@ Public Class ModSignOff
         LOG_Debug(getLocationString(funcName), "We are entered in Argentea Signoff overrride ModBase_run function")
         Try
             ModBase_run = MyBase.ModBase_run(taobj, TheModCntr)
+
+            Dim szString As String = TheModCntr.getParam(PARAMETER_DLL_NAME + ".PosFormCode.SHOW_CALCULATOR").Trim
+            If Not String.IsNullOrEmpty(szString) Then
+                Dim ShowCalculator As Boolean = True
+                If szString.ToUpper.Equals("Y") Then
+                    ShowCalculator = True
+                Else
+                    ShowCalculator = False
+                End If
+                TheModCntr.GUICntr.ThePosForm.cmdCalculator.Visible = ShowCalculator
+            End If
+
+
             If ModBase_run = 1 Then
                 If TheModCntr.ModulNmbrExt = 0 Then
                     'Try
