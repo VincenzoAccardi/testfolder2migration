@@ -244,7 +244,7 @@ Public Class GiftCardController
     Public Function CheckRedeemGiftCard(ByRef parameters As System.Collections.Generic.Dictionary(Of String, Object)) As IGiftCardReturnCode Implements IGiftCardRedeemPreCheck.CheckRedeemGiftCard
         CheckRedeemGiftCard = IGiftCardReturnCode.KO
         Dim funcName As String = "CheckRedeemGiftCard"
-
+        LOG_FuncStart(funcName)
         Dim frm As System.Windows.Forms.Form = Nothing
         Dim p As GiftCardRedeemParameters = New GiftCardRedeemParameters
         Dim CSV As String = String.Empty
@@ -255,18 +255,25 @@ Public Class GiftCardController
 
             FormHelper.ShowWaitScreen(p.Controller, False, frm)
             ArgenteaCOMObject = New ARGLIB.argpay()
-            If ArgenteaCOMObject.GiftCardRedeem(p.IntValue, 0, p.Barcode, p.TransactionID, p.ErrorMessage, p.MessageOut) <> ArgenteaFunctionsReturnCode.OK Then
+            LOG_Error(funcName, "Argentea dll GiftCardRedeem  function")
+            LOG_Error(funcName, "Input : IntValue=" + p.IntValue.ToString)
+            LOG_Error(funcName, "Input : Barcode=" + p.Barcode.ToString)
+            LOG_Error(funcName, "Input : TransactionID=" + p.TransactionID.ToString)
+
+            If ArgenteaCOMObject.GiftCardRedeem(p.IntValue, 0, p.Barcode, p.TransactionID, p.ErrorMessage, p.MessageOut) <> ArgenteaFunctionsReturnCode.OK OrElse String.IsNullOrEmpty(p.MessageOut) Then
                 CSV = "KO" & ";" & p.MessageOut & ";" & p.ErrorMessage
             Else
                 CheckRedeemGiftCard = IGiftCardReturnCode.OK
                 CSV = "OK" & ";" & p.MessageOut & ";" & p.ErrorMessage
             End If
+            LOG_Error(funcName, "Return : " + CSV)
+
             Dim objTPTAHelperArgentea As New TPTAHelperArgentea()
-            objTPTAHelperArgentea.HandleReturnString(p.Transaction, _
-                                                     p.Controller, _
-                                                     CSV, _
-                                                     InternalArgenteaFunctionTypes.GiftCardRedeemPreCkeck, _
-                                                     Me.Parameters, _
+            objTPTAHelperArgentea.HandleReturnString(p.Transaction,
+                                                     p.Controller,
+                                                     CSV,
+                                                     InternalArgenteaFunctionTypes.GiftCardRedeemPreCkeck,
+                                                     Me.Parameters,
                                                      taArgenteaEMVRec)
             taArgenteaEMVRec.theHdr.lTaRefToCreateNmbr = p.MediaRecord.theHdr.lTaCreateNmbr
 
@@ -275,6 +282,7 @@ Public Class GiftCardController
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex.Message)
         Finally
+            LOG_FuncExit(funcName, " returns " & CheckRedeemGiftCard.ToString())
             FormHelper.ShowWaitScreen(p.Controller, True, frm)
             ShowError(p)
         End Try
