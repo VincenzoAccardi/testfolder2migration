@@ -100,6 +100,15 @@ Public Class CSVHelper
                         Else
                             argenteaFunctionReturnObject(0).Successfull = False
                         End If
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbCrLf,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbCr,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbLf,
+                                            Microsoft.VisualBasic.vbCrLf)
                         argenteaFunctionReturnObject(0).Receipt = CSV(1)
                         argenteaFunctionReturnObject(0).Result = CSV(2)
                         ParseReturnString = True
@@ -114,6 +123,15 @@ Public Class CSVHelper
                         Else
                             argenteaFunctionReturnObject(0).Successfull = False
                         End If
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbCrLf,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbCr,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbLf,
+                                            Microsoft.VisualBasic.vbCrLf)
                         argenteaFunctionReturnObject(0).Receipt = CSV(1)
                         argenteaFunctionReturnObject(0).Result = CSV(2)
                         ParseReturnString = True
