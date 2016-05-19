@@ -258,12 +258,16 @@ Public Class TPTAHelperArgentea
             End If
 
             If argenteaFunction = InternalArgenteaFunctionTypes.GiftCardBalance Then
-                taobj.TAEnd(fillFooterLines(TheModCntr.con, taobj, TheModCntr))
+                If taobj.getFtrRecNr = -1 Then
+                    taobj.TAEnd(fillFooterLines(TheModCntr.con, taobj, TheModCntr))
+                End If
                 taobj.bPrintReceipt = False
                 taobj.bTAtoFile = True
                 taobj.bDelete = True
             Else
-                argenteaTA.TAEnd(fillFooterLines(TheModCntr.con, taobj, TheModCntr))
+                If taobj.getFtrRecNr = -1 Then
+                    argenteaTA.TAEnd(fillFooterLines(TheModCntr.con, taobj, TheModCntr))
+                End If
                 argenteaTA.bPrintReceipt = False
                 argenteaTA.bTAtoFile = True
                 argenteaTA.bDelete = True
