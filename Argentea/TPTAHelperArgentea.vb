@@ -265,7 +265,7 @@ Public Class TPTAHelperArgentea
                 taobj.bTAtoFile = True
                 taobj.bDelete = True
             Else
-                If taobj.getFtrRecNr = -1 Then
+                If argenteaTA.getFtrRecNr = -1 Then
                     argenteaTA.TAEnd(fillFooterLines(TheModCntr.con, taobj, TheModCntr))
                 End If
                 argenteaTA.bPrintReceipt = False
