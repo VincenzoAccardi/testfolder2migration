@@ -205,6 +205,8 @@ Public Class TPTAHelperArgentea
         Dim handlingParamter As HandlingParamter
 
         Try
+            LOG_Debug(getLocationString(funcName), "ArgenteaFunction: <" & argenteaFunction.ToString & ">")
+            LOG_Debug(getLocationString(funcName), "Return string: <" & returnString & ">")
 
             ' init
             taArgenteaEMVRec = Nothing

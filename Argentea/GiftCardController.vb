@@ -56,6 +56,7 @@ Public Class GiftCardController
 
         Dim frm As System.Windows.Forms.Form = Nothing
         Dim p As GiftCardActivationParameters = New GiftCardActivationParameters
+        Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
 
         Try
             LOG_Debug(getLocationString(funcName), "We are entered in Argentea CheckGiftCard function")
@@ -74,10 +75,14 @@ Public Class GiftCardController
 
             ' call in check mode
             FormHelper.ShowWaitScreen(p.Controller, False, frm)
-            ArgenteaCOMObject = New ARGLIB.argpay()
 
-            If ArgenteaCOMObject.GiftCardActivation(p.IntValue, 1, p.Barcode, p.Barcode, p.MessageOut, p.ErrorMessage) <> ArgenteaFunctionsReturnCode.OK Then
-                LOG_Debug(getLocationString(funcName), "Activation check for giftcard  " & p.Barcode & " returns error: " & p.ErrorMessage)
+            ArgenteaCOMObject = Nothing
+            ArgenteaCOMObject = New ARGLIB.argpay()
+            retCode = ArgenteaCOMObject.GiftCardActivation(p.IntValue, 1, p.Barcode, p.Barcode, p.MessageOut, p.ErrorMessage)
+            LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
+
+            If retCode <> ArgenteaFunctionsReturnCode.OK Then
+                LOG_Error(getLocationString(funcName), "Activation check for giftcard  " & p.Barcode & " returns error: " & p.ErrorMessage & ". The message output is: " & p.MessageOut)
                 Exit Function
             Else
                 LOG_Debug(getLocationString(funcName), "Gift card number " & p.Barcode & " successfuly checked for activation")
@@ -113,6 +118,7 @@ Public Class GiftCardController
             p.LoadCommonFunctionParameter(parameters)
 
             ' call in check mode
+            ArgenteaCOMObject = Nothing
             ArgenteaCOMObject = New ARGLIB.argpay()
             For i As Integer = 1 To p.Transaction.taCollection.Count
                 Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(i)
@@ -128,15 +134,19 @@ Public Class GiftCardController
 
                                     Try
                                         Dim CSV As String = String.Empty
+                                        Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
                                         FormHelper.ShowWaitScreen(p.Controller, False, frm)
-                                        If ArgenteaCOMObject.GiftCardActivation(p.IntValue, 0, p.Barcode, p.Barcode, p.MessageOut, p.ErrorMessage) <> ArgenteaFunctionsReturnCode.OK Then
+                                        retCode = ArgenteaCOMObject.GiftCardActivation(p.IntValue, 0, p.Barcode, p.Barcode, p.MessageOut, p.ErrorMessage)
+                                        LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
+
+                                        If retCode <> ArgenteaFunctionsReturnCode.OK Then
                                             ActivateGiftCard = IGiftCardReturnCode.KO
                                             ' Show an error for each gift card that cannot be definitely activated
-                                            LOG_Debug(getLocationString(funcName), "Activation for giftcard  " & p.Barcode & " returns error: " & p.ErrorMessage)
-                                            CSV = "KO" & ";" & p.MessageOut & vbCrLf & _
-                                                                "!!!ERRORE DI ATTIVAZIONE!!!" & vbCrLf & _
-                                                                 p.ErrorMessage & vbCrLf & _
-                                                                "Giftcard Serial: " & p.Barcode & vbCrLf & _
+                                            LOG_Error(getLocationString(funcName), "Activation for giftcard  " & p.Barcode & " returns error: " & p.ErrorMessage)
+                                            CSV = "KO" & ";" & p.MessageOut & vbCrLf &
+                                                                "!!!ERRORE DI ATTIVAZIONE!!!" & vbCrLf &
+                                                                 p.ErrorMessage & vbCrLf &
+                                                                "Giftcard Serial: " & p.Barcode & vbCrLf &
                                                                 "Value: " & Math.Round(p.IntValue / 100, 2) & vbCrLf & vbCrLf & " " & ";" & p.ErrorMessage
                                         Else
                                             LOG_Debug(getLocationString(funcName), "Gift card number " & p.Barcode & " successfuly activated")
@@ -188,6 +198,7 @@ Public Class GiftCardController
         Dim frm As System.Windows.Forms.Form = Nothing
         Dim p As BalanceParameters = New BalanceParameters
         Dim CSV As String = String.Empty
+        Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
 
         Try
             LOG_Debug(getLocationString(funcName), "We are entered in Argentea IGiftCardBalanceInquiry function")
@@ -201,9 +212,14 @@ Public Class GiftCardController
             Me.Parameters.GiftCardBalanceInternalInquiry = p.GiftCardBalanceInternalInquiry
             ' check the balance
             FormHelper.ShowWaitScreen(p.Controller, False, frm)
+
+            ArgenteaCOMObject = Nothing
             ArgenteaCOMObject = New ARGLIB.argpay()
-            If ArgenteaCOMObject.GiftCardBalance(p.Barcode, p.ErrorMessage, p.MessageOut) <> ArgenteaFunctionsReturnCode.OK Then
-                LOG_Debug(getLocationString(funcName), "Balance for giftcard  " & p.Barcode & " returns error: " & p.ErrorMessage)
+            retCode = ArgenteaCOMObject.GiftCardBalance(p.Barcode, p.ErrorMessage, p.MessageOut)
+            LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
+
+            If retCode <> ArgenteaFunctionsReturnCode.OK Then
+                LOG_Error(getLocationString(funcName), "Balance for giftcard " & p.Barcode & " returns error: " & p.ErrorMessage & ". The message output is: " & p.MessageOut)
                 CSV = "KO" & ";" & p.MessageOut & ";" & p.ErrorMessage
             Else
                 GiftCardBalanceInquiry = IGiftCardReturnCode.OK
@@ -249,18 +265,24 @@ Public Class GiftCardController
         Dim p As GiftCardRedeemParameters = New GiftCardRedeemParameters
         Dim CSV As String = String.Empty
         Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
 
         Try
             p.LoadCommonFunctionParameter(parameters)
 
             FormHelper.ShowWaitScreen(p.Controller, False, frm)
+
+            ArgenteaCOMObject = Nothing
             ArgenteaCOMObject = New ARGLIB.argpay()
             LOG_Error(funcName, "Argentea dll GiftCardRedeem  function")
             LOG_Error(funcName, "Input : IntValue=" + p.IntValue.ToString)
             LOG_Error(funcName, "Input : Barcode=" + p.Barcode.ToString)
             LOG_Error(funcName, "Input : TransactionID=" + p.TransactionID.ToString)
 
-            If ArgenteaCOMObject.GiftCardRedeem(p.IntValue, 0, p.Barcode, p.TransactionID, p.ErrorMessage, p.MessageOut) <> ArgenteaFunctionsReturnCode.OK OrElse String.IsNullOrEmpty(p.MessageOut) Then
+            retCode = ArgenteaCOMObject.GiftCardRedeem(p.IntValue, 0, p.Barcode, p.TransactionID, p.ErrorMessage, p.MessageOut)
+            LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
+
+            If retCode <> ArgenteaFunctionsReturnCode.OK OrElse String.IsNullOrEmpty(p.MessageOut) Then
                 CSV = "KO" & ";" & p.MessageOut & ";" & p.ErrorMessage
             Else
                 CheckRedeemGiftCard = IGiftCardReturnCode.OK
@@ -317,13 +339,20 @@ Public Class GiftCardController
         Dim frm As System.Windows.Forms.Form = Nothing
         Dim p As GiftCardRedeemParameters = New GiftCardRedeemParameters
         Dim CSV As String = String.Empty
+        Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
 
         Try
             p.LoadCommonFunctionParameter(parameters)
 
             FormHelper.ShowWaitScreen(p.Controller, False, frm)
+
+            ArgenteaCOMObject = Nothing
             ArgenteaCOMObject = New ARGLIB.argpay()
-            If ArgenteaCOMObject.GiftCardCancellation(p.IntValue, p.TransactionID, p.Barcode, p.ErrorMessage, p.MessageOut) <> ArgenteaFunctionsReturnCode.OK Then
+
+            retCode = ArgenteaCOMObject.GiftCardCancellation(p.IntValue, p.TransactionID, p.Barcode, p.ErrorMessage, p.MessageOut)
+            LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
+
+            If retCode <> ArgenteaFunctionsReturnCode.OK Then
                 CSV = "KO" & ";" & p.MessageOut & ";" & p.ErrorMessage
             Else
                 GiftCardCancellation = IGiftCardReturnCode.OK
@@ -331,10 +360,10 @@ Public Class GiftCardController
             End If
 
             Dim objTPTAHelperArgentea As New TPTAHelperArgentea()
-            objTPTAHelperArgentea.HandleReturnString(p.Transaction, _
-                                                     p.Controller, _
-                                                     CSV, _
-                                                     InternalArgenteaFunctionTypes.GiftCardRedeemCancel, _
+            objTPTAHelperArgentea.HandleReturnString(p.Transaction,
+                                                     p.Controller,
+                                                     CSV,
+                                                     InternalArgenteaFunctionTypes.GiftCardRedeemCancel,
                                                      Me.Parameters)
 
             p.Status = ArgenteaGiftCardStatus.RedeemCanceled.ToString
