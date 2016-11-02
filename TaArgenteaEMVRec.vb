@@ -101,7 +101,23 @@ Public Class TaArgenteaEMVRec : Inherits TPDotnet.Pos.TaBaseRec
             szReceipt = m.Fields_Value("szReceipt")
         End Get
         Set(ByVal Value As String)
-            m.Fields_Value("szReceipt") = Value
+            szOriginalReceipt = Value
+            Dim szRec As String = Value
+            szRec = Replace(szRec, Microsoft.VisualBasic.vbCrLf, Microsoft.VisualBasic.vbLf)
+            szRec = Replace(szRec, Microsoft.VisualBasic.vbCr, Microsoft.VisualBasic.vbLf)
+            szRec = Replace(szRec, Microsoft.VisualBasic.vbLf, Microsoft.VisualBasic.vbCrLf)
+
+            m.Fields_Value("szReceipt") = "\x{FONTA,CENTER} " + szRec.Replace(vbCrLf, " \x" + vbCrLf + "\x{FONTA,CENTER} ") + " \x" + vbCrLf
+
+        End Set
+    End Property
+
+    Public Overridable Property szOriginalReceipt() As String
+        Get
+            szOriginalReceipt = m.Fields_Value("szOriginalReceipt")
+        End Get
+        Set(ByVal Value As String)
+            m.Fields_Value("szOriginalReceipt") = Value
         End Set
     End Property
 
@@ -262,6 +278,7 @@ Public Class TaArgenteaEMVRec : Inherits TPDotnet.Pos.TaBaseRec
             ' ---------------
             m.Append("szFunctionID", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szReceipt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szOriginalReceipt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szRupp", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szOperationResult", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szOperationResultMessage", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
@@ -365,7 +382,14 @@ Public Class TaArgenteaEMVRec : Inherits TPDotnet.Pos.TaBaseRec
                 Exit Function
             End If
 
-            GetPresentation = szReceipt
+            Dim szRec As String = szReceipt
+
+            szRec = Replace(szRec, Microsoft.VisualBasic.vbCrLf, Microsoft.VisualBasic.vbLf)
+            szRec = Replace(szRec, Microsoft.VisualBasic.vbCr, Microsoft.VisualBasic.vbLf)
+            szRec = Replace(szRec, Microsoft.VisualBasic.vbLf, Microsoft.VisualBasic.vbCrLf)
+
+            'GetPresentation = "\x{FONTA,CENTER} " + szRec.Replace(vbCrLf, " \x" + vbCrLf + "\x{FONTA,CENTER} ") + "\x"
+            GetPresentation = szRec
             'If Not String.IsNullOrEmpty(szReceipt) AndAlso szReceipt.IndexOf(Microsoft.VisualBasic.Constants.vbLf) >= 0 Then _
             '    GetPresentation = szReceipt.Replace(Microsoft.VisualBasic.Constants.vbLf, _
             '                                        Microsoft.VisualBasic.Constants.vbCrLf)
