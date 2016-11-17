@@ -41,6 +41,13 @@ Public Class clsMedia
         Try
             LOG_FuncStart(getLocationString(funcName))
 
+            GetStati(taobj, TheModCntr, MyTaMediaRec)
+            If Me.m_bIsSwapMedia Then
+                LOG_Debug(getLocationString(funcName), "We are in a swap media receipt. Just return true.")
+                DoSpecialHandling4CreditCardsOnline = True
+                Exit Function
+            End If
+
             If MyTaMediaRec.dTaPaidTotal < 0.0 OrElse MyTaMediaRec.dReturn < 0.0 Then
                 'for performance reasons 
                 For Ret = 1 To taobj.GetNmbrofRecs
