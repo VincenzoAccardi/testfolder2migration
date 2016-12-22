@@ -963,11 +963,11 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
                     ' we will change TA_MEDIA or iTA_FOOTER
                     '                TA_?????
-                    If aktsid <> PosDef.TARecTypes.iTA_FOOTER AndAlso _
-                       aktsid <> PosDef.TARecTypes.iTA_MEDIA AndAlso _
-                       aktsid <> PosDef.TARecTypes.iTA_LOYALTY AndAlso _
-                       aktsid <> PosDef.TARecTypes.iTA_TAX_INCLUDED AndAlso _
-                       aktsid <> PosDef.TARecTypes.iTA_CUSTSURVEY AndAlso _
+                    If aktsid <> PosDef.TARecTypes.iTA_FOOTER AndAlso
+                       aktsid <> PosDef.TARecTypes.iTA_MEDIA AndAlso
+                       aktsid <> PosDef.TARecTypes.iTA_LOYALTY AndAlso
+                       aktsid <> PosDef.TARecTypes.iTA_TAX_INCLUDED AndAlso
+                       aktsid <> PosDef.TARecTypes.iTA_CUSTSURVEY AndAlso
                        aktsid <> PosDef.TARecTypes.iTA_COMMENT Then
 
                         If lastsId = PosDef.TARecTypes.iTA_MEDIA OrElse lastsId = PosDef.TARecTypes.iTA_FOOTER Then
@@ -1005,7 +1005,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
             ' last one a custsurvey, then change before footer
             i = GetNmbrofRecs()
-            If TARecords(i).sid = PosDef.TARecTypes.iTA_CUSTSURVEY AndAlso _
+            If TARecords(i).sid = PosDef.TARecTypes.iTA_CUSTSURVEY AndAlso
                TARecords(i - 1).sid = PosDef.TARecTypes.iTA_FOOTER Then
                 TaChangeRec(i - 1, i)
             End If
@@ -1013,8 +1013,8 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             ' Here we check for refs in the TA
             For i = 1 To TARecords.Count()
                 Creation = CType(TARecords.Item(i), TaBaseRec).theHdr.lTaRefToCreateNmbr
-                If Creation > 0 AndAlso _
-                    Creation <> CType(TARecords.Item(i - 1), TaBaseRec).theHdr.lTaCreateNmbr AndAlso _
+                If Creation > 0 AndAlso
+                    Creation <> CType(TARecords.Item(i - 1), TaBaseRec).theHdr.lTaCreateNmbr AndAlso
                     Creation <> CType(TARecords.Item(i - 1), TaBaseRec).theHdr.lTaRefToCreateNmbr Then
 
                     k = GetPositionFromCreationNmbr(Creation) ' get the act. TaNmbr from the CreateNmbr
@@ -1064,6 +1064,108 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             LOG_FuncExit(getLocationString("Reorg"), "")
         End Try
     End Sub
+
+    Public Overrides Function UpdEmplMoveTimer(ByRef EMPLMOVE As ADODB_Recordset) As Boolean
+        Dim RegisterTime As String
+        Dim TenderTime As String
+        Dim szNoSalesActivityTime As String
+        Dim i As Short
+        Dim j As Short
+        Dim dbstring As String
+        Dim MyTaTotalRec As TaTotalRec
+        Dim MyTaFtrRec As TaFtrRec
+        Dim szTotalDate As String
+        Dim StartTaTime As String
+        Dim TaBaseRec As TPDotnet.Pos.TaBaseRec
+
+        UpdEmplMoveTimer = False
+
+        Try
+
+            UpdEmplMoveTimer = False
+
+            i = Me.getLastTotalRecNr
+            j = Me.getFtrRecNr
+            MyTaFtrRec = Me.GetTALine(j)
+
+            StartTaTime = Me.szStartTaTime
+
+            ' sometimes the transaction is started before the real start (eg. the C-Key is pressed)
+            ' this cause wrong operator statistics
+            ' we try to use the szITDate as StartTaTime
+            TaBaseRec = Me.GetTALine(3)
+            If TaBaseRec.ExistField("szITDate") Then
+                StartTaTime = TaBaseRec.GetPropertybyName("szITDate")
+            End If
+
+            If i > 1 Then
+                ' total is present
+                MyTaTotalRec = Me.GetTALine(i)
+
+                szTotalDate = MyTaTotalRec.szDate
+                If szTotalDate < StartTaTime Then
+                    szTotalDate = StartTaTime
+                End If
+
+                ' after total to end it is the payment time
+                TenderTime = GetTimeRange(szTotalDate, MyTaFtrRec.szDate)
+
+                dbstring = EMPLMOVE.Fields_value("szPaymentTime")
+                dbstring = AddTime(dbstring, TenderTime)
+                EMPLMOVE.Fields_value("szPaymentTime") = dbstring
+
+            Else
+                ' take footer date as total time
+                ' normally in store without a total: in store we assume, only art_sale without total
+                '           but take it as register time
+                '          in NoSales transactions (like pay in, loan, pay out, ff)
+                szTotalDate = MyTaFtrRec.szDate
+            End If
+
+            If (i > 1 Or MyTaFtrRec.szTaType = TA_TYPE_STORE) And
+                MyTaFtrRec.szTaType <> TA_TYPE_CASH_MANAGEMENT Then
+                ' there was a total or type store
+                ' and it is not a cash management TA
+
+                RegisterTime = GetTimeRange(StartTaTime, szTotalDate)
+
+                dbstring = EMPLMOVE.Fields_value("szRegisterTime")
+                dbstring = AddTime(dbstring, RegisterTime)
+                EMPLMOVE.Fields_value("szRegisterTime") = dbstring
+
+                ' correct time, when there was a lock (means a break) within this ta
+                CorrectBreakTime(EMPLMOVE, "szRegisterTime", "szPaymentTime", szTotalDate)
+
+            Else
+                ' no sales transaction
+                szNoSalesActivityTime = GetTimeRange(StartTaTime, szTotalDate)
+
+                dbstring = EMPLMOVE.Fields_value("szNoSalesActivityTime")
+                dbstring = AddTime(dbstring, szNoSalesActivityTime)
+                EMPLMOVE.Fields_value("szNoSalesActivityTime") = dbstring
+
+                ' correct time, when there was a lock (means a break) within this ta
+                CorrectBreakTime(EMPLMOVE, "szNoSalesActivityTime", "szPaymentTime", szTotalDate)
+
+            End If
+
+            MyTaTotalRec = Nothing
+            MyTaFtrRec = Nothing
+
+            UpdEmplMoveTimer = True
+
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString("UpdEmplMoveTimer"), ex)
+
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString("UpdEmplMoveTimer"), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString("UpdEmplMoveTimer"), String.Concat("Function UpdEmplMoveTimer returns ", UpdEmplMoveTimer.ToString))
+        End Try
+
+    End Function
 
 #End Region
 
