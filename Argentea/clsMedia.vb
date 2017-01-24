@@ -183,9 +183,9 @@ Public Class clsMedia
                     Exit Function
                 End If
 
-                If Not MyTaMediaRec.PAYMENTinMedia.bPayOverpaid AndAlso taobj.GetReturnValue > 0 Then
-                    TPMsgBox(PosDef.TARMessageTypes.TPERROR, _
-                         String.Concat(getPosTxtNew(theModCntr.contxt, "Message", ERR_NO_OVERPAY), " ", MyTaMediaRec.dTaPaidTotal.ToString), _
+                If Not MyTaMediaRec.PAYMENTinMedia.bPayOverpaid AndAlso Math.Round(taobj.GetReturnValue, theModCntr.sLocCurrDecNmbr) > 0 Then
+                    TPMsgBox(PosDef.TARMessageTypes.TPERROR,
+                         String.Concat(getPosTxtNew(theModCntr.contxt, "Message", ERR_NO_OVERPAY), " ", MyTaMediaRec.dTaPaidTotal.ToString),
                          ERR_NO_OVERPAY, theModCntr, "Message")
                     LOG_Info(getLocationString("DoPostChecks"), "overpayment for that payment not allowed")
                     DoSpecialHandling4Vouchers1 = False
