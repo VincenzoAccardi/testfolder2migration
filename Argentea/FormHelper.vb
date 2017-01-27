@@ -108,6 +108,8 @@ Public Class FormHelper
                 For Each proc As System.Diagnostics.Process In procs
                     proc.Kill()
                 Next
+                TheModCntr.GUICntr.ThePosForm.BringToFront()
+                TheModCntr.GUICntr.ThePosForm.Focus()
             Else
                 Dim proc As New System.Diagnostics.Process()
                 proc = System.Diagnostics.Process.Start(CrashBlock)

@@ -222,6 +222,7 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TPDotnet.Pos.PosFormBase, Version=5.0.1.7, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="TPDotnet.Pos.Shared">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Shared.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
