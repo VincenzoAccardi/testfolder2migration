@@ -125,7 +125,10 @@ Public Class ART : Inherits TPDotnet.Pos.ART
                     szItemLookupCode = ARTRECSET.Fields_value("szITMasterEan")
                 End If
             End If
-            ArtKey = szItemLookupCode
+
+            If Not String.IsNullOrEmpty(szItemLookupCode) Then
+                ArtKey = szItemLookupCode
+            End If
             ' to do : improve the dbread 
             'SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " & _
             '             "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType, POSIdentity.szITSpecialItemType1 as szITSpecialItemType1,POSIdentity.szITMasterEan as szITMasterEan FROM Item " & _
