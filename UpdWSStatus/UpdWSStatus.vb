@@ -47,6 +47,16 @@ Module UpdWSStatus
         Try
             LOG_Error(getLocationString("UpdWSStatus.Main"), "Start")
 
+            Dim pid As Integer = System.Diagnostics.Process.GetCurrentProcess().Id
+            For Each p As System.Diagnostics.Process In System.Diagnostics.Process.GetProcessesByName(System.Diagnostics.Process.GetCurrentProcess.ProcessName)
+                If p.Id <> pid Then
+                    LOG_Error(getLocationString("UpdWSStatus.Main"), "Another instance of this program is already running and will be killed now (ID=" + p.Id.ToString + ")")
+                    p.Kill()
+                Else
+                    LOG_Error(getLocationString("UpdWSStatus.Main"), "Don't kill this process because it is the current instance (ID=" + p.Id.ToString + ")")
+                End If
+            Next
+
             ' get the parameter
             szParameter = VB.Command()
 
