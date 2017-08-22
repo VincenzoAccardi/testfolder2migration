@@ -77,6 +77,14 @@ Public Class clsMedia
             ElseIf bIsVoidReceipt OrElse bIsMediaCorrect _
             OrElse MyTaMediaRec.dTaPaidTotal < 0 Then
 
+                If MyTaMediaRec.PAYMENTinMedia.szSpecialUsageVoidReceipt = MM_VOIDRECEIPT_SHOULD_BE_VOIDED Then
+
+                    LOG_Debug(getLocationString(funcName), "Don't call the Void on the EFT device because the media is configured as should be voided.")
+                    DoSpecialHandling4CreditCardsOnline = True
+                    Exit Function
+
+                End If
+
                 ' line/immediate void
                 LOG_Debug(getLocationString(funcName), "before calling Void")
                 DoSpecialHandling4CreditCardsOnline = TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Void(taobj, TheModCntr)
