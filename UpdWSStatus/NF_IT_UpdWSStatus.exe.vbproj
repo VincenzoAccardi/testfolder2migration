@@ -162,7 +162,7 @@
     <Reference Include="TPDotnet.Services.TPWSStatusService">
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Services.TPWSStatusService.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
-      <Private>True</Private>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -194,4 +194,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>COPY /Y $(TargetPath) C:\TPDev5017\TPActDev\dev.net\Pos\bin</PostBuildEvent>
+  </PropertyGroup>
 </Project>
