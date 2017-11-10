@@ -103,7 +103,9 @@
     <Reference Include="Microsoft.VisualBasic.Compatibility">
       <Name>Microsoft.VisualBasic.Compatibility</Name>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System">
       <Name>System</Name>
     </Reference>
@@ -164,9 +166,9 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.clsSelectMedia">
-      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.clsSelectMedia.dll</HintPath>
+    <Reference Include="TPDotnet.Pos.clsSelectMedia, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.clsSelectMedia.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.Pos.Constants">
@@ -222,7 +224,10 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.PosFormBase, Version=5.0.1.7, Culture=neutral, PublicKeyToken=null" />
+    <Reference Include="TPDotnet.Pos.PosFormBase, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="TPDotnet.Pos.Shared">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Shared.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
