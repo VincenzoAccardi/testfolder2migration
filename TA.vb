@@ -6,6 +6,7 @@ Imports TPDotnet.Pos
 Imports System.Collections.Generic
 Imports System.Xml.Linq
 Imports System.Xml.XPath
+Imports System.Windows.Forms
 
 Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA
 
@@ -52,11 +53,11 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         Dim parameters As Dictionary(Of String, Object)
 
         Try
-            parameters = New Dictionary(Of String, Object) From _
-                { _
+            parameters = New Dictionary(Of String, Object) From
+                {
                     {"Transaction", Me} _
                   , {"Record", obj} _
-                  , {"Index", iPos} _
+                  , {"Index", iPos}
                 }
             If TPDotnet.IT.Common.Pos.TransactionRecordPlugIn.Instance.Add(parameters) <> ITransactionRecordPlugInReturnCode.KO Then
                 MyBase.AddObject(obj, iPos)
@@ -73,10 +74,10 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         Dim parameters As Dictionary(Of String, Object)
 
         Try
-            parameters = New Dictionary(Of String, Object) From _
-                { _
+            parameters = New Dictionary(Of String, Object) From
+                {
                     {"Transaction", Me} _
-                  , {"Index", i} _
+                  , {"Index", i}
                 }
             If TPDotnet.IT.Common.Pos.TransactionRecordPlugIn.Instance.Remove(parameters) <> ITransactionRecordPlugInReturnCode.KO Then
                 MyBase.RemoveObject(i)
@@ -212,12 +213,12 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             If m_lactTaNmbr <> lActTanmbr Then
                 ' ta number differs!!!!
                 ' bring error message
-                LOG_Error(getLocationString("NewTa2Reg"), _
-                          "Transaction numbers differ, m_lactTaNmbr=" & m_lactTaNmbr.ToString & _
+                LOG_Error(getLocationString("NewTa2Reg"),
+                          "Transaction numbers differ, m_lactTaNmbr=" & m_lactTaNmbr.ToString &
                           " and lActTanmbr=" & lActTanmbr.ToString)
             End If
 
-            If Date.TryParseExact(szITTransactionResetDate, "yyyyMMdd", Nothing, Globalization.DateTimeStyles.None, TransactionResetDate) AndAlso _
+            If Date.TryParseExact(szITTransactionResetDate, "yyyyMMdd", Nothing, Globalization.DateTimeStyles.None, TransactionResetDate) AndAlso
                 Date.Compare(TransactionResetDate, Date.Now) < 0 Then
                 ' transaction reset date reached
                 bTransactionResetDate = True
@@ -250,6 +251,44 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             LOG_FuncExit(getLocationString("NewTa2Reg"), "")
         End Try
     End Sub
+
+    Public Overrides Function SetLastTransactionNmbr(ByRef lLastlTaNmbr As Integer, ByRef lRolloverTransactionNmbrAt As Integer) As Boolean
+
+        Dim funcName As String = "SetLastTransactionNmbr"
+        Dim storedTaNmbr As Integer = -1
+        Dim storedRolloverTaNmbr As Integer = -1
+        Dim bExit As Boolean = False
+
+        Try
+            SetLastTransactionNmbr = MyBase.SetLastTransactionNmbr(lLastlTaNmbr, lRolloverTransactionNmbrAt)
+
+            GetLastTransactionNmbr(storedTaNmbr, storedRolloverTaNmbr)
+
+            If lLastlTaNmbr <> storedTaNmbr Then
+                bExit = True
+                LOG_Error(funcName, "Transaction number has not been successfully stored into database.")
+                LOG_Error(funcName, "SetLastTransactionNmbr called with No.:" + lLastlTaNmbr.ToString + " and GetLastTransactionNmbr returns No.:" + storedTaNmbr.ToString)
+                LOG_Error(funcName, "Connection to PosDB object is " + IIf(Me.conTPPosDB Is Nothing, "NULL", "SET"))
+                LOG_Error(funcName, "Connection to PosDB State is " + Me.conTPPosDB.State.ToString)
+                LOG_Error(funcName, "Connection to PosDB ConnectionString is " + Me.conTPPosDB.ConnectionString.ToString)
+                LOG_Error(funcName, "Connection to PosDB.Connection object is " + IIf(Me.conTPPosDB.Connection Is Nothing, "NULL", "SET"))
+                LOG_Error(funcName, "Connection to PosDB.Connection.State object is " + Me.conTPPosDB.Connection.State.ToString)
+            End If
+
+        Catch ex As Exception
+            bExit = True
+            LOG_Error(funcName, ex)
+            If ex.InnerException IsNot Nothing Then
+                LOG_Error(funcName, ex.InnerException)
+            End If
+        End Try
+
+        If bExit Then
+            MessageBox.Show("Sistema non utilizzabile, contattare assistenza!")
+            Environment.Exit(0)
+        End If
+
+    End Function
 
     Public Overrides Sub Clone(ByRef ta As TPDotnet.Pos.TA)
 
@@ -367,14 +406,14 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
     End Function
 
 
-    Public Overrides Function TAfromFile(ByRef szFileName As String, _
-                                           ByRef bReadHdr As Boolean, _
-                                           ByRef bReadStatistik As Boolean, _
-                                           ByRef bCheckTraining As Boolean, _
-                                           ByRef bFileIsStream As Boolean, _
-                                           ByRef bReadTA_Control As Boolean, _
-                                           ByRef bRefresh As Boolean, _
-                                           ByRef bCheckCRC As Boolean, _
+    Public Overrides Function TAfromFile(ByRef szFileName As String,
+                                           ByRef bReadHdr As Boolean,
+                                           ByRef bReadStatistik As Boolean,
+                                           ByRef bCheckTraining As Boolean,
+                                           ByRef bFileIsStream As Boolean,
+                                           ByRef bReadTA_Control As Boolean,
+                                           ByRef bRefresh As Boolean,
+                                           ByRef bCheckCRC As Boolean,
                                         ByVal bCheckRescan As Boolean) As Boolean
 
 
@@ -453,7 +492,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                     ' --------------------------------
                     szTmpValue = myXMLValueNode.Name.LocalName
 
-                    If szTmpValue.ToUpper(CultureInfo_EnUs) = _
+                    If szTmpValue.ToUpper(CultureInfo_EnUs) =
                          TPDotnet.Services.CRCService.CRCService.CRC_SERVICE_TAG_NAME.ToUpper(CultureInfo_EnUs) Then
                         ' checksum, no object, only for checking
                         ' therefore read the next one
@@ -499,7 +538,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                         End If
                         Dim xDoc As XDocument = XDocument.Parse(myXMLValueNode.ToString(), LoadOptions.None)
                         Dim xElements As List(Of XElement) = xDoc.XPathSelectElements("//*[@Type]").ToList
-                        For Each xEl As XElement In xElements 
+                        For Each xEl As XElement In xElements
                             If Not myTaBase.DataFieldObject.ExistField(xEl.Name.ToString()) Then
                                 myTaBase.DataFieldObject.AddField(xEl.Name.ToString(), CType(xEl.FirstAttribute.Value.ToString(), TPDotnet.Pos.DataField.FIELD_TYPES))
                             End If
@@ -508,7 +547,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
                         If m_bCheckTAObj Then
                             ' check, which objects should be added to the current TA
-                            bRet = checkTAObj(szFileName, myXMLValueNode, szTmpValue, myXmlTaBase, bReadHdr, bReadStatistik, bCheckTraining, _
+                            bRet = checkTAObj(szFileName, myXMLValueNode, szTmpValue, myXmlTaBase, bReadHdr, bReadStatistik, bCheckTraining,
                                        bFileIsStream, bRefresh, bCheckCRC, iPriceWithVat, bCreateNewTax, bAddNewTax, bTaxFreeCust)
                             If bRet = False Then
                                 Exit Function
@@ -553,7 +592,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                 LOG_FuncExit(getLocationString("TAfromFile"), String.Concat("Function TAfromFile returns ", TAfromFile.ToString))
             End Try
 
-            
+
 
 
         Catch ex As Exception
