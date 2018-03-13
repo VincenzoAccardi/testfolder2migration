@@ -6,6 +6,7 @@ Imports TPDotnet.Pos
 Imports System.Collections.Generic
 Imports System.Xml.Linq
 Imports System.Xml.XPath
+Imports System.Linq
 Imports System.Windows.Forms
 
 Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA
@@ -1104,6 +1105,50 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         End Try
     End Sub
 
+    Class PosCounter
+
+        Public Function GetDate(ByVal xTransaction As XDocument, ByVal fromRecords As String, ByVal from As Boolean) As String
+            GetDate = String.Empty
+
+            Try
+
+                Dim records As List(Of XElement) = xTransaction.XPathSelectElements(fromRecords).ToList
+                If records IsNot Nothing Then
+
+                    If from Then
+                        records.Min(Of String)(Function(x)
+                                                   If String.IsNullOrEmpty(GetDate) OrElse GetDate > x.Value Then
+                                                       GetDate = x.Value
+                                                   End If
+                                                   Return GetDate
+                                               End Function)
+                    Else
+                        records.Min(Of String)(Function(x)
+                                                   If String.IsNullOrEmpty(GetDate) OrElse GetDate < x.Value Then
+                                                       GetDate = x.Value
+                                                   End If
+                                                   Return GetDate
+                                               End Function)
+                    End If
+
+                End If
+
+            Catch ex As Exception
+            End Try
+
+        End Function
+
+    End Class
+
+    Public RegisterTime_From As String = String.Empty
+    Public RegisterTime_To As String = String.Empty
+
+    Public TenderTime_From As String = String.Empty
+    Public TenderTime_To As String = String.Empty
+
+    Public NoSalesTime_From As String = String.Empty
+    Public NoSalesTime_To As String = String.Empty
+
     Public Overrides Function UpdEmplMoveTimer(ByRef EMPLMOVE As ADODB_Recordset) As Boolean
         Dim RegisterTime As String
         Dim TenderTime As String
@@ -1116,6 +1161,9 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         Dim szTotalDate As String
         Dim StartTaTime As String
         Dim TaBaseRec As TPDotnet.Pos.TaBaseRec
+        Dim posCounter As New PosCounter
+        Dim counterFrom As String = String.Empty
+        Dim counterTo As String = String.Empty
 
         UpdEmplMoveTimer = False
 
@@ -1132,7 +1180,11 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             ' sometimes the transaction is started before the real start (eg. the C-Key is pressed)
             ' this cause wrong operator statistics
             ' we try to use the szITDate as StartTaTime
-            TaBaseRec = Me.GetTALine(3)
+            If Me.GetFirstItemLine > 0 Then
+                TaBaseRec = Me.GetTALine(Me.GetFirstItemLine)
+            Else
+                TaBaseRec = Me.GetTALine(1)
+            End If
             If TaBaseRec.ExistField("szITDate") Then
                 StartTaTime = TaBaseRec.GetPropertybyName("szITDate")
             End If
@@ -1148,6 +1200,14 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
                 ' after total to end it is the payment time
                 TenderTime = GetTimeRange(szTotalDate, MyTaFtrRec.szDate)
+
+                If Not String.IsNullOrEmpty(TenderTime_From) AndAlso Not String.IsNullOrEmpty(TenderTime_To) Then
+                    counterFrom = posCounter.GetDate(TAtoXDocument(False, 0, False), TenderTime_From, True)
+                    counterTo = posCounter.GetDate(TAtoXDocument(False, 0, False), TenderTime_To, False)
+                    If Not String.IsNullOrEmpty(counterFrom) AndAlso Not String.IsNullOrEmpty(counterTo) Then
+                        TenderTime = GetTimeRange(counterFrom, counterTo)
+                    End If
+                End If
 
                 dbstring = EMPLMOVE.Fields_value("szPaymentTime")
                 dbstring = AddTime(dbstring, TenderTime)
@@ -1168,6 +1228,14 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
                 RegisterTime = GetTimeRange(StartTaTime, szTotalDate)
 
+                If Not String.IsNullOrEmpty(RegisterTime_From) AndAlso Not String.IsNullOrEmpty(RegisterTime_To) Then
+                    counterFrom = posCounter.GetDate(TAtoXDocument(False, 0, False), RegisterTime_From, True)
+                    counterTo = posCounter.GetDate(TAtoXDocument(False, 0, False), RegisterTime_To, False)
+                    If Not String.IsNullOrEmpty(counterFrom) AndAlso Not String.IsNullOrEmpty(counterTo) Then
+                        RegisterTime = GetTimeRange(counterFrom, counterTo)
+                    End If
+                End If
+
                 dbstring = EMPLMOVE.Fields_value("szRegisterTime")
                 dbstring = AddTime(dbstring, RegisterTime)
                 EMPLMOVE.Fields_value("szRegisterTime") = dbstring
@@ -1178,6 +1246,14 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             Else
                 ' no sales transaction
                 szNoSalesActivityTime = GetTimeRange(StartTaTime, szTotalDate)
+
+                If Not String.IsNullOrEmpty(NoSalesTime_From) AndAlso Not String.IsNullOrEmpty(NoSalesTime_To) Then
+                    counterFrom = posCounter.GetDate(TAtoXDocument(False, 0, False), NoSalesTime_From, True)
+                    counterTo = posCounter.GetDate(TAtoXDocument(False, 0, False), NoSalesTime_To, False)
+                    If Not String.IsNullOrEmpty(counterFrom) AndAlso Not String.IsNullOrEmpty(counterTo) Then
+                        szNoSalesActivityTime = GetTimeRange(counterFrom, counterTo)
+                    End If
+                End If
 
                 dbstring = EMPLMOVE.Fields_value("szNoSalesActivityTime")
                 dbstring = AddTime(dbstring, szNoSalesActivityTime)
