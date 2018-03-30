@@ -235,6 +235,15 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
+    Public Overridable Property szRescanType() As String
+        Get
+            szRescanType = m.Fields_Value("szRescanType")
+        End Get
+        Set(ByVal Value As String)
+            m.Fields_Value("szRescanType") = Value
+        End Set
+    End Property
+
 #End Region
 
 #Region "New/Finalize"
@@ -272,6 +281,7 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("bAllowVoidLine", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("szLinkToFileName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szMovePath", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szRescanType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
@@ -362,7 +372,7 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
                 m.Fields_Value("bAllowVoidLine") = myCloneObj.bAllowVoidLine
                 m.Fields_Value("szLinkToFileName") = myCloneObj.szLinkToFileName
                 m.Fields_Value("szMovePath") = myCloneObj.szMovePath
-
+                m.Fields_Value("szRescanType") = myCloneObj.szRescanType
 
                 theHdr.bTaValid = myCloneObj.theHdr.bTaValid
                 theHdr.lTaRefToCreateNmbr = iCreateNmbr
