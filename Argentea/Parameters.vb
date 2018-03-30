@@ -390,6 +390,19 @@ Public Class ArgenteaParameters
 
 #End Region
 
+#Region "Common"
+    Private _PrintLogoOnExternalReceipts As Boolean
+    <ArgenteaParameters("PRINT_LOGO_ON_EXTERNAL_RECEIPTS", True)>
+    Public Property PrintLogoOnExternalReceipts() As Boolean
+        Get
+            Return _PrintLogoOnExternalReceipts
+        End Get
+        Set(ByVal value As Boolean)
+            _PrintLogoOnExternalReceipts = value
+        End Set
+    End Property
+
+#End Region
 
     Public Function LoadParametersByReflection(ByRef TheModCntr As TPDotnet.Pos.ModCntr) As Boolean
         LoadParametersByReflection = False

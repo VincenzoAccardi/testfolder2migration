@@ -52,6 +52,15 @@ Public Class TPTAHelper
 
                 ' fill the headerlines from globstoreval
                 fillHeaderLines(TheModCntr, CreateTA)
+
+                Dim cHdr As TPDotnet.Pos.TaHdrRec = CreateTA.GetTALine(1)
+                If Not cHdr.ExistField("bExternalReceiptArgentea") Then cHdr.AddField("bExternalReceiptArgentea", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                cHdr.setPropertybyName("bExternalReceiptArgentea", 1)
+                Dim p As New ArgenteaParameters
+                p.LoadParametersByReflection(TheModCntr)
+                If Not p.PrintLogoOnExternalReceipts Then
+                    cHdr.bSuppressLogo = 1
+                End If
             End If
 
             CreateTA.bPrintReceipt = False
@@ -61,6 +70,8 @@ Public Class TPTAHelper
             ' add out eft record
             CreateTA.Add(MyTaRec)
             Dim ftr As TPDotnet.Pos.TaFtrRec = fillFooterLines(TheModCntr.con, CreateTA, TheModCntr)
+            If Not ftr.ExistField("bExternalReceiptArgentea") Then ftr.AddField("bExternalReceiptArgentea", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            ftr.setPropertybyName("bExternalReceiptArgentea", 1)
             ftr.szBarcode1 = ""
             ftr.szBarcode2 = ""
             ftr.szBarcodeComplete = ""
