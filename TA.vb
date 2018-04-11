@@ -1025,7 +1025,9 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                     End If
 
                     If aktsid = PosDef.TARecTypes.iTA_COMMENT Then
-                        If CType(TARecords.Item(i), TaComment).lPresentation.ToString().StartsWith(CInt(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_VLL_CUST_MESSAGE)) Then
+                        If CType(TARecords.Item(i), TaComment).lPresentation.ToString().StartsWith(CInt(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_VLL_CUST_MESSAGE)) OrElse
+                            CType(TARecords.Item(i), TaComment).lPresentation.ToString().StartsWith(CInt(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_VLL_CUST_BALANCE)) OrElse
+                            CType(TARecords.Item(i), TaComment).lPresentation.ToString().Equals("9999") Then
                             k = Me.getLastMediaRecNr
                             If i < k Then
                                 TaFromLineafterLine(i, j - 1)
