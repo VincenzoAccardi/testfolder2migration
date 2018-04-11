@@ -137,6 +137,30 @@ Public Class CSVHelper
                         ParseReturnString = True
                         Exit For
                         Exit Select
+                    Case InternalArgenteaFunctionTypes.ExternalGiftCardActivation,
+                         InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation
+
+                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
+                        If CSV(0) = "OK" Then
+                            argenteaFunctionReturnObject(0).Successfull = True
+                        Else
+                            argenteaFunctionReturnObject(0).Successfull = False
+                        End If
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbCrLf,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbCr,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(1) = Replace(CSV(1),
+                                            Microsoft.VisualBasic.vbLf,
+                                            Microsoft.VisualBasic.vbCrLf)
+                        argenteaFunctionReturnObject(0).Receipt = CSV(1)
+                        argenteaFunctionReturnObject(0).Result = CSV(2)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
                     Case Else
                         argenteaFunctionReturnObject(0).Successfull = False
                         argenteaFunctionReturnObject(0).Result = "KO"

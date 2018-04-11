@@ -310,6 +310,132 @@ End Class
 
 #End Region
 
+#Region "External GiftCard"
+
+Public Class ExternalGiftCardActivationParameters
+    Inherits ExternalGiftCardCommonParametersRecord
+
+    Private _ArticleRecord As TPDotnet.Pos.TaArtSaleRec
+    Public Property ArticleRecord() As TPDotnet.Pos.TaArtSaleRec
+        Get
+            Return _ArticleRecord
+        End Get
+        Set(ByVal value As TPDotnet.Pos.TaArtSaleRec)
+            _Record = value
+            _ArticleRecord = value
+        End Set
+    End Property
+
+    Public Overrides Property Value As Decimal
+        Get
+            If Not _ArticleRecord Is Nothing Then
+                _Value = _ArticleRecord.dTaTotal
+            End If
+            Return _Value
+        End Get
+        Set(value As Decimal)
+            _Value = value
+        End Set
+    End Property
+
+    Public Overrides Property Barcode As String
+        Get
+            If Not _Record Is Nothing AndAlso _Record.ExistField(ExternalGiftCardBarcodeField) Then
+                Return _Record.GetPropertybyName(ExternalGiftCardBarcodeField).ToString()
+            End If
+            Return MyBase.Barcode
+        End Get
+        Set(value As String)
+            If Not _Record Is Nothing Then
+                If Not _Record.ExistField(ExternalGiftCardBarcodeField) Then
+                    _Record.AddField(ExternalGiftCardBarcodeField, DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                End If
+                _Record.setPropertybyName(ExternalGiftCardBarcodeField, value.ToString)
+            End If
+            MyBase.Barcode = value
+        End Set
+    End Property
+
+    Public Overridable ReadOnly Property ExternalGiftCardBarcodeField As String
+        Get
+            Return "szITArgenteaExternalGiftCardEAN"
+        End Get
+    End Property
+
+End Class
+
+Public Class ExternalGiftCardDeActivationParameters
+    Inherits ExternalGiftCardCommonParametersRecord
+
+    Private _ArticleRecord As TPDotnet.Pos.TaArtSaleRec
+    Public Property ArticleRecord() As TPDotnet.Pos.TaArtSaleRec
+        Get
+            Return _ArticleRecord
+        End Get
+        Set(ByVal value As TPDotnet.Pos.TaArtSaleRec)
+            _Record = value
+            _ArticleRecord = value
+        End Set
+    End Property
+
+    Public Overrides Property Value As Decimal
+        Get
+            If Not _ArticleRecord Is Nothing Then
+                _Value = _ArticleRecord.dTaTotal
+            End If
+            Return _Value
+        End Get
+        Set(value As Decimal)
+            _Value = value
+        End Set
+    End Property
+
+    Public Overrides Property Barcode As String
+        Get
+            If Not _Record Is Nothing AndAlso _Record.ExistField(ExternalGiftCardBarcodeField) Then
+                Return _Record.GetPropertybyName(ExternalGiftCardBarcodeField).ToString()
+            End If
+            Return MyBase.Barcode
+        End Get
+        Set(value As String)
+            If Not _Record Is Nothing Then
+                If Not _Record.ExistField(ExternalGiftCardBarcodeField) Then
+                    _Record.AddField(ExternalGiftCardBarcodeField, DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                End If
+                _Record.setPropertybyName(ExternalGiftCardBarcodeField, value.ToString)
+            End If
+            MyBase.Barcode = value
+        End Set
+    End Property
+
+    Public Overridable ReadOnly Property ExternalGiftCardBarcodeField As String
+        Get
+            Return "szITArgenteaExternalGiftCardEAN"
+        End Get
+    End Property
+
+End Class
+
+Public Class ExternalGiftCardCommonParametersRecord
+    Inherits CommonParametersRecord
+
+    Public Overrides ReadOnly Property TransactionIdField As String
+        Get
+            Return "szArgenteaExternalGiftCardTxID"
+        End Get
+    End Property
+
+    Public Overrides ReadOnly Property StatusField As String
+        Get
+            Return "szArgenteaExternalGiftCardStatus"
+        End Get
+    End Property
+
+End Class
+
+
+#End Region
+
 #Region "Common"
 
 Public Class CommonParametersRecord
