@@ -311,7 +311,69 @@ Public Class ArgenteaParameters
 
 #End Region
 
+#Region "ExtGiftCard"
+#Region "Activation"
 
+    Private _ExtGiftCardActivationCopies As Integer
+    <ArgenteaParameters("EXT_GC_ACTIVATION_COPIES", 1)>
+    Public Property ExtGiftCardActivationCopies() As Integer
+        Get
+            Return _ExtGiftCardActivationCopies
+        End Get
+        Set(ByVal value As Integer)
+            _ExtGiftCardActivationCopies = value
+        End Set
+    End Property
+
+    Private _ExtGiftCardActivationSave As Boolean
+    <ArgenteaParameters("EXT_GC_ACTIVATION_SAVE", False)>
+    Public Property ExtGiftCardActivationSave() As Boolean
+        Get
+            Return _ExtGiftCardActivationSave
+        End Get
+        Set(ByVal value As Boolean)
+            _ExtGiftCardActivationSave = value
+        End Set
+    End Property
+
+    Private _ExtGiftCardActivationPrintWithinTa As Boolean
+    <ArgenteaParameters("EXT_GC_ACTIVATION_PRINT_WITHIN_TA", True)>
+    Public Property ExtGiftCardActivationPrintWithinTa() As Boolean
+        Get
+            Return _ExtGiftCardActivationPrintWithinTa
+        End Get
+        Set(ByVal value As Boolean)
+            _ExtGiftCardActivationPrintWithinTa = value
+        End Set
+    End Property
+
+#End Region
+#Region "DeActivation"
+    Private _ExtGiftCardDeActivationCancelCopies As Integer
+    <ArgenteaParameters("EXT_GC_DEACTIVATION_CANCEL_COPIES", 1)>
+    Public Property ExtGiftCardDeActivationCancelCopies() As Integer
+        Get
+            Return _ExtGiftCardDeActivationCancelCopies
+        End Get
+        Set(ByVal value As Integer)
+            _ExtGiftCardDeActivationCancelCopies = value
+        End Set
+    End Property
+
+    Private _ExtGiftCardDeActivationCancelSave As Boolean
+    <ArgenteaParameters("EXT_GC_DEACTIVATION_CANCEL_SAVE", False)>
+    Public Property ExtGiftCardDeActivationCancelSave() As Boolean
+        Get
+            Return _ExtGiftCardDeActivationCancelSave
+        End Get
+        Set(ByVal value As Boolean)
+            _ExtGiftCardDeActivationCancelSave = value
+        End Set
+    End Property
+
+#End Region
+
+#End Region
 #Region "PhoneCard"
 
 #Region "CheckPhoneRecharge"

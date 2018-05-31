@@ -35,7 +35,7 @@ Public Class ExternalGiftCardController
 
 #Region "IExternalGiftCardActivation"
     Public Function ActivationExternalGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IExternalGiftCardReturnCode Implements IExternalGiftCardActivation.ActivationExternalGiftCard
-        ActivationExternalGiftCard = IExternalGiftCardReturnCode.OK
+        ActivationExternalGiftCard = IExternalGiftCardReturnCode.KO
         Dim funcName As String = "ActivationExternalGiftCard"
 
         Dim frm As System.Windows.Forms.Form = Nothing
@@ -50,66 +50,78 @@ Public Class ExternalGiftCardController
             ' call in check mode
             ArgenteaCOMObject = Nothing
             ArgenteaCOMObject = New ARGLIB.argpay()
-            For i As Integer = 1 To p.Transaction.taCollection.Count
-                Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(i)
+            'For i As Integer = 1 To p.Transaction.taCollection.Count
+            '    Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(i)
 
-                Select Case MyTaBaseRec.sid
-                    Case TPDotnet.Pos.PosDef.TARecTypes.iTA_ART_SALE
+            '    Select Case MyTaBaseRec.sid
+            '        Case TPDotnet.Pos.PosDef.TARecTypes.iTA_ART_SALE
+            Try
+                '                p.ArticleRecord = MyTaBaseRec
+                'Dim MyTaArtSaleRec As TaArtSaleRec = MyTaBaseRec
+                If p.ArticleRecord.theHdr.bIsVoided = 0 AndAlso TypeOf p.ArticleRecord.ARTinArtSale Is TPDotnet.IT.Common.Pos.ART Then
+                    Dim ITART As TPDotnet.IT.Common.Pos.ART = p.ArticleRecord.ARTinArtSale
+                    If ITART.szITSpecialItemType = TPDotnet.IT.Common.Pos.ExternalGiftCardItem Then
+
                         Try
-                            p.ArticleRecord = MyTaBaseRec
-                            'Dim MyTaArtSaleRec As TaArtSaleRec = MyTaBaseRec
-                            If p.ArticleRecord.theHdr.bIsVoided = 0 AndAlso TypeOf p.ArticleRecord.ARTinArtSale Is TPDotnet.IT.Common.Pos.ART Then
-                                Dim ITART As TPDotnet.IT.Common.Pos.ART = p.ArticleRecord.ARTinArtSale
-                                If ITART.szITSpecialItemType = TPDotnet.IT.Common.Pos.ExternalGiftCardItem Then
-
-                                    Try
-                                        Dim CSV As String = String.Empty
-                                        Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
-                                        FormHelper.ShowWaitScreen(p.Controller, False, frm)
-                                        p.Barcode = GetBarcodeFromTemplate(p.Transaction, p.Controller, p.ArticleRecord.szInputString)
-                                        retCode = ArgenteaCOMObject.Attivazione(p.IntValue, 0, p.Barcode, p.Barcode, p.MessageOut, p.ErrorMessage)
-                                        LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
-
-                                        If retCode <> ArgenteaFunctionsReturnCode.OK Then
-                                            ActivationExternalGiftCard = IExternalGiftCardReturnCode.KO
-                                            ' Show an error for each gift card that cannot be definitely activated
-                                            LOG_Error(getLocationString(funcName), "Activation for giftcard  " & p.Barcode & " returns error: " & p.ErrorMessage)
-                                            CSV = "KO" & ";" & p.MessageOut & vbCrLf &
-                                                                "!!!ERRORE DI ATTIVAZIONE!!!" & vbCrLf &
-                                                                 p.ErrorMessage & vbCrLf &
-                                                                "Giftcard Serial: " & p.Barcode & vbCrLf &
-                                                                "Value: " & Math.Round(p.IntValue / 100, 2) & vbCrLf & vbCrLf & " " & ";" & p.ErrorMessage
-                                        Else
-                                            LOG_Debug(getLocationString(funcName), "Gift card number " & p.Barcode & " successfuly activated")
-                                            CSV = "OK" & ";" & p.MessageOut & ";" & p.ErrorMessage
-                                        End If
-
-                                        Dim objTPTAHelperArgentea As New TPTAHelperArgentea()
-                                        objTPTAHelperArgentea.HandleReturnString(p.Transaction,
-                                                                                 p.Controller,
-                                                                                 CSV,
-                                                                                 InternalArgenteaFunctionTypes.ExternalGiftCardActivation,
-                                                                                 Me.Parameters)
-                                        p.Status = ArgenteaExternalGiftCardStatus.ActivatedDefinitively.ToString
-
-                                    Catch ex As Exception
-                                        LOG_Error(getLocationString(funcName), ex.Message)
-                                    Finally
-                                        FormHelper.ShowWaitScreen(p.Controller, True, frm)
-                                        ShowError(p)
-                                    End Try
-
+                            Dim CSV As String = String.Empty
+                            Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
+                            p.Barcode = GetBarcodeFromTemplate(p.Transaction, p.Controller, p.ArticleRecord.szInputString)
+                            If String.IsNullOrEmpty(p.Barcode.Trim) Then
+                                Dim giftForm As FormArgenteaItemInput = p.Controller.GetCustomizedForm(GetType(FormArgenteaItemInput), STRETCH_TO_SMALL_WINDOW)
+                                giftForm.ArticleDescription = p.ArticleRecord.ARTinArtSale.szDesc
+                                p.Barcode = giftForm.DisplayMe(p.Transaction, p.Controller, FormRoot.DialogActive.d1_DialogActive)
+                                giftForm.Close()
+                                If String.IsNullOrEmpty(p.Barcode) Then
+                                    Exit Function
                                 End If
+                            End If
+
+                            Dim szEanCode As String = IIf(String.IsNullOrEmpty(p.ArticleRecord.szItemLookupCode), p.ArticleRecord.ARTinArtSale.szPOSItemID, p.ArticleRecord.szItemLookupCode)
+                            FormHelper.ShowWaitScreen(p.Controller, False, frm)
+                            retCode = ArgenteaCOMObject.Attivazione(p.IntValue, 0, szEanCode, p.Barcode, p.MessageOut, p.ErrorMessage)
+                            LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
+
+                            If retCode <> ArgenteaFunctionsReturnCode.OK Then
+                                ActivationExternalGiftCard = IExternalGiftCardReturnCode.KO
+                                ' Show an error for each gift card that cannot be definitely activated
+                                LOG_Error(getLocationString(funcName), "Activation for giftcard  " & p.Barcode & " returns error: " & p.ErrorMessage)
+                                CSV = "KO" & ";" & p.MessageOut & vbCrLf &
+                                                    "!!!ERRORE DI ATTIVAZIONE!!!" & vbCrLf &
+                                                     p.ErrorMessage & vbCrLf &
+                                                    "Giftcard Serial: " & p.Barcode & vbCrLf &
+                                                    "Value: " & Math.Round(p.IntValue / 100, 2) & vbCrLf & vbCrLf & " " & ";" & p.ErrorMessage
+                            Else
+                                LOG_Debug(getLocationString(funcName), "Gift card number " & p.Barcode & " successfuly activated")
+                                CSV = "OK" & ";" & p.MessageOut & ";" & p.ErrorMessage
+                                ActivationExternalGiftCard = IExternalGiftCardReturnCode.OK
 
                             End If
 
+                            Dim objTPTAHelperArgentea As New TPTAHelperArgentea()
+                            objTPTAHelperArgentea.HandleReturnString(p.Transaction,
+                                                                     p.Controller,
+                                                                     CSV,
+                                                                     InternalArgenteaFunctionTypes.ExternalGiftCardActivation,
+                                                                     Me.Parameters)
+                            p.Status = ArgenteaExternalGiftCardStatus.ActivatedDefinitively.ToString
                         Catch ex As Exception
                             LOG_Error(getLocationString(funcName), ex.Message)
+                        Finally
+                            FormHelper.ShowWaitScreen(p.Controller, True, frm)
+                            ShowError(p)
                         End Try
-                        Exit Select
 
-                End Select
-            Next i
+                    End If
+
+                End If
+
+            Catch ex As Exception
+                LOG_Error(getLocationString(funcName), ex.Message)
+            End Try
+            ' Exit Select
+
+            '        End Select
+            ' Next i
 
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex.Message)
@@ -133,12 +145,36 @@ Public Class ExternalGiftCardController
         Try
             p.LoadCommonFunctionParameter(Parameters)
 
-            FormHelper.ShowWaitScreen(p.Controller, False, frm)
-
             ArgenteaCOMObject = Nothing
             ArgenteaCOMObject = New ARGLIB.argpay()
-            p.Barcode = GetBarcodeFromTemplate(p.Transaction, p.Controller, p.ArticleRecord.szInputString)
-            retCode = ArgenteaCOMObject.DisAttivazione(p.IntValue, p.Barcode, p.Barcode, p.MessageOut, p.ErrorMessage)
+            If p.ArticleRecord IsNot Nothing Then
+                p.Barcode = GetBarcodeFromTemplate(p.Transaction, p.Controller, p.ArticleRecord.szInputString)
+            End If
+
+            If String.IsNullOrEmpty(p.Barcode.Trim) Then
+                Dim giftForm As FormArgenteaItemInput = p.Controller.GetCustomizedForm(GetType(FormArgenteaItemInput), STRETCH_TO_SMALL_WINDOW)
+                If p.ArticleRecord IsNot Nothing Then
+                    giftForm.ArticleDescription = p.ArticleRecord.ARTinArtSale.szDesc
+                Else
+                    giftForm.ArticleDescription = p.ArticleReturnRecord.ARTinArtReturn.szDesc
+                End If
+                p.Barcode = giftForm.DisplayMe(p.Transaction, p.Controller, FormRoot.DialogActive.d1_DialogActive)
+                giftForm.Close()
+                If String.IsNullOrEmpty(p.Barcode) Then
+                    Exit Function
+                End If
+            End If
+            FormHelper.ShowWaitScreen(p.Controller, False, frm)
+
+            Dim szEanCode As String = String.Empty
+
+            If p.ArticleRecord IsNot Nothing Then
+                szEanCode = IIf(String.IsNullOrEmpty(p.ArticleRecord.szItemLookupCode), p.ArticleRecord.ARTinArtSale.szPOSItemID, p.ArticleRecord.szItemLookupCode)
+            Else
+                szEanCode = IIf(String.IsNullOrEmpty(p.ArticleReturnRecord.szItemLookupCode), p.ArticleReturnRecord.ARTinArtReturn.szPOSItemID, p.ArticleReturnRecord.szItemLookupCode)
+            End If
+
+            retCode = ArgenteaCOMObject.DisAttivazione(p.IntValue, szEanCode, p.Barcode, p.MessageOut, p.ErrorMessage)
             LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". Giftcard: " & p.Barcode & ". Error: " & p.ErrorMessage & ". Output: " & p.MessageOut)
 
             If retCode <> ArgenteaFunctionsReturnCode.OK Then
@@ -157,7 +193,7 @@ Public Class ExternalGiftCardController
 
             p.Status = ArgenteaExternalGiftCardStatus.Deactivated.ToString
 
-            DeActivationExternalGiftCard = IExternalGiftCardReturnCode.OK
+            'DeActivationExternalGiftCard = IExternalGiftCardReturnCode.OK
 
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex.Message)
@@ -197,8 +233,10 @@ Public Class ExternalGiftCardController
             End If
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex.Message)
-
+        Finally
+            TheModCntr.theBarcodeCls.SetNormalBuffer = String.Empty
         End Try
+
 
         Return GetBarcodeFromTemplate
     End Function

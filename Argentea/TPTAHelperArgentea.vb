@@ -175,6 +175,21 @@ Public Class TPTAHelperArgentea
                     End With
 
                     Exit Select
+                Case InternalArgenteaFunctionTypes.ExternalGiftCardActivation
+
+                    With HandlingParamter
+                        .NoOfAdditionalTaCopy = parameters.ExtGiftCardActivationCopies
+                        .CreateAdditionalTa = parameters.ExtGiftCardActivationSave
+                        .PrintWithinTa = parameters.ExtGiftCardActivationPrintWithinTa
+                    End With
+                    Exit Select
+                Case InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation
+
+                    With HandlingParamter
+                        .NoOfAdditionalTaCopy = parameters.ExtGiftCardDeActivationCancelCopies
+                        .CreateAdditionalTa = parameters.ExtGiftCardDeActivationCancelSave
+                    End With
+                    Exit Select
 
                 Case Else
                     LoadHandlingParamterByArgenteaFuntion = Nothing

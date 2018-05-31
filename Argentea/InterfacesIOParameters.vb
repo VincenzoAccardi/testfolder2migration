@@ -378,10 +378,23 @@ Public Class ExternalGiftCardDeActivationParameters
         End Set
     End Property
 
+    Private _ArticleReturnRecord As TPDotnet.Pos.TaArtReturnRec
+    Public Property ArticleReturnRecord() As TPDotnet.Pos.TaArtReturnRec
+        Get
+            Return _ArticleReturnRecord
+        End Get
+        Set(ByVal value As TPDotnet.Pos.TaArtReturnRec)
+            _Record = value
+            _ArticleReturnRecord = value
+        End Set
+    End Property
+
     Public Overrides Property Value As Decimal
         Get
             If Not _ArticleRecord Is Nothing Then
                 _Value = _ArticleRecord.dTaTotal
+            ElseIf Not _ArticleReturnRecord Is Nothing Then
+                _Value = _ArticleReturnRecord.dTaTotal
             End If
             Return _Value
         End Get
