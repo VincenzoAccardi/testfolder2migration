@@ -244,6 +244,15 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
+    Public Overridable Property szDeleteLinkFile() As String
+        Get
+            szDeleteLinkFile = m.Fields_Value("szDeleteLinkFile")
+        End Get
+        Set(ByVal Value As String)
+            m.Fields_Value("szDeleteLinkFile") = Value
+        End Set
+    End Property
+
 #End Region
 
 #Region "New/Finalize"
@@ -282,6 +291,7 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("szLinkToFileName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szMovePath", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szRescanType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szDeleteLinkFile", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
@@ -373,6 +383,8 @@ Public Class TAExternalTARec : Inherits TPDotnet.Pos.TaBaseRec
                 m.Fields_Value("szLinkToFileName") = myCloneObj.szLinkToFileName
                 m.Fields_Value("szMovePath") = myCloneObj.szMovePath
                 m.Fields_Value("szRescanType") = myCloneObj.szRescanType
+                m.Fields_Value("szDeleteLinkFile") = myCloneObj.szDeleteLinkFile
+
 
                 theHdr.bTaValid = myCloneObj.theHdr.bTaValid
                 theHdr.lTaRefToCreateNmbr = iCreateNmbr
