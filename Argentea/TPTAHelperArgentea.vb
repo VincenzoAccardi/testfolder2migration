@@ -98,7 +98,7 @@ Public Class TPTAHelperArgentea
 
     End Class
 
-    Protected Overridable Function LoadHandlingParamterByArgenteaFuntion(ByVal argenteaFunction As InternalArgenteaFunctionTypes, _
+    Protected Overridable Function LoadHandlingParamterByArgenteaFuntion(ByVal argenteaFunction As InternalArgenteaFunctionTypes,
                                                    ByVal parameters As ArgenteaParameters) As HandlingParamter
 
         Dim HandlingParamter As New HandlingParamter()
@@ -188,6 +188,7 @@ Public Class TPTAHelperArgentea
                     With HandlingParamter
                         .NoOfAdditionalTaCopy = parameters.ExtGiftCardDeActivationCancelCopies
                         .CreateAdditionalTa = parameters.ExtGiftCardDeActivationCancelSave
+                        .PrintWithinTa = parameters.ExtGiftCardDeActivationPrintWithinTa
                     End With
                     Exit Select
 
@@ -204,12 +205,12 @@ Public Class TPTAHelperArgentea
 
     End Function
 
-    Public Overridable Function HandleReturnString(ByRef taobj As TPDotnet.Pos.TA, _
-                                                   ByRef TheModCntr As TPDotnet.Pos.ModCntr, _
-                                                   ByVal returnString As String, _
-                                                   ByVal argenteaFunction As InternalArgenteaFunctionTypes, _
-                                                   ByVal parameters As ArgenteaParameters, _
-                                                   Optional ByRef taArgenteaEMVRec As TaArgenteaEMVRec = Nothing _
+    Public Overridable Function HandleReturnString(ByRef taobj As TPDotnet.Pos.TA,
+                                                   ByRef TheModCntr As TPDotnet.Pos.ModCntr,
+                                                   ByVal returnString As String,
+                                                   ByVal argenteaFunction As InternalArgenteaFunctionTypes,
+                                                   ByVal parameters As ArgenteaParameters,
+                                                   Optional ByRef taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
                                                    ) As Boolean
 
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
@@ -231,8 +232,8 @@ Public Class TPTAHelperArgentea
             handlingParamter = LoadHandlingParamterByArgenteaFuntion(argenteaFunction, parameters)
 
             ' parse the CSV ans fill the ArgenteaFunctionReturnObject object
-            If (Not CSVHelper.ParseReturnString(returnString, _
-                                                argenteaFunction, _
+            If (Not CSVHelper.ParseReturnString(returnString,
+                                                argenteaFunction,
                                                 argenteaFunctionReturnObject)) Then
                 Throw New Exception("CSV_INVALID")
             End If
@@ -289,7 +290,7 @@ Public Class TPTAHelperArgentea
                 argenteaTA.bTAtoFile = True
                 argenteaTA.bDelete = True
             End If
-            
+
 
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex.Message)

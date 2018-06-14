@@ -27,6 +27,7 @@ Public Enum InternalArgenteaFunctionTypes
     PhoneRechargeCheck
     ExternalGiftCardActivation
     ExternalGiftCardDeActivation
+    ExternalGiftCardConfirm
 End Enum
 
 Public Enum ArgenteaFunctionsReturnCode

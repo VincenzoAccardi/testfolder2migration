@@ -144,7 +144,7 @@ Public Class ArgenteaParameters
         End Set
     End Property
 
-    Private _GiftCardBalanceInternalInquiry As Boolean 
+    Private _GiftCardBalanceInternalInquiry As Boolean
     Public Property GiftCardBalanceInternalInquiry() As Boolean
         Get
             Return _GiftCardBalanceInternalInquiry
@@ -371,6 +371,51 @@ Public Class ArgenteaParameters
         End Set
     End Property
 
+    Private _ExtGiftCardDeActivationPrintWithinTa As Boolean
+    <ArgenteaParameters("EXT_GC_DEACTIVATION_PRINT_WITHIN_TA", True)>
+    Public Property ExtGiftCardDeActivationPrintWithinTa() As Boolean
+        Get
+            Return _ExtGiftCardDeActivationPrintWithinTa
+        End Get
+        Set(ByVal value As Boolean)
+            _ExtGiftCardDeActivationPrintWithinTa = value
+        End Set
+    End Property
+
+#End Region
+#Region "Confirm"
+    Private _ExtGiftCardConfirmCopies As Integer
+    <ArgenteaParameters("EXT_GC_CONFIRM_COPIES", 1)>
+    Public Property ExtGiftCardConfirmCopies() As Integer
+        Get
+            Return _ExtGiftCardConfirmCopies
+        End Get
+        Set(ByVal value As Integer)
+            _ExtGiftCardConfirmCopies = value
+        End Set
+    End Property
+
+    Private _ExtGiftCardConfirmSave As Boolean
+    <ArgenteaParameters("EXT_GC_CONFIRM_SAVE", False)>
+    Public Property ExtGiftCardConfirmSave() As Boolean
+        Get
+            Return _ExtGiftCardConfirmSave
+        End Get
+        Set(ByVal value As Boolean)
+            _ExtGiftCardConfirmSave = value
+        End Set
+    End Property
+
+    Private _ExtGiftCardConfirmPrintWithinTa As Boolean
+    <ArgenteaParameters("EXT_GC_CONFIRM_PRINT_WITHIN_TA", True)>
+    Public Property ExtGiftCardConfirmPrintWithinTa() As Boolean
+        Get
+            Return _ExtGiftCardConfirmPrintWithinTa
+        End Get
+        Set(ByVal value As Boolean)
+            _ExtGiftCardConfirmPrintWithinTa = value
+        End Set
+    End Property
 #End Region
 
 #End Region

@@ -4,11 +4,17 @@ Imports TPDotnet.IT.Common.Pos
 Imports TPDotnet.Pos
 Imports ARGLIB = PAGAMENTOLib
 Imports Microsoft.VisualBasic
+Imports System.Xml.Linq
+Imports System.Xml.XPath
+Imports System.Linq
+
+
 
 
 Public Class ExternalGiftCardController
     Implements IExternalGiftCardActivation
     Implements IExternalGiftCardDeActivation
+    Implements IExternalGiftCardConfirm
 
 
 #Region "Argentea specific"
@@ -111,6 +117,14 @@ Public Class ExternalGiftCardController
                             ShowError(p)
                         End Try
 
+                        Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(p.Transaction.taCollection.Count)
+                        If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_ARGENTEA_EMV Then
+                            Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaArgenteaEMVRec)
+                            If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
+                                If Not myTaArgEmv.ExistField("szITSerialCode") Then myTaArgEmv.AddField("szITSerialCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                                myTaArgEmv.setPropertybyName("szITSerialCode", p.Barcode.ToString)
+                            End If
+                        End If
                     End If
 
                 End If
@@ -193,6 +207,14 @@ Public Class ExternalGiftCardController
 
             p.Status = ArgenteaExternalGiftCardStatus.Deactivated.ToString
 
+            Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(p.Transaction.taCollection.Count)
+            If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_ARGENTEA_EMV Then
+                Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaArgenteaEMVRec)
+                If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
+                    If Not myTaArgEmv.ExistField("szITSerialCode") Then myTaArgEmv.AddField("szITSerialCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                    myTaArgEmv.setPropertybyName("szITSerialCode", p.Barcode.ToString)
+                End If
+            End If
             'DeActivationExternalGiftCard = IExternalGiftCardReturnCode.OK
 
         Catch ex As Exception
@@ -205,6 +227,84 @@ Public Class ExternalGiftCardController
     End Function
 #End Region
 
+#Region "IExternalGiftCardConfirm"
+    Public Function ConfirmExternalGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IExternalGiftCardReturnCode Implements IExternalGiftCardConfirm.ConfirmExternalGiftCard
+        ConfirmExternalGiftCard = IExternalGiftCardReturnCode.KO
+        Dim funcName As String = "IExternalGiftCardConfirm"
+
+        Dim frm As System.Windows.Forms.Form = Nothing
+        Dim p As ExternalGiftCardConfirmParameters = New ExternalGiftCardConfirmParameters
+        Dim CSV As String = String.Empty
+        Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
+
+        Try
+            p.LoadCommonFunctionParameter(Parameters)
+            Dim objTPTAHelperArgentea As New TPTAHelperArgentea()
+            Dim argenteaTA As TPDotnet.Pos.TA = Nothing
+            Me.Parameters.LoadParametersByReflection(p.Controller)
+            Dim xDoc As Xml.Linq.XDocument = p.Transaction.TAtoXDocument(False, 0, False)
+
+            Dim xElActiveList As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/ARGENTEA_EMV[szFunctionID='ExternalGiftCardActivation']/szITSerialCode").ToList()
+            Dim xElActiveSerialCode As New List(Of String)
+            For Each xEl As XElement In xElActiveList
+                xElActiveSerialCode.Add(xEl.Value)
+            Next
+            Dim xElDeActiveList As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/ARGENTEA_EMV[szFunctionID='ExternalGiftCardDeActivation']/szITSerialCode").ToList()
+            Dim xElDeActiveSerialCode As New List(Of String)
+            For Each xEl As XElement In xElDeActiveList
+                xElDeActiveSerialCode.Add(xEl.Value)
+            Next
+            Dim xel1 As List(Of String) = xElActiveSerialCode.Except(xElDeActiveSerialCode).ToList()
+            Dim xel2 As List(Of String) = xElDeActiveSerialCode.Except(xElActiveSerialCode).ToList()
+
+            Dim szITSerialCodeList As List(Of String) = xel1.Concat(xel2).ToList()
+
+
+            For i As Integer = 1 To p.Transaction.taCollection.Count
+                Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(i)
+                If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_ARGENTEA_EMV Then
+                    Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaArgenteaEMVRec)
+                    If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
+                        If szITSerialCodeList.Contains(myTaArgEmv.GetPropertybyName("szITSerialCode")) Then
+                            argenteaTA = objTPTAHelperArgentea.CreateTA(p.Transaction, p.Controller, MyTaBaseRec, Me.Parameters.ExtGiftCardConfirmSave)
+                            For j As Integer = 1 To Me.Parameters.ExtGiftCardConfirmCopies
+                                If Not objTPTAHelperArgentea.PrintReceipt(argenteaTA, p.Controller) Then
+                                    Throw New Exception("CANNOT_PRINT_ARGENTEA_TA")
+                                End If
+                            Next
+
+                            If Me.Parameters.ExtGiftCardConfirmPrintWithinTa Then
+                                Dim myTaCloneArgEmv As New TPDotnet.IT.Common.Pos.TaArgenteaEMVRec
+                                myTaCloneArgEmv.Clone(myTaArgEmv, 0)
+                                myTaCloneArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardConfirm.ToString
+                                myTaCloneArgEmv.theHdr.lTaCreateNmbr = 0
+                                myTaCloneArgEmv.theHdr.lTaRefToCreateNmbr = 0
+                                myTaCloneArgEmv.bPrintReceipt = True
+                                myTaCloneArgEmv.szReceipt = myTaArgEmv.szOriginalReceipt
+                                myTaCloneArgEmv.szOriginalReceipt = myTaArgEmv.szOriginalReceipt
+
+                                p.Transaction.Add(myTaCloneArgEmv)
+
+                            End If
+                        End If
+                    End If
+                End If
+
+            Next
+            Dim lCreateNumbers As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/ARGENTEA_EMV[szFunctionID='ExternalGiftCardActivation' or szFunctionID='ExternalGiftCardDeActivation']/Hdr/lTaCreateNmbr").ToList()
+            For Each lCreateNmbr As XElement In lCreateNumbers
+                p.Transaction.Remove(p.Transaction.GetPositionFromCreationNmbr(CInt(lCreateNmbr.Value)))
+            Next
+
+
+        Catch ex As Exception
+
+        End Try
+
+
+    End Function
+
+#End Region
 #End Region
 
 #Region "Overridable"

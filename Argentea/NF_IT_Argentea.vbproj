@@ -118,6 +118,7 @@
       <Name>System.Windows.Forms</Name>
     </Reference>
     <Reference Include="System.XML" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="TPDotnet.GUIControls">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.GUIControls.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>

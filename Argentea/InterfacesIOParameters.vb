@@ -429,6 +429,11 @@ Public Class ExternalGiftCardDeActivationParameters
 
 End Class
 
+Public Class ExternalGiftCardConfirmParameters
+    Inherits ExternalGiftCardCommonParametersRecord
+
+End Class
+
 Public Class ExternalGiftCardCommonParametersRecord
     Inherits CommonParametersRecord
 
