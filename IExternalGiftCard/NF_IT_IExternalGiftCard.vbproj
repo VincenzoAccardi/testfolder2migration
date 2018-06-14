@@ -65,6 +65,7 @@
   <ItemGroup>
     <Compile Include="Enumerations.vb" />
     <Compile Include="IExternalGiftCardActivation.vb" />
+    <Compile Include="IExternalGiftCardConfirm.vb" />
     <Compile Include="IExternalGiftCardDeActivation.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
