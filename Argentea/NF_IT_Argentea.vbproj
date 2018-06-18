@@ -219,6 +219,10 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TPDotnet.Pos.ModPrintFloat, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModPrintFloat.dll</HintPath>
+    </Reference>
     <Reference Include="TPDotnet.Pos.ModShortSignOff, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModShortSignOff.dll</HintPath>
@@ -229,6 +233,10 @@
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModSignOff.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TPDotnet.Pos.ModTrainingStatistic, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModTrainingStatistic.dll</HintPath>
+    </Reference>
     <Reference Include="TPDotnet.Pos.ModUtils">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModUtils.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
@@ -238,6 +246,7 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TPDotnet.Pos.PosModeBase, Version=5.0.1.7, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="TPDotnet.Pos.Shared">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Shared.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
