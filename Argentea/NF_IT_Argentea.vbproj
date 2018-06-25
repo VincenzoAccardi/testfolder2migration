@@ -285,6 +285,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ADVController.vb" />
     <Compile Include="ArgenteaFunctionReturnObject.vb" />
     <Compile Include="argpay.vb" />
     <Compile Include="AssemblyInfo.vb" />

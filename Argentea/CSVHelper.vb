@@ -16,7 +16,7 @@ Public Class CSVHelper
     ' -----------------------------------
 #End Region
 
-    Public Shared Function ParseReturnString(ByVal returnString As String, ByVal argenteaFunction As InternalArgenteaFunctionTypes, ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject) As Boolean
+    Public Shared Function ParseReturnString(ByVal returnString As String, ByVal argenteaFunction As InternalArgenteaFunctionTypes, ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, Optional ByRef szCharSeparator As String = ";") As Boolean
         ParseReturnString = False
         Dim I, J As Integer
         Dim funcName As String = "ParseReturnString"
@@ -28,7 +28,7 @@ Public Class CSVHelper
             argenteaFunctionReturnObject(0).Successfull = False
             argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
 
-            CSV = returnString.Split(";")
+            CSV = returnString.Split(szCharSeparator)
             For I = 0 To CSV.Length - 1
 
                 Select Case argenteaFunction
@@ -87,11 +87,11 @@ Public Class CSVHelper
                         Exit Select
                     Case InternalArgenteaFunctionTypes.EFTConfirm
                         Exit Select
-                    Case InternalArgenteaFunctionTypes.GiftCardActivationPreCheck, _
-                        InternalArgenteaFunctionTypes.GiftCardActivation, _
-                        InternalArgenteaFunctionTypes.GiftCardRedeemPreCkeck, _
-                        InternalArgenteaFunctionTypes.GiftCardRedeem, _
-                        InternalArgenteaFunctionTypes.GiftCardRedeemCancel, _
+                    Case InternalArgenteaFunctionTypes.GiftCardActivationPreCheck,
+                        InternalArgenteaFunctionTypes.GiftCardActivation,
+                        InternalArgenteaFunctionTypes.GiftCardRedeemPreCkeck,
+                        InternalArgenteaFunctionTypes.GiftCardRedeem,
+                        InternalArgenteaFunctionTypes.GiftCardRedeemCancel,
                         InternalArgenteaFunctionTypes.GiftCardBalance
 
                         argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
@@ -114,7 +114,7 @@ Public Class CSVHelper
                         ParseReturnString = True
                         Exit For
                         Exit Select
-                    Case InternalArgenteaFunctionTypes.PhoneRechargeCheck, _
+                    Case InternalArgenteaFunctionTypes.PhoneRechargeCheck,
                         InternalArgenteaFunctionTypes.PhoneRechargeActivation
 
                         argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
@@ -160,7 +160,58 @@ Public Class CSVHelper
                         ParseReturnString = True
                         Exit For
                         Exit Select
+                    Case InternalArgenteaFunctionTypes.ADVPayment
+                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
+                        If CSV(0) = "OK" Then
+                            argenteaFunctionReturnObject(0).Successfull = True
+                        Else
+                            argenteaFunctionReturnObject(0).Successfull = False
+                        End If
+                        argenteaFunctionReturnObject(0).Description = CSV(1)
+                        argenteaFunctionReturnObject(0).TerminalID = CSV(2)
+                        If Not String.IsNullOrEmpty(CSV(3).Trim()) Then
+                            argenteaFunctionReturnObject(0).TerminalID = CSV(3)
+                        End If
+                        argenteaFunctionReturnObject(0).Amount = CSV(4)
+                        CSV(5) = Replace(CSV(5),
+                                            Microsoft.VisualBasic.vbCrLf,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(5) = Replace(CSV(5),
+                                            Microsoft.VisualBasic.vbCr,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(5) = Replace(CSV(5),
+                                            Microsoft.VisualBasic.vbLf,
+                                            Microsoft.VisualBasic.vbCrLf)
+                        argenteaFunctionReturnObject(0).Receipt = CSV(5)
+                        argenteaFunctionReturnObject(0).Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+                    Case InternalArgenteaFunctionTypes.ADVVoid
+                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
+                        If CSV(0) = "OK" Then
+                            argenteaFunctionReturnObject(0).Successfull = True
+                        Else
+                            argenteaFunctionReturnObject(0).Successfull = False
+                        End If
+                        argenteaFunctionReturnObject(0).Description = CSV(1)
+                        argenteaFunctionReturnObject(0).TerminalID = CSV(2)
 
+                        argenteaFunctionReturnObject(0).Amount = CSV(3)
+                        CSV(4) = Replace(CSV(4),
+                                            Microsoft.VisualBasic.vbCrLf,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(4) = Replace(CSV(4),
+                                            Microsoft.VisualBasic.vbCr,
+                                            Microsoft.VisualBasic.vbLf)
+                        CSV(4) = Replace(CSV(4),
+                                            Microsoft.VisualBasic.vbLf,
+                                            Microsoft.VisualBasic.vbCrLf)
+                        argenteaFunctionReturnObject(0).Receipt = CSV(4)
+                        argenteaFunctionReturnObject(0).Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
                     Case Else
                         argenteaFunctionReturnObject(0).Successfull = False
                         argenteaFunctionReturnObject(0).Result = "KO"

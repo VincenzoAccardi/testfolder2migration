@@ -72,8 +72,13 @@ Public Class clsMedia
 
                 ' payment
                 LOG_Debug(getLocationString(funcName), "before calling payment")
-                DoSpecialHandling4CreditCardsOnline = TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Payment(taobj, TheModCntr, MyTaMediaRec, MyTaMediaMemberDetailRec)
-
+                If MyTaMediaRec.PAYMENTinMedia.szExternalID.Equals(TPDotnet.IT.Common.Pos.EFT.ADVController.PaymentAdv.JIFFY.ToString()) OrElse
+                    MyTaMediaRec.PAYMENTinMedia.szExternalID.Equals(TPDotnet.IT.Common.Pos.EFT.ADVController.PaymentAdv.SATISPAY.ToString()) OrElse
+                    MyTaMediaRec.PAYMENTinMedia.szExternalID.Equals(TPDotnet.IT.Common.Pos.EFT.ADVController.PaymentAdv.BITCOIN.ToString()) Then
+                    DoSpecialHandling4CreditCardsOnline = TPDotnet.IT.Common.Pos.EFT.ADVController.Instance.Payment(taobj, TheModCntr, MyTaMediaRec, MyTaMediaMemberDetailRec)
+                Else
+                    DoSpecialHandling4CreditCardsOnline = TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Payment(taobj, TheModCntr, MyTaMediaRec, MyTaMediaMemberDetailRec)
+                End If
             ElseIf bIsVoidReceipt OrElse bIsMediaCorrect _
             OrElse MyTaMediaRec.dTaPaidTotal < 0 Then
 
@@ -84,11 +89,16 @@ Public Class clsMedia
                     Exit Function
 
                 End If
-
-                ' line/immediate void
                 LOG_Debug(getLocationString(funcName), "before calling Void")
-                DoSpecialHandling4CreditCardsOnline = TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Void(taobj, TheModCntr)
 
+                If MyTaMediaRec.PAYMENTinMedia.szExternalID.Equals(TPDotnet.IT.Common.Pos.EFT.ADVController.PaymentAdv.JIFFY.ToString()) OrElse
+                    MyTaMediaRec.PAYMENTinMedia.szExternalID.Equals(TPDotnet.IT.Common.Pos.EFT.ADVController.PaymentAdv.SATISPAY.ToString()) OrElse
+                    MyTaMediaRec.PAYMENTinMedia.szExternalID.Equals(TPDotnet.IT.Common.Pos.EFT.ADVController.PaymentAdv.BITCOIN.ToString()) Then
+                    DoSpecialHandling4CreditCardsOnline = TPDotnet.IT.Common.Pos.EFT.ADVController.Instance.Void(taobj, TheModCntr)
+                Else
+                    ' line/immediate void
+                    DoSpecialHandling4CreditCardsOnline = TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Void(taobj, TheModCntr)
+                End If
             End If
 
             If Not DoSpecialHandling4CreditCardsOnline Then
@@ -119,7 +129,7 @@ Public Class clsMedia
         Try
             LOG_FuncStart(getLocationString(funcName))
 
-            If String.IsNullOrEmpty(MyTaMediaRec.PAYMENTinMedia.szExternalID) OrElse _
+            If String.IsNullOrEmpty(MyTaMediaRec.PAYMENTinMedia.szExternalID) OrElse
                 Not String.Equals(MyTaMediaRec.PAYMENTinMedia.szExternalID, "GIFTCARDARGENTEA", StringComparison.InvariantCultureIgnoreCase) Then
                 LOG_Error(getLocationString(funcName), "MediaMember " & MyTaMediaRec.PAYMENTinMedia.lMediaMember & " is not configured as GIFTCARDARGENTEA")
                 Exit Function
@@ -147,8 +157,8 @@ Public Class clsMedia
 
                 If theModCntr.bCalledFromWebService OrElse theModCntr.bExternalDialog Then
                     If String.IsNullOrEmpty(MyTaMediaRec.szBarcode) Then
-                        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, _
-                     getPosTxtNew(theModCntr.contxt, "Message", TEXT_INVALID_BARCODE), _
+                        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION,
+                     getPosTxtNew(theModCntr.contxt, "Message", TEXT_INVALID_BARCODE),
                      TEXT_INVALID_BARCODE, theModCntr, "Message")
                         DoSpecialHandling4Vouchers1 = False
                         Exit Function
@@ -160,8 +170,8 @@ Public Class clsMedia
                     ret = InquiryGiftCard(theModCntr, taobj, MyTaMediaRec.szBarcode, dBalance, szReceipt)
                     Select Case ret
 
-                        Case IGiftCardReturnCode.KO, _
-                             IGiftCardReturnCode.KO_SKIP_STANDARD, _
+                        Case IGiftCardReturnCode.KO,
+                             IGiftCardReturnCode.KO_SKIP_STANDARD,
                              IGiftCardReturnCode.OK_SKIP_STANDARD
 
                             DoSpecialHandling4Vouchers1 = False
@@ -209,8 +219,8 @@ Public Class clsMedia
                 ret = CheckRedeemGiftCard(theModCntr, taobj, MyTaMediaRec)
                 Select Case ret
 
-                    Case IGiftCardReturnCode.KO, _
-                         IGiftCardReturnCode.KO_SKIP_STANDARD, _
+                    Case IGiftCardReturnCode.KO,
+                         IGiftCardReturnCode.KO_SKIP_STANDARD,
                          IGiftCardReturnCode.OK_SKIP_STANDARD
 
                         DoSpecialHandling4Vouchers1 = False
@@ -236,8 +246,8 @@ Public Class clsMedia
                 ret = GiftCardCancellation(theModCntr, taobj, MyTaMediaRec)
                 Select Case ret
 
-                    Case IGiftCardReturnCode.KO, _
-                         IGiftCardReturnCode.KO_SKIP_STANDARD, _
+                    Case IGiftCardReturnCode.KO,
+                         IGiftCardReturnCode.KO_SKIP_STANDARD,
                          IGiftCardReturnCode.OK_SKIP_STANDARD
 
                         DoSpecialHandling4Vouchers1 = False
@@ -315,7 +325,7 @@ Public Class clsMedia
         End Try
     End Function
 
-    Protected Overrides Function GetDialogInputs4Redemption(ByVal taobj As TPDotnet.Pos.TA, ByVal TheModCntr As TPDotnet.Pos.ModCntr, _
+    Protected Overrides Function GetDialogInputs4Redemption(ByVal taobj As TPDotnet.Pos.TA, ByVal TheModCntr As TPDotnet.Pos.ModCntr,
                                                          ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec) As Boolean
 
         Dim bRet As Boolean
@@ -378,9 +388,9 @@ Public Class clsMedia
             MyTaMediaRec.dTaQty = 1
             MyTaMediaRec.dPaidForeignCurr = Convert.ToDecimal(m_szAmount)
             MyTaMediaRec.dPaidForeignCurrTotal = MyTaMediaRec.dPaidForeignCurr
-            MyTaMediaRec.dTaPaid = Rounding.dRounding(System.Math.Abs(MyTaMediaRec.dPaidForeignCurr) / MyTaMediaRec.PAYMENTinMedia.dPayExchRate, _
-                                                TPDotnet.Services.Rounding.ROUNDINGMETHOD.ROUND_UP, _
-                                                MyTaMediaRec.PAYMENTinMedia.lPaySDOC, _
+            MyTaMediaRec.dTaPaid = Rounding.dRounding(System.Math.Abs(MyTaMediaRec.dPaidForeignCurr) / MyTaMediaRec.PAYMENTinMedia.dPayExchRate,
+                                                TPDotnet.Services.Rounding.ROUNDINGMETHOD.ROUND_UP,
+                                                MyTaMediaRec.PAYMENTinMedia.lPaySDOC,
                                                 MyTaMediaRec.PAYMENTinMedia.lPayDecNmbr)
             MyTaMediaRec.dTaPaidTotal = MyTaMediaRec.dTaPaid
             MyTaMediaRec.szSerialNmbr = m_szSerialNmbr
@@ -428,10 +438,10 @@ Public Class clsMedia
                 Exit Function
             End If
 
-            CheckRedeemGiftCard = handler.CheckRedeemGiftCard(New Dictionary(Of String, Object) From { _
-                                                              {"Controller", TheModCntr}, _
-                                                              {"Transaction", taobj}, _
-                                                              {"MediaRecord", MyTaMediaRec} _
+            CheckRedeemGiftCard = handler.CheckRedeemGiftCard(New Dictionary(Of String, Object) From {
+                                                              {"Controller", TheModCntr},
+                                                              {"Transaction", taobj},
+                                                              {"MediaRecord", MyTaMediaRec}
                                                           })
 
         Catch ex As Exception
@@ -456,13 +466,13 @@ Public Class clsMedia
         Dim parameters As Dictionary(Of String, Object)
 
         Try
-            parameters = New Dictionary(Of String, Object) From { _
-                                                             {"Controller", TheModCntr}, _
-                                                             {"Transaction", taobj}, _
-                                                             {"Barcode", szBarcode}, _
-                                                             {"Value", dBalance}, _
-                                                             {"Receipt", szReceipt}, _
-                                                             {"GiftCardBalanceInternalInquiry", True} _
+            parameters = New Dictionary(Of String, Object) From {
+                                                             {"Controller", TheModCntr},
+                                                             {"Transaction", taobj},
+                                                             {"Barcode", szBarcode},
+                                                             {"Value", dBalance},
+                                                             {"Receipt", szReceipt},
+                                                             {"GiftCardBalanceInternalInquiry", True}
                                                             }
 
             handler = createPosModelObject(Of IGiftCardBalanceInquiry)(TheModCntr, "GiftCardController", 0, False)
@@ -501,10 +511,10 @@ Public Class clsMedia
         Dim parameters As Dictionary(Of String, Object)
 
         Try
-            parameters = New Dictionary(Of String, Object) From { _
-                                                              {"Controller", TheModCntr}, _
-                                                              {"Transaction", taobj}, _
-                                                              {"MediaRecord", MyTaMediaRec} _
+            parameters = New Dictionary(Of String, Object) From {
+                                                              {"Controller", TheModCntr},
+                                                              {"Transaction", taobj},
+                                                              {"MediaRecord", MyTaMediaRec}
                                                           }
 
             handler = createPosModelObject(Of IGiftCardCancellationPayment)(TheModCntr, "GiftCardController", 0, False)
