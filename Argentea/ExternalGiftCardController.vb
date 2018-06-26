@@ -96,6 +96,7 @@ Public Class ExternalGiftCardController
                                                      p.ErrorMessage & vbCrLf &
                                                     "Giftcard Serial: " & p.Barcode & vbCrLf &
                                                     "Value: " & Math.Round(p.IntValue / 100, 2) & vbCrLf & vbCrLf & " " & ";" & p.ErrorMessage
+                                Exit Function
                             Else
                                 LOG_Debug(getLocationString(funcName), "Gift card number " & p.Barcode & " successfuly activated")
                                 CSV = "OK" & ";" & p.MessageOut & ";" & p.ErrorMessage
@@ -296,6 +297,7 @@ Public Class ExternalGiftCardController
                 p.Transaction.Remove(p.Transaction.GetPositionFromCreationNmbr(CInt(lCreateNmbr.Value)))
             Next
 
+            p.Transaction.Reorg()
 
         Catch ex As Exception
 
