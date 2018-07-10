@@ -169,20 +169,18 @@ Public Class CSVHelper
                         End If
                         argenteaFunctionReturnObject(0).Description = CSV(1)
                         argenteaFunctionReturnObject(0).TerminalID = CSV(2)
-                        If Not String.IsNullOrEmpty(CSV(3).Trim()) Then
-                            argenteaFunctionReturnObject(0).TerminalID = CSV(3)
-                        End If
-                        argenteaFunctionReturnObject(0).Amount = CSV(4)
-                        CSV(5) = Replace(CSV(5),
+
+                        argenteaFunctionReturnObject(0).Amount = CSV(3)
+                        CSV(4) = Replace(CSV(4),
                                             Microsoft.VisualBasic.vbCrLf,
                                             Microsoft.VisualBasic.vbLf)
-                        CSV(5) = Replace(CSV(5),
+                        CSV(4) = Replace(CSV(4),
                                             Microsoft.VisualBasic.vbCr,
                                             Microsoft.VisualBasic.vbLf)
-                        CSV(5) = Replace(CSV(5),
+                        CSV(4) = Replace(CSV(4),
                                             Microsoft.VisualBasic.vbLf,
                                             Microsoft.VisualBasic.vbCrLf)
-                        argenteaFunctionReturnObject(0).Receipt = CSV(5)
+                        argenteaFunctionReturnObject(0).Receipt = CSV(4)
                         argenteaFunctionReturnObject(0).Result = CSV(0)
                         ParseReturnString = True
                         Exit For
