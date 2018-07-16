@@ -220,7 +220,7 @@ Public Class ADVController
 
             ' check CSV
             argenteaFunctionReturnObject(0) = New ArgenteaFunctionReturnObject
-            If (Not CSVHelper.ParseReturnString(returnString, InternalArgenteaFunctionTypes.ADVVoid, argenteaFunctionReturnObject)) Then
+            If (Not CSVHelper.ParseReturnString(returnString, InternalArgenteaFunctionTypes.ADVVoid, argenteaFunctionReturnObject, "-")) Then
                 Exit Function
             End If
 
