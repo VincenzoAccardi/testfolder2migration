@@ -726,13 +726,13 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             LOG_FuncStart(getLocationString("SetTotalDiscInfo"))
             dVal = 0
 
-            If DiscInfo.lDiscListType <> PosDef.DiscountTypes.LIST_TOTAL_DISCOUNT_IN_PERC AndAlso _
+            If DiscInfo.lDiscListType <> PosDef.DiscountTypes.LIST_TOTAL_DISCOUNT_IN_PERC AndAlso
                 DiscInfo.lDiscListType <> PosDef.DiscountTypes.LIST_TOTAL_DISCOUNT_IN_AMOUNT Then
                 Exit Sub
             End If
 
-            dOriginalVal = TPDotnet.Services.Rounding.Rounding.dRounding(DiscInfo.dTotalAmount * DiscInfo.dDiscValue / 100, _
-                                         TPDotnet.Services.Rounding.ROUNDINGMETHOD.ROUND_ARITHMETIC, _
+            dOriginalVal = TPDotnet.Services.Rounding.Rounding.dRounding(DiscInfo.dTotalAmount * DiscInfo.dDiscValue / 100,
+                                         TPDotnet.Services.Rounding.ROUNDINGMETHOD.ROUND_ARITHMETIC,
                                          1, m_iExactness) * (-1)
 
             Me.Add(DiscInfo)
@@ -743,7 +743,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             ' we create TaDiscInfo entrys for all articles getting total discount
             '====================================================================
             For i = TARecords.Count() To 1 Step -1
-                If CType(TARecords.Item(i), TaBaseRec).sid = PosDef.TARecTypes.iTA_ART_SALE AndAlso _
+                If CType(TARecords.Item(i), TaBaseRec).sid = PosDef.TARecTypes.iTA_ART_SALE AndAlso
                     CType(TARecords.Item(i), TaBaseRec).theHdr.bIsVoided <> TAdefine.TaAllHdrTypes.IS_VOIDED Then
 
                     MyTaArtSaleRec = TARecords.Item(i)
@@ -757,8 +757,8 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                         dDisc = ((DiscInfo.dDiscValue * dBasic) / 100) * (-1)
 
                         ' round discount 
-                        dDisc = TPDotnet.Services.Rounding.Rounding.dRounding(dDisc / MyTaArtSaleRec.dTaQty, _
-                                         TPDotnet.Services.Rounding.ROUNDINGMETHOD.ROUND_ARITHMETIC, _
+                        dDisc = TPDotnet.Services.Rounding.Rounding.dRounding(dDisc / MyTaArtSaleRec.dTaQty,
+                                         TPDotnet.Services.Rounding.ROUNDINGMETHOD.ROUND_ARITHMETIC,
                                          1, m_iExactness)
                         dDisc = TPDotnet.Services.Rounding.Rounding.dRounding(dDisc * MyTaArtSaleRec.dTaQty, TPDotnet.Services.Rounding.ROUNDINGMETHOD.ROUND_ARITHMETIC, 1, m_iExactness)
 
@@ -823,8 +823,8 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                                     End If
                                 End If
 
-                            ElseIf dItemWithHighAmount >= (dBasic / MyTaArtSaleRec.dTaQty) AndAlso _
-                                bItemWithHighAmountHasBeebSaved AndAlso bItemWithHighAmountSavedHasMultipleQty AndAlso _
+                            ElseIf dItemWithHighAmount >= (dBasic / MyTaArtSaleRec.dTaQty) AndAlso
+                                bItemWithHighAmountHasBeebSaved AndAlso bItemWithHighAmountSavedHasMultipleQty AndAlso
                                 MyTaArtSaleRec.dTaQty = 1 Then
                                 ' this item has qty 1, an item has been already saved but, the saved item has qty > 1.
                                 ' so we prefer to use this item even if its amount is lower than the saved item amount.
@@ -856,7 +856,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
                 End If
 
-                If CType(TARecords.Item(i), TaBaseRec).sid = PosDef.TARecTypes.iTA_ARTSET AndAlso _
+                If CType(TARecords.Item(i), TaBaseRec).sid = PosDef.TARecTypes.iTA_ARTSET AndAlso
                    CType(TARecords.Item(i), TaBaseRec).theHdr.bIsVoided <> TAdefine.TaAllHdrTypes.IS_VOIDED Then
                     ' only for kv set recal the tax
                     MyTaArtVSetRec = TARecords.Item(i)
@@ -866,7 +866,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                         If MyTaArtSaleRec.ARTinArtSale.bArtKVSet <> False Then
                             ' it is a kv set, then total is filled for this sub article
                             ' we need to recalculate the tax, because the tax is stored for each sub article of a KV set 
-                            MyTaArtVSetRec.dTaTotal = MyTaArtVSetRec.dTaTotal - _
+                            MyTaArtVSetRec.dTaTotal = MyTaArtVSetRec.dTaTotal -
                                                       ((DiscInfo.dDiscValue * MyTaArtVSetRec.dTaTotal) / 100)
                             Me.CalculateArticleTax(MyTaArtVSetRec, i + 1, MyTaArtVSetRec.dTaTotal, True, bDummy)
                         End If
@@ -1024,10 +1024,14 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                         End If
                     End If
 
+
                     If aktsid = PosDef.TARecTypes.iTA_COMMENT Then
-                        If CType(TARecords.Item(i), TaComment).lPresentation.ToString().StartsWith(CInt(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_VLL_CUST_MESSAGE)) OrElse
+                        Dim szPresentationToExclude As String = CType(TARecords.Item(i), TaComment).GetPropertybyName("ReorgToExlude")
+                        szPresentationToExclude = IIf(String.IsNullOrEmpty(szPresentationToExclude), "0", szPresentationToExclude)
+                        If (CType(TARecords.Item(i), TaComment).lPresentation.ToString().StartsWith(CInt(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_VLL_CUST_MESSAGE)) OrElse
                             CType(TARecords.Item(i), TaComment).lPresentation.ToString().StartsWith(CInt(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_VLL_CUST_BALANCE)) OrElse
-                            CType(TARecords.Item(i), TaComment).lPresentation.ToString().Equals("9999") Then
+                            CType(TARecords.Item(i), TaComment).lPresentation.ToString().Equals("9999")) AndAlso
+                            (szPresentationToExclude <> "-1") Then
                             k = Me.getLastMediaRecNr
                             If i < k Then
                                 TaFromLineafterLine(i, j - 1)
@@ -1308,9 +1312,9 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             ' =========
             ' read transaction counter
             ' ========================
-            SqlString = "SELECT * FROM TxControlTransactionNmbr " & _
-                         "WHERE lRetailStoreID = " & lRetailStoreID & "  " & _
-                           "AND lWorkstationNmbr = " & lWorkStationNmbr
+            SqlString = "SELECT * FROM TxControlTransactionNmbr " &
+                         "WHERE lRetailStoreID = " & lRetailStoreID & "  " &
+                           "And lWorkstationNmbr = " & lWorkStationNmbr
 
             ' set default value
             szITTransactionResetDate = "29991231"
@@ -1326,20 +1330,20 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                         GetTransactionResetDate = True
                     End If
                 Catch ex As Exception
-                    LOG_Error(getLocationString("GetTransactionResetDate"), _
+                    LOG_Error(getLocationString("GetTransactionResetDate"),
                               "Field 'szITTransactionResetDate' does not exist, 29991231 is used!")
                 End Try
 
                 If Not Date.TryParseExact(szITTransactionResetDate, "yyyyMMdd", Nothing, Globalization.DateTimeStyles.None, TransactionResetDate) Then
-                    LOG_Error(getLocationString("GetTransactionResetDate"), _
+                    LOG_Error(getLocationString("GetTransactionResetDate"),
                                                   "Field 'szITTransactionResetDate' not in format YYYYMMDD : " & szITTransactionResetDate & ". 29991231 is used!")
                     szITTransactionResetDate = "29991231"
                     GetTransactionResetDate = False
                 End If
 
             Else
-                LOG_Error(getLocationString("GetTransactionResetDate"), _
-                          "Entry not present for Workstation " & lWorkStationNmbr & _
+                LOG_Error(getLocationString("GetTransactionResetDate"),
+                          "Entry not present for Workstation " & lWorkStationNmbr &
                           " not found. Use 29991231 as rollover transaction date!")
             End If
 
@@ -1374,8 +1378,8 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
             ' read data
             ' =========
-            SqlString = "SELECT * FROM TxControlTransactionNmbr " & _
-                         "WHERE lRetailStoreID = " & lRetailStoreID & "  " & _
+            SqlString = "SELECT * FROM TxControlTransactionNmbr " &
+                         "WHERE lRetailStoreID = " & lRetailStoreID & "  " &
                            "AND lWorkstationNmbr = " & lWorkStationNmbr
 
             LOG_Debug(getLocationString("SetTransactionResetDate"), SqlString)
@@ -1384,12 +1388,12 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
                 ' ignore, when szITTransactionResetDate does not exist
                 Try
-                    LOG_Error(getLocationString("SetTransactionResetDate"), _
+                    LOG_Error(getLocationString("SetTransactionResetDate"),
                               "Set 'szITTransactionResetDate' to " & szITTransactionResetDate)
                     RECSET.Fields_value("szITTransactionResetDate") = szITTransactionResetDate
                     SetTransactionResetDate = True
                 Catch ex As Exception
-                    LOG_Error(getLocationString("SetTransactionResetDate"), _
+                    LOG_Error(getLocationString("SetTransactionResetDate"),
                               "Field 'szITTransactionResetDate' does not exist!")
                 End Try
 
