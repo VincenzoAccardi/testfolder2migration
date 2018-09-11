@@ -1,5 +1,7 @@
 ﻿Imports System
 Imports TPDotnet.Pos
+Imports System.Xml.Linq
+Imports System.Xml.XPath
 Imports Microsoft.VisualBasic
 'If DEBUG Then
 '
@@ -256,7 +258,15 @@ Public Class ADVController
             If Not Void Then
                 ' error
             End If
+            Dim TaBase As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.sSelReceiptLine)
+            Dim xel As XElement = taobj.TAtoXDocument(False, 0, False).XPathSelectElement("/TAS/NEW_TA/ARGENTEA_EMV/Hdr[lTaRefToCreateNmbr=" + TaBase.theHdr.lTaCreateNmbr.ToString + "]/lTaSeqNmbr")
 
+            If xel IsNot Nothing Then
+                Dim lTaSeqNmbr As Integer = CInt(xel.Value)
+                Dim taArg As TaArgenteaEMVRec = CType(taobj.GetTALine(lTaSeqNmbr), TaArgenteaEMVRec)
+                If Not taArg.ExistField("bIsVoided") Then taArg.AddField("bIsVoided", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                taArg.setPropertybyName("bIsVoided", -1)
+            End If
             Void = True
 
         Catch ex As Exception
