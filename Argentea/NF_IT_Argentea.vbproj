@@ -119,15 +119,27 @@
     </Reference>
     <Reference Include="System.XML" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="TPDotnet.Backstore.Explorer.CommonLib, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Backstore.Explorer.CommonLib.dll</HintPath>
+    </Reference>
     <Reference Include="TPDotnet.GUIControls">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.GUIControls.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="TPDotnet.IT.Common.Pos.clsMedia, Version=50.17.2.1, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.clsMedia.dll</HintPath>
+    </Reference>
     <Reference Include="TPDotnet.IT.Common.Pos.Constants, Version=50.17.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.Constants.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.IT.Common.Pos.IBuoniPasto, Version=50.17.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IBuoniPasto.dll</HintPath>
     </Reference>
     <Reference Include="TPDotnet.IT.Common.Pos.IDataObjects, Version=50.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -283,12 +295,17 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
+    <Reference Include="USR_FormBuonoChiaro, Version=50.17.2.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\USR_FormBuonoChiaro.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ADVController.vb" />
     <Compile Include="ArgenteaFunctionReturnObject.vb" />
     <Compile Include="argpay.vb" />
     <Compile Include="AssemblyInfo.vb" />
+    <Compile Include="BPCController.vb" />
     <Compile Include="ExternalGiftCardController.vb" />
     <Compile Include="PhoneRechargeController.vb" />
     <Compile Include="TPTAHelperArgentea.vb" />
@@ -374,6 +391,12 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SubModules\Shared\NF_IT_Common_Shared.vbproj">
+      <Project>{1cd58943-c4a7-49e6-bb92-411098266cdc}</Project>
+      <Name>NF_IT_Common_Shared</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
 </Project>

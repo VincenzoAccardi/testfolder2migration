@@ -16,77 +16,124 @@ Public Class CSVHelper
     ' -----------------------------------
 #End Region
 
+    ''' <summary>
+    '''     Esegue il parsing di una risposta dettata dal Protocollo
+    '''     Argentea.
+    '''     In Ordine del CSV del protocollo Argentea in punti chiave
+    '''     della risposta sono.:
+    '''         Successufully   Format to Boolean True/False  da Stringa   -OK/KO-   <-- Per tutti i Metodi Argentea
+    '''         CodeResult      Format to Stringa 000         da Stringa   -000-     <-- Riporta il Codice di Errore o Success
+    '''         Description     Format to Stringa "...."      da Stringa   -....-    <-- Descrizione dell'errore o del Success
+    '''     gli altri in base all'azione
+    '''         ripresi dalla posizione sul CSV e interpretati
+    '''         per definire gli attributi dell'oggetto intrno
+    ''          di risposta al chaiamante.
+    ''' </summary>
+    ''' <param name="returnString">La Stringa di risposta dopo la chiamata verso Argentea da interpretare</param>
+    ''' <param name="argenteaFunction">Il Nome del metodo Argentea e quindi dell'azione su cui elaborare la risposta</param>
+    ''' <param name="argenteaFunctionReturnObject">L'oggetto da fillare con gli attributi dati dalla risposta dopo codifica</param>
+    ''' <param name="szCharSeparator">Il separatore nella ripsota CSV remota che solitamente è - </param>
+    ''' <returns>Se True (se non ci sono cambiamenti nel protocollo Argentea errori di Parsing non ci dovrebbero essere) Altrimenti è un Errore si Parsing sul Protocollo di risposte Argentea</returns>
     Public Shared Function ParseReturnString(ByVal returnString As String, ByVal argenteaFunction As InternalArgenteaFunctionTypes, ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, Optional ByRef szCharSeparator As String = ";") As Boolean
         ParseReturnString = False
         Dim I, J As Integer
         Dim funcName As String = "ParseReturnString"
-        Dim CSV() As String = Nothing
+        Dim CSV(200) As String '= Nothing
         Dim StepNum As Integer
-        Try
-            LOG_Debug(getLocationString(funcName), "Parsing result")
-            'ReDim argenteaFunctionReturnObject(0)
-            argenteaFunctionReturnObject(0).Successfull = False
-            argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
 
+        ' Riprendo il riferimento da restituire con gli attributi codificati
+        Dim MyRefRet As ArgenteaFunctionReturnObject = argenteaFunctionReturnObject(0)
+
+        ' Formatta il campo scpeciale Recipt senza vincoli dei vbcrlf di vb
+        Dim ReplaceVbCRLF As Func(Of String, String) = Function(ByVal strFieldCSV As String) 'As String
+
+                                                           strFieldCSV = Replace(strFieldCSV,
+                                                    Microsoft.VisualBasic.vbCrLf,
+                                                    Microsoft.VisualBasic.vbLf)
+                                                           strFieldCSV = Replace(strFieldCSV,
+                                                    Microsoft.VisualBasic.vbCr,
+                                                    Microsoft.VisualBasic.vbLf)
+                                                           strFieldCSV = Replace(strFieldCSV,
+                                                                    Microsoft.VisualBasic.vbLf,
+                                                                    Microsoft.VisualBasic.vbCrLf)
+                                                           Return strFieldCSV
+                                                       End Function
+
+        ' Formatta l'attributo speciale di ritorno a boolean in base a OK KO
+        Dim SetSuccessufully As Func(Of String, Boolean) = Function(ByVal strFieldCSV As String) 'As Boolean
+                                                               If strFieldCSV = "OK" Then Return True Else Return False
+                                                           End Function
+
+        ' Per i valori attesi numerici  se stringa vuota riporta "0"
+        Dim SetNumeric As Func(Of String, String) = Function(ByVal strFieldCSV As String) 'As String
+                                                        If strFieldCSV = String.Empty Then Return "0" Else Return strFieldCSV
+                                                    End Function
+
+
+        Try
+
+            ' Log che stiamo parsando la risposta
+            LOG_Debug(getLocationString(funcName), "Parsing result")
+
+            ' Gli Attributi per formattare la risposta corrente da restituire al chiamante
+            'ReDim argenteaFunctionReturnObject(0)
+            MyRefRet.Successfull = False
+            MyRefRet.ArgenteaFunction = argenteaFunction
+
+            ' Il CSV della risposta data dal comando Argentea da Interpretare
             CSV = returnString.Split(szCharSeparator)
+
+            ' Cicla su ogni campo del CSV
             For I = 0 To CSV.Length - 1
 
+                ' Ed in Base alla funzione dell'azione Argentea che ci 
+                ' ha dato la risposta preleviamo il rispettivo  valore
+                ' da riportare nel Nostro Oggetto di Risposta codificato.
                 Select Case argenteaFunction
 
-                    Case InternalArgenteaFunctionTypes.EFTPayment, InternalArgenteaFunctionTypes.EFTVoid
-                        argenteaFunctionReturnObject(0).TerminalID = CSV(0)
-                        argenteaFunctionReturnObject(0).Amount = CSV(1)
-                        If CSV(2) = "OK" Then
-                            argenteaFunctionReturnObject(0).Successfull = True
-                        Else
-                            argenteaFunctionReturnObject(0).Successfull = False
-                        End If
-                        argenteaFunctionReturnObject(0).Description = CSV(3) ' when payment fails it describe the reason
-                        argenteaFunctionReturnObject(0).Acquirer = CSV(4)
-                        CSV(5) = Replace(CSV(5),
-                                        Microsoft.VisualBasic.vbCrLf,
-                                        Microsoft.VisualBasic.vbLf)
-                        CSV(5) = Replace(CSV(5),
-                                        Microsoft.VisualBasic.vbCr,
-                                        Microsoft.VisualBasic.vbLf)
-                        CSV(5) = Replace(CSV(5),
-                                        Microsoft.VisualBasic.vbLf,
-                                        Microsoft.VisualBasic.vbCrLf)
-                        argenteaFunctionReturnObject(0).Receipt = CSV(5)
+                    ' AZIONE DEL CASO: Pagamento o Annullo di Pagamento
+                    Case InternalArgenteaFunctionTypes.EFTPayment,
+                         InternalArgenteaFunctionTypes.EFTVoid
+
+                        MyRefRet.TerminalID = CSV(0)
+                        MyRefRet.Amount = CSV(1)
+                        MyRefRet.Successfull = SetSuccessufully(CSV(2))
+                        MyRefRet.Description = CSV(3)
+                        MyRefRet.Acquirer = CSV(4)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
                         ParseReturnString = True
                         Exit For
                         Exit Select
-                    Case InternalArgenteaFunctionTypes.EFTGetTotals, InternalArgenteaFunctionTypes.EFTClose
+
+                    ' AZIONE DEL CASO: Stampa Totali dal POS o Chiusura del POS
+                    Case InternalArgenteaFunctionTypes.EFTGetTotals,
+                         InternalArgenteaFunctionTypes.EFTClose
+
                         If CInt(CSV(0)) > 1 Then ReDim Preserve argenteaFunctionReturnObject(CInt(CSV(0)) - 1)
+
+                        ' In questo caso speciale scorro sull'array
+                        ' perchè il returnString contiene più risposte
+                        ' da codificare.
                         For J = 0 To argenteaFunctionReturnObject.GetUpperBound(0)
                             If J <> 0 Then argenteaFunctionReturnObject(J) = New ArgenteaFunctionReturnObject
                             StepNum = 6 * J
                             argenteaFunctionReturnObject(J).TerminalID = CSV(StepNum + 1)
                             argenteaFunctionReturnObject(J).Abi = CSV(StepNum + 2)
                             argenteaFunctionReturnObject(J).Amount = CSV(StepNum + 3)
-                            If CSV(StepNum + 4) = "OK" Then
-                                argenteaFunctionReturnObject(J).Successfull = True
-                            Else
-                                argenteaFunctionReturnObject(J).Successfull = False
-                            End If
+                            argenteaFunctionReturnObject(J).Successfull = SetSuccessufully(CSV(StepNum + 4))
                             argenteaFunctionReturnObject(J).Amount = CSV(StepNum + 3)
                             argenteaFunctionReturnObject(J).Description = CSV(StepNum + 5)
-                            CSV(StepNum + 6) = Replace(CSV(StepNum + 6),
-                                            Microsoft.VisualBasic.vbCrLf,
-                                            Microsoft.VisualBasic.vbLf)
-                            CSV(StepNum + 6) = Replace(CSV(StepNum + 6),
-                                            Microsoft.VisualBasic.vbCr,
-                                            Microsoft.VisualBasic.vbLf)
-                            CSV(StepNum + 6) = Replace(CSV(StepNum + 6),
-                                            Microsoft.VisualBasic.vbLf,
-                                            Microsoft.VisualBasic.vbCrLf)
-                            argenteaFunctionReturnObject(J).Receipt = CSV(StepNum + 6)
+                            argenteaFunctionReturnObject(J).Receipt = ReplaceVbCRLF(CSV(StepNum + 6))
                         Next J
                         ParseReturnString = True
                         Exit For
                         Exit Select
+
+                    ' AZIONDE DEL CASO: ?? non usato
                     Case InternalArgenteaFunctionTypes.EFTConfirm
                         Exit Select
+
+                    ' AZIONDE DEL CASO: GIFT CARDS su Protocollo
                     Case InternalArgenteaFunctionTypes.GiftCardActivationPreCheck,
                         InternalArgenteaFunctionTypes.GiftCardActivation,
                         InternalArgenteaFunctionTypes.GiftCardRedeemPreCkeck,
@@ -94,125 +141,89 @@ Public Class CSVHelper
                         InternalArgenteaFunctionTypes.GiftCardRedeemCancel,
                         InternalArgenteaFunctionTypes.GiftCardBalance
 
-                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
-                        If CSV(0) = "OK" Then
-                            argenteaFunctionReturnObject(0).Successfull = True
-                        Else
-                            argenteaFunctionReturnObject(0).Successfull = False
-                        End If
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbCrLf,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbCr,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbLf,
-                                            Microsoft.VisualBasic.vbCrLf)
-                        argenteaFunctionReturnObject(0).Receipt = CSV(1)
-                        argenteaFunctionReturnObject(0).Result = CSV(2)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(1))
+                        MyRefRet.Result = CSV(2)
                         ParseReturnString = True
                         Exit For
                         Exit Select
+
+                    ' AZIONDE DEL CASO: Ricariche Telefoniche da Protocollo
                     Case InternalArgenteaFunctionTypes.PhoneRechargeCheck,
                         InternalArgenteaFunctionTypes.PhoneRechargeActivation
 
-                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
-                        If CSV(0) = "OK" Then
-                            argenteaFunctionReturnObject(0).Successfull = True
-                        Else
-                            argenteaFunctionReturnObject(0).Successfull = False
-                        End If
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbCrLf,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbCr,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbLf,
-                                            Microsoft.VisualBasic.vbCrLf)
-                        argenteaFunctionReturnObject(0).Receipt = CSV(1)
-                        argenteaFunctionReturnObject(0).Result = CSV(2)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(1))
+                        MyRefRet.Result = CSV(2)
                         ParseReturnString = True
                         Exit For
                         Exit Select
+
+                    ' AZIONDE DEL CASO: GIFTCARDS tipo smartbox applepay da protocollo
                     Case InternalArgenteaFunctionTypes.ExternalGiftCardActivation,
                          InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation
 
-                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
-                        If CSV(0) = "OK" Then
-                            argenteaFunctionReturnObject(0).Successfull = True
-                        Else
-                            argenteaFunctionReturnObject(0).Successfull = False
-                        End If
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbCrLf,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbCr,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(1) = Replace(CSV(1),
-                                            Microsoft.VisualBasic.vbLf,
-                                            Microsoft.VisualBasic.vbCrLf)
-                        argenteaFunctionReturnObject(0).Receipt = CSV(1)
-                        argenteaFunctionReturnObject(0).Result = CSV(2)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(1))
+                        MyRefRet.Result = CSV(2)
                         ParseReturnString = True
                         Exit For
                         Exit Select
+
+                    ' AZIONDE DEL CASO: Pagamenti da SatisPay da protocollo
                     Case InternalArgenteaFunctionTypes.ADVPayment
-                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
-                        If CSV(0) = "OK" Then
-                            argenteaFunctionReturnObject(0).Successfull = True
-                        Else
-                            argenteaFunctionReturnObject(0).Successfull = False
-                        End If
-                        argenteaFunctionReturnObject(0).Description = CSV(1)
-                        argenteaFunctionReturnObject(0).TerminalID = CSV(2)
 
-                        argenteaFunctionReturnObject(0).Amount = CSV(3)
-                        CSV(4) = Replace(CSV(4),
-                                            Microsoft.VisualBasic.vbCrLf,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(4) = Replace(CSV(4),
-                                            Microsoft.VisualBasic.vbCr,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(4) = Replace(CSV(4),
-                                            Microsoft.VisualBasic.vbLf,
-                                            Microsoft.VisualBasic.vbCrLf)
-                        argenteaFunctionReturnObject(0).Receipt = CSV(4)
-                        argenteaFunctionReturnObject(0).Result = CSV(0)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.Description = CSV(1)
+                        MyRefRet.TerminalID = CSV(2)
+                        MyRefRet.Amount = CSV(3)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(4))
+                        MyRefRet.Result = CSV(0)
                         ParseReturnString = True
                         Exit For
                         Exit Select
+
+                    ' AZIONDE DEL CASO: Storno dei Pagamenti da SatisPay da protocollo
                     Case InternalArgenteaFunctionTypes.ADVVoid
-                        argenteaFunctionReturnObject(0).ArgenteaFunction = argenteaFunction
-                        If CSV(0) = "OK" Then
-                            argenteaFunctionReturnObject(0).Successfull = True
-                        Else
-                            argenteaFunctionReturnObject(0).Successfull = False
-                        End If
-                        argenteaFunctionReturnObject(0).Description = CSV(1)
-                        argenteaFunctionReturnObject(0).TerminalID = CSV(2)
 
-                        argenteaFunctionReturnObject(0).Amount = CSV(3)
-                        CSV(4) = Replace(CSV(4),
-                                            Microsoft.VisualBasic.vbCrLf,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(4) = Replace(CSV(4),
-                                            Microsoft.VisualBasic.vbCr,
-                                            Microsoft.VisualBasic.vbLf)
-                        CSV(4) = Replace(CSV(4),
-                                            Microsoft.VisualBasic.vbLf,
-                                            Microsoft.VisualBasic.vbCrLf)
-                        argenteaFunctionReturnObject(0).Receipt = CSV(4)
-                        argenteaFunctionReturnObject(0).Result = CSV(0)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.Description = CSV(1)
+                        MyRefRet.TerminalID = CSV(2)
+                        MyRefRet.Amount = CSV(3)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(4))
+                        MyRefRet.Result = CSV(0)
                         ParseReturnString = True
                         Exit For
                         Exit Select
+
+                    ' AZIONDE DEL CASO: Buoni Pasto Cartacei da protocollo
+                    Case InternalArgenteaFunctionTypes.BPCPayment
+
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.CodeResult = SetNumeric(CSV(1))
+                        MyRefRet.Description = CSV(2)
+                        ' il 3 c'è già
+                        MyRefRet.Amount = SetNumeric(CSV(4))
+                        MyRefRet.Provider = CSV(5)
+                        MyRefRet.TerminalID = CSV(6)
+                        MyRefRet.RequireCommit = CSV(7)
+                        MyRefRet.CodeIssuer = CSV(8)
+                        MyRefRet.Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
                     Case Else
-                        argenteaFunctionReturnObject(0).Successfull = False
-                        argenteaFunctionReturnObject(0).Result = "KO"
+
+                        ' AZIONDE DEL CASO: Azione non prevista esco con errore Parsing di protocollo
+                        MyRefRet.Successfull = False
+                        MyRefRet.Result = "KO"
                         Exit For
 
                 End Select
@@ -220,6 +231,7 @@ Public Class CSVHelper
             Next I
 
         Catch ex As Exception
+            ' ESCO Con azione di parsing in Errore
             Try
                 LOG_Error(getLocationString(funcName), ex)
             Catch InnerEx As Exception

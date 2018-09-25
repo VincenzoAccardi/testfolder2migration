@@ -30,6 +30,7 @@ Public Enum InternalArgenteaFunctionTypes
     ExternalGiftCardConfirm
     ADVPayment
     ADVVoid
+    BPCPayment
 End Enum
 
 Public Enum ArgenteaFunctionsReturnCode

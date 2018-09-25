@@ -13,7 +13,7 @@ Imports System.Collections.Generic
 Imports TPDotnet.Services.Rounding
 
 Public Class clsMedia
-    Inherits TPDotnet.Pos.clsMedia
+    Inherits TPDotnet.IT.Common.Pos.clsMedia
 
 #Region "Documentation"
     ' ********** ********** ********** **********
@@ -420,6 +420,75 @@ Public Class clsMedia
 
     End Function
 
+    ''' <summary>
+    '''     Gestione spcializzata al pagamento  dietro
+    '''     i tipi di Buono Pasto in gestione Argentea
+    '''     
+    '''       BPC ->  Buono Pasto Cartaceo (Tasto su pagamenti in Tab dedicata con Cartaceo)
+    '''       BPE ->  Buono Pasto Elettronico (Tasto su pagamenti in Tab dedicata con Elettronico)
+    '''
+    ''' </summary>
+    ''' <param name="taobj">La Transaction in corso</param>
+    ''' <param name="theModCntr">Il Controller a riporto</param>
+    ''' <param name="MyTaMediaRec">La MediaRec iniziale come Pagato (rimossa e aggioranta con i nuovi mediarec all'ok del pagato da qui)</param>
+    ''' <param name="MyTaMediaMemberDetailRec">La MediaRec di riporto alla funzione sulla classe base (non utilizzata qui)</param>
+    ''' <returns></returns>
+    Protected Overrides Function DoSpecialHandling4Vouchers2(ByRef taobj As TPDotnet.Pos.TA, ByRef theModCntr As ModCntr, ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef MyTaMediaMemberDetailRec As TaMediaMemberDetailRec) As Boolean
+        Dim funcName As String = "DoSpecialHandling4Vouchers2"
+
+        'Dim dPayableAmount As Decimal = 0
+        Dim m_TAMediaRec As TPDotnet.Pos.TaMediaRec = MyTaMediaRec
+
+        Try
+            'DoSpecialHandling4Vouchers2 = False
+            LOG_FuncStart(getLocationString(funcName))
+
+            ' Sulla Base opero per il flow di default
+            ' su tutti gli altri casi di gestione.
+            '
+            '   ->  Voucher2 tutti i tipi
+
+            If String.IsNullOrEmpty(MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim) Then
+                Return MyBase.DoSpecialHandling4Vouchers2(taobj, theModCntr, MyTaMediaRec, MyTaMediaMemberDetailRec)
+            End If
+
+            'Dim m_PayableAmout As Decimal = Math.Min(GetPayableAmount(m_Transaction, m_ModCntr) - (m_Transaction.GetPayedValue - m_TAMediaRec.dTaPaidTotal), m_Transaction.GetTotal)
+
+            ' Altrimenti opero per questo flow specifico
+            ' rispetto  alla  gestione  di cui preposto.
+            '
+            '   -> In questo caso gestiamo.:
+            '       BPC ->  Buono Pasto Cartaceo (Tasto su pagamenti in Tab dedicata con Cartaceo)
+            '       BPE ->  Buono Pasto Elettronico (Tasto su pagamenti in Tab dedicata con Elettronico)
+            Dim _DoSpecialHandling4Vouchers2 As IBPReturnCode = IBPReturnCode.KO
+
+            If MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPC" Then
+                ' Ticket Cartaceo Basato su Service Argentea
+                _DoSpecialHandling4Vouchers2 = ProcessBPCartaceo(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
+            Else ' MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPE" Then
+                'Ticket Elettronico Basato su POS Argentea
+                _DoSpecialHandling4Vouchers2 = ProcessBCElettronico(MyTaMediaRec, MyTaMediaMemberDetailRec)
+            End If
+
+            ' Se il risultato del Processo è stato
+            ' concluso in modo corretto faccio  il
+            ' committ dell' operazione  altrimenti
+            ' esco senza committ ( OK = True KO = False)
+            If _DoSpecialHandling4Vouchers2 = IBPReturnCode.OK Then
+                Return True
+            Else
+                Return False
+            End If
+
+        Catch ex As Exception
+            LOG_ErrorInTry(getLocationString(funcName), ex)
+        Finally
+            LOG_FuncExit(getLocationString(funcName), "Function " + funcName + " returns " & DoSpecialHandling4Vouchers2.ToString)
+        End Try
+
+
+    End Function
+
 #End Region
 
 #Region "IGiftCardRedeemPreCheck"
@@ -535,6 +604,70 @@ Public Class clsMedia
         Finally
             LOG_FuncExit(getLocationString(funcName), "returns ")
         End Try
+    End Function
+
+#End Region
+
+#Region "IBuoniPasto"
+
+    ''' <summary>
+    '''     Implementazione  del  Metodo  dell'interfaccia  che espone
+    '''     la funzione princiapale  atta ad eseguire la presentazione
+    '''     del form per l'immissione dei buoni pasto, e negli handler
+    '''     alla gestione dell'inserimento dei vari EAN di BP da validare
+    '''     ad Argentea.
+    ''' </summary>
+    ''' <param name="TheModCntr">Il Controller di riporto dalla Transazione di base</param>
+    ''' <param name="taobj">La Transazione di base per completo</param>
+    ''' <param name="MyTaMediaRec">Il Media iniziale di riporto da aggiornare una volta eseguito il procecco corrente</param>
+    ''' <param name="MyTaMediaMemberDetailRec">Il detaglio del Mediarec di riporto</param>
+    ''' <returns></returns>
+    Public Function ProcessBPCartaceo(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA, ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef MyTaMediaMemberDetailRec As TaMediaMemberDetailRec) As IBPReturnCode
+
+        ProcessBPCartaceo = IBPReturnCode.OK
+        Dim funcName As String = "ProcessBPCartaceo"
+        Dim handler As IBPCDematerialize
+
+        Try
+
+            ' Ricreiamo il Form e l'Handler per la Gestione solo istanza
+            ' l'handler per l'oggetto PosModel da passare al Form di istanza.
+
+            handler = createPosModelObject(Of IBPCDematerialize)(TheModCntr, "BPCController", 0, False)
+            If handler Is Nothing Then
+                ' gift card handler is not defined into the database
+                ProcessBPCartaceo = IBPReturnCode.KO
+                Exit Function
+            End If
+
+            ' Richiama il metodo dell'interfaccia --> "BPCController.Dematerialize"
+            ' che avvia il form e rimane sulla gestione tramite eventi sul form per
+            ' la scanzione e validazione dei BP
+
+            ProcessBPCartaceo = handler.Dematerialize(New Dictionary(Of String, Object) From {
+                                                              {"Controller", TheModCntr},
+                                                              {"Transaction", taobj},
+                                                              {"MediaRecord", MyTaMediaRec},
+                                                              {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
+                                                          })
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString(funcName), ex)
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString(funcName), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString(funcName), "returns ")
+        End Try
+
+
+    End Function
+
+
+    Public Function ProcessBCElettronico()
+
+
+
     End Function
 
 #End Region
