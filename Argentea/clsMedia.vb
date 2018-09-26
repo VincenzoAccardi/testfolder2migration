@@ -489,6 +489,8 @@ Public Class clsMedia
 
     End Function
 
+
+
 #End Region
 
 #Region "IGiftCardRedeemPreCheck"
@@ -621,7 +623,7 @@ Public Class clsMedia
     ''' <param name="taobj">La Transazione di base per completo</param>
     ''' <param name="MyTaMediaRec">Il Media iniziale di riporto da aggiornare una volta eseguito il procecco corrente</param>
     ''' <param name="MyTaMediaMemberDetailRec">Il detaglio del Mediarec di riporto</param>
-    ''' <returns></returns>
+    ''' <returns>OK KO<see cref="IBPReturnCode"/></returns>
     Public Function ProcessBPCartaceo(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA, ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef MyTaMediaMemberDetailRec As TaMediaMemberDetailRec) As IBPReturnCode
 
         ProcessBPCartaceo = IBPReturnCode.OK
@@ -664,11 +666,58 @@ Public Class clsMedia
     End Function
 
 
-    Public Function ProcessBCElettronico()
+    ''' <summary>
+    '''     Implementazione  del  Metodo  dell'interfaccia  che espone
+    '''     la funzione princiapale  atta ad eseguire la presentazione
+    '''     del form per la chiamata all'attesa del pos, e negli handler
+    '''     all'arrivo del totalizzatore da parte del POS di Argentea.
+    ''' </summary>
+    ''' <param name="TheModCntr">Il Controller di riporto dalla Transazione di base</param>
+    ''' <param name="taobj">La Transazione di base per completo</param>
+    ''' <param name="MyTaMediaRec">Il Media iniziale di riporto da aggiornare una volta eseguito il procecco corrente</param>
+    ''' <param name="MyTaMediaMemberDetailRec">Il detaglio del Mediarec di riporto</param>
+    ''' <returns>OK KO<see cref="IBPReturnCode"/></returns>
+    Public Function ProcessBCElettronico(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA, ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef MyTaMediaMemberDetailRec As TaMediaMemberDetailRec) As IBPReturnCode
 
+        ProcessBCElettronico = IBPReturnCode.OK
+        Dim funcName As String = "ProcessBCElettronico"
+        Dim handler As IBPCDematerialize
 
+        Try
+
+            ' Ricreiamo il Form e l'Handler per la Gestione solo istanza
+            ' l'handler per l'oggetto PosModel da passare al Form di istanza.
+
+            handler = createPosModelObject(Of IBPCDematerialize)(TheModCntr, "BPCController", 0, False)
+            If handler Is Nothing Then
+                ' gift card handler is not defined into the database
+                ProcessBCElettronico = IBPReturnCode.KO
+                Exit Function
+            End If
+
+            ' Richiama il metodo dell'interfaccia --> "BPCController.Dematerialize"
+            ' che avvia il form e rimane sulla gestione tramite eventi sul form per
+            ' la scanzione e validazione dei BP
+
+            ProcessBCElettronico = handler.Dematerialize(New Dictionary(Of String, Object) From {
+                                                              {"Controller", TheModCntr},
+                                                              {"Transaction", taobj},
+                                                              {"MediaRecord", MyTaMediaRec},
+                                                              {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
+                                                          })
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString(funcName), ex)
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString(funcName), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString(funcName), "returns ")
+        End Try
 
     End Function
+
+
 
 #End Region
 
