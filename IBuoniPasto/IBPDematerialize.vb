@@ -1,6 +1,6 @@
 ﻿#Region "Documentation"
 ' ********** ********** ********** **********
-' IBPCDematerialize
+' IBPDematerialize
 ' ---------- ---------- ---------- ----------
 ' Author : Emanuele Gualtierotti
 ' Wincor Nixdorf Retail Consulting
@@ -10,8 +10,12 @@
 ' -----------------------------------
 #End Region
 
-#Region "IBPCDematerialize"
-Public Interface IBPCDematerialize
+Imports TPDotnet.Pos
+Imports TPDotnet.IT.Common.Pos
+
+
+#Region "IBPDematerialize"
+Public Interface IBPDematerialize
     Function Dematerialize(ByRef Parameters As System.Collections.Generic.Dictionary(Of String, Object)) As IBPReturnCode
 End Interface
 #End Region
