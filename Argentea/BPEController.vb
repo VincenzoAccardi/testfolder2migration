@@ -7,7 +7,7 @@ Imports System.Collections.Generic
 Imports System.Windows.Forms
 Imports TPDotnet.IT.Common.Pos.EFT
 
-Public Class BPCController
+Public Class BPEController
     Implements IBPDematerialize
 
 #Region "CONST di INFO e ERRORE Private"
@@ -215,7 +215,7 @@ Public Class BPCController
                 ' passando l'intera transazione il Controller corrente
                 ' Il Metodo di pagamento passato come argomento
                 '
-                If HandlePaymentBPCartaceo(m_PayableAmout) Then
+                If HandlePaymentBPElettronico(m_PayableAmout) Then
                     Dematerialize = IBPReturnCode.OK
                 End If
                 '
@@ -253,7 +253,7 @@ Public Class BPCController
     '''     in presentazione su questa cassa.
     ''' </summary>
     ''' <returns>Boolean True (Conslusa operazione senza eccezioni)</returns>
-    Protected Overridable Function HandlePaymentBPCartaceo(ByVal dPayableAmount As Decimal) As Boolean
+    Protected Overridable Function HandlePaymentBPElettronico(ByVal dPayableAmount As Decimal) As Boolean
         Dim funcName As String = "HandlePaymentBPCartaceo"
         Dim service As ClsProxyArgentea = Nothing
 
@@ -261,7 +261,7 @@ Public Class BPCController
         Try
 
             ' START & LOG
-            HandlePaymentBPCartaceo = False
+            HandlePaymentBPElettronico = False
             LOG_FuncStart(getLocationString(funcName))
 
             '
@@ -274,7 +274,7 @@ Public Class BPCController
                 service = New ClsProxyArgentea(
                 pParams.Controller,                     '   <-- Il Controller di base (la cassa)
                 pParams.Transaction,                    '   <-- Il Riferimento alla transazione (per altri dati che servono)
-                ClsProxyArgentea.enTypeProxy.Service,   '   <-- Il Proxy servizio avviato in modalità
+                ClsProxyArgentea.enTypeProxy.Pos,       '   <-- Il Proxy servizio avviato in modalità
                 pParams.TransactionID,                  '   <-- L'id della transazione in corso
                 pParams.MediaRecord.dTaPaidTotal        '   <-- Il Pagato fino adesso insieme agli altri media
             )
@@ -622,7 +622,7 @@ Public Class BPCController
             m_LastErrorMessage = "Errore interno non previsto --exception on create media excedeed-- (Chiamare assistenza)"
 
             ' Log e segnale non aggiornato in uscita e chiusura 
-            LOG_Debug(getLocationString(funcName), m_LastErrorMessage + "--" + Ex.InnerException.ToString())
+            LOG_Debug(getLocationString(funcname), m_LastErrorMessage + "--" + Ex.InnerException.ToString())
             msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
 
             LOG_ErrorInTry(getLocationString("HandlePayment"), Ex)

@@ -28,6 +28,7 @@ Public Class clsMedia
 #End Region
 
 #Region "Overridden methods"
+
     Protected Overrides Function DoSpecialHandling4CreditCardsOnline(ByRef taobj As TPDotnet.Pos.TA, ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef MyTaMediaMemberDetailRec As TPDotnet.Pos.TaMediaMemberDetailRec) As Boolean
 
         Dim funcName As String = "DoSpecialHandling4CreditCardsOnline"
@@ -463,11 +464,11 @@ Public Class clsMedia
             Dim _DoSpecialHandling4Vouchers2 As IBPReturnCode = IBPReturnCode.KO
 
             If MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPC" Then
-                ' Ticket Cartaceo Basato su Service Argentea
+                ' Ticket Cartaceo Basato su Service Argentea    
                 _DoSpecialHandling4Vouchers2 = ProcessBPCartaceo(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
             Else ' MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPE" Then
                 'Ticket Elettronico Basato su POS Argentea
-                _DoSpecialHandling4Vouchers2 = ProcessBCElettronico(MyTaMediaRec, MyTaMediaMemberDetailRec)
+                _DoSpecialHandling4Vouchers2 = ProcessBPElettronico(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
             End If
 
             ' Se il risultato del Processo è stato
@@ -488,7 +489,6 @@ Public Class clsMedia
 
 
     End Function
-
 
 
 #End Region
@@ -628,24 +628,31 @@ Public Class clsMedia
 
         ProcessBPCartaceo = IBPReturnCode.OK
         Dim funcName As String = "ProcessBPCartaceo"
-        Dim handler As IBPCDematerialize
+        Dim handler As IBPDematerialize
 
         Try
 
             ' Ricreiamo il Form e l'Handler per la Gestione solo istanza
             ' l'handler per l'oggetto PosModel da passare al Form di istanza.
-
-            handler = createPosModelObject(Of IBPCDematerialize)(TheModCntr, "BPCController", 0, False)
+            '
+            handler = createPosModelObject(Of IBPDematerialize)(TheModCntr, "BPCController", 0, False)
             If handler Is Nothing Then
                 ' gift card handler is not defined into the database
                 ProcessBPCartaceo = IBPReturnCode.KO
                 Exit Function
+            Else
+
+                '
+                ' I Parametri common sempre
+                '
+                'handler.New(TheModCntr, taobj)
+
             End If
 
             ' Richiama il metodo dell'interfaccia --> "BPCController.Dematerialize"
             ' che avvia il form e rimane sulla gestione tramite eventi sul form per
-            ' la scanzione e validazione dei BP
-
+            ' la scansione e validazione dei BPC C finale sta per i Cartacei (Controller dedicato)
+            '
             ProcessBPCartaceo = handler.Dematerialize(New Dictionary(Of String, Object) From {
                                                               {"Controller", TheModCntr},
                                                               {"Transaction", taobj},
@@ -677,29 +684,29 @@ Public Class clsMedia
     ''' <param name="MyTaMediaRec">Il Media iniziale di riporto da aggiornare una volta eseguito il procecco corrente</param>
     ''' <param name="MyTaMediaMemberDetailRec">Il detaglio del Mediarec di riporto</param>
     ''' <returns>OK KO<see cref="IBPReturnCode"/></returns>
-    Public Function ProcessBCElettronico(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA, ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef MyTaMediaMemberDetailRec As TaMediaMemberDetailRec) As IBPReturnCode
+    Public Function ProcessBPElettronico(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA, ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef MyTaMediaMemberDetailRec As TaMediaMemberDetailRec) As IBPReturnCode
 
-        ProcessBCElettronico = IBPReturnCode.OK
-        Dim funcName As String = "ProcessBCElettronico"
-        Dim handler As IBPCDematerialize
+        ProcessBPElettronico = IBPReturnCode.OK
+        Dim funcName As String = "ProcessBPElettronico"
+        Dim handler As IBPDematerialize
 
         Try
 
             ' Ricreiamo il Form e l'Handler per la Gestione solo istanza
             ' l'handler per l'oggetto PosModel da passare al Form di istanza.
 
-            handler = createPosModelObject(Of IBPCDematerialize)(TheModCntr, "BPCController", 0, False)
+            handler = createPosModelObject(Of IBPDematerialize)(TheModCntr, "BPEController", 0, False)
             If handler Is Nothing Then
                 ' gift card handler is not defined into the database
-                ProcessBCElettronico = IBPReturnCode.KO
+                ProcessBPElettronico = IBPReturnCode.KO
                 Exit Function
             End If
 
-            ' Richiama il metodo dell'interfaccia --> "BPCController.Dematerialize"
+            ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
             ' che avvia il form e rimane sulla gestione tramite eventi sul form per
-            ' la scanzione e validazione dei BP
+            ' la scansione e validazione dei BPE E finale sta per gli Elettronici (Controller dedicato)
 
-            ProcessBCElettronico = handler.Dematerialize(New Dictionary(Of String, Object) From {
+            ProcessBPElettronico = handler.Dematerialize(New Dictionary(Of String, Object) From {
                                                               {"Controller", TheModCntr},
                                                               {"Transaction", taobj},
                                                               {"MediaRecord", MyTaMediaRec},
@@ -716,8 +723,6 @@ Public Class clsMedia
         End Try
 
     End Function
-
-
 
 #End Region
 

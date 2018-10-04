@@ -168,7 +168,7 @@ Public Class BalanceParameters
 
     Public Overridable ReadOnly Property Receipt() As String
         Get
-            Return _MessageOut 'use message out as receipt
+            Return _RefTo_MessageOut 'use message out as receipt
         End Get
     End Property
 
@@ -456,114 +456,28 @@ End Class
 
 #End Region
 
-#Region "BPC"
+#Region "BP Parameters"
 
-Public Structure BPCType
-    Public szKey As String
-    Public szVal As String
-End Structure
+''' <summary>
+'''     Parametri Common e  specializzati
+'''     per l'uso in controller e service
+'''     dedicati alla gestione dei BP sia
+'''     Cartacei che Elettronici.
+''' </summary>
+Public Class BPParameters
+    Inherits BPCommonParametersRecord
 
-
-
-Public Class BPCParameters
-    Inherits BPCCommonParametersRecord
+#Region "Variabili Private"
 
     Protected _MediaRecord As TPDotnet.Pos.TaMediaRec
     Protected _MediaMemberMediaRecord As TPDotnet.Pos.TaMediaMemberDetailRec
 
-    Protected m_ProgressiveCall As Integer = 1
-    Protected m_RUPP As String = ""
     Protected m_TerminalID As String = ""
 
-    ''' <summary>
-    '''     Usato nelle chiamate Hundler per
-    '''     formattare secondo le specifiche
-    '''     del protocollo Argentea il CSV in
-    '''     risposta sul MsgOut
-    ''' </summary>
-    Enum TypeCodifiqueProtocol
-        ''' <summary>
-        '''     IL CSV su risposta dietro Iniziazlizzazione
-        ''' </summary>
-        Inizialization
-        ''' <summary>
-        '''     IL CSV su risposta dietro Dematerializzazione
-        ''' </summary>
-        Dematerialization
-        ''' <summary>
-        '''     IL CSV su risposta dietro Undo Dematerializzazione
-        ''' </summary>
-        Reverse
-        ''' <summary>
-        '''     IL CSV su risposta dietro Confirm Dematerializzazione
-        ''' </summary>
-        Confirm
-    End Enum
-
-    ''' <summary>
-    '''     Collection usata per le Transazioni
-    '''     Argentea andati a buon fine dopo la
-    '''     chiamata alla funzione Argentea.
-    ''' </summary>
-    Friend BPCList As New Collections.Generic.Dictionary(Of String, BPCType)(System.StringComparer.InvariantCultureIgnoreCase)
+#End Region
 
 
-    ''' <summary>
-    '''     Argomento specializzato per le chiamate a 
-    '''     Argentea come Progressivo di call tra servizi.
-    ''' </summary>
-    ''' <returns>Integer</returns>
-    Public ReadOnly Property ProgressiveCall() As Integer
-        Get
-            Return m_ProgressiveCall
-        End Get
-    End Property
-
-    ''' <summary>
-    '''     Increment Progressive internal for Argentea
-    '''     to call vs Remote service BPC
-    ''' </summary>
-    ''' <returns></returns>
-    Public Function IncrementProgressiveCall() As Integer
-        m_ProgressiveCall += 1
-        Return IncrementProgressiveCall
-    End Function
-
-    ''' <summary>
-    '''     Return a Codifique of Cash and Shop 
-    '''     customer referement
-    ''' </summary>
-    ''' <returns>String</returns>
-    Public ReadOnly Property CodeCashDevice() As String
-        Get
-            Return MyBase.Transaction.lRetailStoreID.ToString().PadLeft(5, "0") + MyBase.Transaction.lWorkStationNmbr.ToString().PadLeft(5, "0")
-        End Get
-    End Property
-
-    ''' <summary>
-    '''     Return a Number of Receipt to
-    '''     use on call add BPC
-    ''' </summary>
-    ''' <returns>String</returns>
-    Public ReadOnly Property ReceiptNumber() As String
-        Get
-            Return MyBase.Transaction.lactTaNmbr
-        End Get
-    End Property
-
-    ''' <summary>
-    '''     Return a Code RUPP from Property Config
-    '''     for identiquate POS ID Account
-    ''' </summary>
-    ''' <returns>String</returns>
-    Public Property RUPP() As String
-        Get
-            Return m_RUPP
-        End Get
-        Set(ByVal value As String)
-            m_RUPP = value
-        End Set
-    End Property
+#Region "Property relative ad Argentea per definizione in Parametri"
 
     ''' <summary>
     '''     Return a Code of Terminal rescued
@@ -579,72 +493,7 @@ Public Class BPCParameters
         End Set
     End Property
 
-
-    ''' <summary>
-    '''     Return a codifiquated string for add BPC on Session Argentea
-    '''     this solution start with specifique .:  input_parameter
-    ''' </summary>
-    ''' <remarks>
-    '''     Inizialization:
-    '''     Dematerialization:
-    '''             CouponCode:                 tag COUP_CODE                           -> code to identify coupon, tag ;
-    '''             Codice Cassiere:            tag CouponCode BPSW2$[codicecassiere]   -> extra cash identifier that will be added As extra   data   In   the   form, . 
-    '''             Progressive:                tag PROG                                -> progressive of cash counter operation;
-    '''             IdCassa:                    tag CASSA                               -> RUPP as provided by Argentea, tag CASSA;
-    '''             CodiceDevice:               tag COD_DEV                             -> numeric field. Usually it Is created With shop code plus cash counter code;
-    '''                                                                                   (e.g if shop code Is 120 And cash counter Is 1 then you can pass 0012000001)
-    '''             CodiceScontrino:            tag COD_SCON                            -> receipt number(numeric);
-    '''             RFU_1                       tag RFU_2                               -> Internal Use
-    '''             RFU_2                       tag RFU_2                               -> Internal Use
-    '''     Reverse:
-    '''             CouponCode:                 tag COUP_CODE                           -> code to identify coupon, tag ;
-    '''             Progressive:                tag PROG                                -> progressive of cash counter operation;
-    '''             IdCassa:                    tag CASSA                               -> RUPP as provided by Argentea, tag CASSA;
-    '''             CodiceDevice:               tag COD_DEV                             -> numeric field. Usually it Is created With shop code plus cash counter code;
-    '''                                                                                   (e.g if shop code Is 120 And cash counter Is 1 then you can pass 0012000001)
-    '''             CodiceScontrino:            tag COD_SCON                            -> receipt number(numeric);
-    '''             TransactionId               tag TRAN_ID     -> Transazione da parte Argentea
-    '''             RFU_1                       tag RFU_2                               -> Internal Use
-    '''             RFU_2                       tag RFU_2                               -> Internal Use
-    '''     Confirm:
-    '''            Progressive                  tag PROG        -> Progressivo di chiamata verso Argentea
-    '''            IdCassa                      tag CASSA       -> Prefisso foarmato per Cliente-Cassa e non terminal
-    '''            CouponCode                   tag COUP_CODE   -> Codice Coupon (Barcode)
-    '''            TransactionId                tag TRAN_ID     -> Transazione da parte Argentea
-    '''            RFU_1                        tag RFU_2       -> Internal Use
-    '''            RFU_2                        tag RFU_2       -> Internal Use
-    ''' </remarks>
-    ''' <returns>String</returns>
-    Public Function GetCodifiqueReceipt(TypeCodifique As TypeCodifiqueProtocol) As String
-        Dim Result As String
-
-        Result = ""
-
-        Select Case TypeCodifique
-            Case TypeCodifiqueProtocol.Inizialization
-
-                Result = "" ' Non Utilizzato
-
-            Case TypeCodifiqueProtocol.Dematerialization
-
-                Result = "COUP_CODE=" + Barcode + "-BPSW2$=" + MyBase.Transaction.lActOperatorID.ToString() + "-PROG=" _
-                 + m_ProgressiveCall.ToString() + "-CASSA=" + m_RUPP + "-COD_DEV=" + Me.CodeCashDevice +
-                 "-COD_SCON=" + Me.ReceiptNumber + "-RFU_1=-RFU_2=-"
-
-            Case TypeCodifiqueProtocol.Reverse
-
-                Result = "COUP_CODE=" + Barcode + "-PROG=" _
-                 + m_ProgressiveCall.ToString() + "-CASSA=" + m_RUPP + "-COD_DEV=" + Me.CodeCashDevice +
-                 "-COD_SCON=" + Me.ReceiptNumber + "-TRAN_ID=" + Me.TransactionID + "-RFU_1=-RFU_2=-"
-
-            Case TypeCodifiqueProtocol.Confirm
-
-                Result = "PROG=" + Me.ProgressiveCall.ToString() + "-CASSA=" + Me.RUPP + "-COUP_CODE=" + Me.Barcode + "-TRAN_ID=" + Me.TransactionID
-
-        End Select
-
-        Return Result
-    End Function
+#End Region
 
 
     ''' <summary>
@@ -676,13 +525,12 @@ Public Class BPCParameters
     End Property
 
 
-
 End Class
 
 ''' <summary>
 '''     Strato per gli args (dinamici) di riferimento alla function Handler
 ''' </summary>
-Public Class BPCCommonParametersRecord
+Public Class BPCommonParametersRecord
     Inherits CommonParametersRecord
 
     ''' <summary>
@@ -775,6 +623,10 @@ Public Class CommonParametersRecord
 
 End Class
 
+
+''' <summary>
+'''     Parametri comuni in Uso da dll shared
+''' </summary>
 Public Class CommonParameters
 
     Friend _ParametersBase As System.Collections.Generic.Dictionary(Of String, Object)
@@ -819,7 +671,7 @@ Public Class CommonParameters
     Protected _Successfull As Boolean = False
     Protected _ErrorMessage As String = String.Empty
     Protected _SuccessMessage As String = String.Empty
-    Protected _CommittRequired As Boolean = False
+    'Protected _CommittRequired As Boolean = False
 
     ''' <summary>
     '''     Usato subito dopo l'interpretazione della risposta
@@ -841,14 +693,14 @@ Public Class CommonParameters
     '''     definisce se il Successfull ha bisogno di una 
     '''     ulteriore chiamata di conferma per andare avanti
     ''' </summary>
-    Public Overridable Property CommittRequired() As Boolean
-        Get
-            Return _CommittRequired
-        End Get
-        Set(ByVal value As Boolean)
-            _CommittRequired = value
-        End Set
-    End Property
+    'Public Overridable Property CommittRequired() As Boolean
+    'Get
+    'Return _CommittRequired
+    'End Get
+    'Set(ByVal value As Boolean)
+    '       _CommittRequired = value
+    'End Set
+    'End Property
 
     ''' <summary>
     '''     Usato per intermezzo di segnalazione errori
@@ -964,7 +816,6 @@ Public Class CommonParameters
         End Set
     End Property
 
-
     ''' <summary>
     '''     Di supporto alla Opzione di Operatore
     '''     per l'eccesso su totale rispetto al Buono.
@@ -1001,30 +852,32 @@ Public Class CommonParameters
 
 #End Region
 
+#Region "Di supporto alle chiamate per il ritorno in risposta"
 
-    Protected _MessageOut As String = String.Empty
+    Protected _RefTo_MessageOut As String = String.Empty
 
     ''' <summary>
-    '''     Il Messaggio di risposta da codificare
-    '''     dopo le chiamate verso Argntea.
-    '''     (Passato alla dll COM di Argentea e fillato dalla stessa)
+    '''     Per compatibilità altrimenti usare <see cref="RefTo_MessageOut"/>
     ''' </summary>
-    ''' <returns>Il Messaggio grezzo interno del protocollo preso dal campo CSV di argentea</returns>
     Public Overridable Property MessageOut() As String
         Get
-            Return _MessageOut
+            Return _RefTo_MessageOut
         End Get
         Set(ByVal value As String)
-            _MessageOut = value
+            _RefTo_MessageOut = value
         End Set
     End Property
+
+#End Region
+
+#Region "Funzione principe per il caricamento Dinamico dei Parametri tra funzioni"
 
     ''' <summary>
     '''     Usato per il Load dei parametri passati alle funzioni Handler
     '''     con la dictionary dei nomi degli argomenti e in richiamto al
     '''     loro valore tramite Reflection. 
     '''     (Funzione chiamata subito all'ingresso delle funzioni Hunlder)
-    '''     Finalità.: Proiettare gli argomenti dinamicmente rispetto alchiamte.
+    '''     Finalità.: Proiettare gli argomenti dinamicmente rispetto al chiamante.
     ''' </summary>
     ''' <param name="source">Dictionary dei nomi degli argomenti con value del Valore sull'argomento valorizzato dal chiamante</param>
     Public Sub LoadCommonFunctionParameter(ByRef source As System.Collections.Generic.Dictionary(Of String, Object))
@@ -1043,6 +896,8 @@ Public Class CommonParameters
         Catch ex As Exception
         End Try
     End Sub
+
+#End Region
 
 End Class
 

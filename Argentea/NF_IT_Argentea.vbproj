@@ -295,7 +295,7 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="USR_FormBuonoChiaro, Version=50.17.2.3, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="USR_FormBuonoChiaro, Version=50.17.2.4, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\USR_FormBuonoChiaro.dll</HintPath>
     </Reference>
@@ -305,7 +305,9 @@
     <Compile Include="ArgenteaFunctionReturnObject.vb" />
     <Compile Include="argpay.vb" />
     <Compile Include="AssemblyInfo.vb" />
+    <Compile Include="BPEController.vb" />
     <Compile Include="BPCController.vb" />
+    <Compile Include="ClsProxyArgentea.vb" />
     <Compile Include="ExternalGiftCardController.vb" />
     <Compile Include="PhoneRechargeController.vb" />
     <Compile Include="TPTAHelperArgentea.vb" />

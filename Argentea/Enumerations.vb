@@ -30,7 +30,14 @@ Public Enum InternalArgenteaFunctionTypes
     ExternalGiftCardConfirm
     ADVPayment
     ADVVoid
+    ''' <summary>
+    '''     Protocollo in riposta a Pagamento su Servizio remoto Argentea
+    ''' </summary>
     BPCPayment
+    ''' <summary>
+    '''     Protocollo in risposta a Pagamento su POS locale fornito da Argentea
+    ''' </summary>
+    BPEPayment
 End Enum
 
 Public Enum ArgenteaFunctionsReturnCode

@@ -38,7 +38,106 @@ Public Class ArgenteaFunctionReturnObject
     Public Successfull As Boolean
 
 
+#Region ".ctor"
+
+    Friend Sub New(Optional ByVal StatusCurrent As Integer = 0)
+
+        If StatusCurrent <> 0 Then
+
+            ' Unsuccessfull
+            Me.Successfull = False
+
+            ' E riporto nell'ordine corretto il messaggio di stato.
+            Me.Description = "Errore di connessione"
+            _Status = StatusCurrent
+
+        End If
+
+
+    End Sub
+
+
+#End Region
+
+#Region "Membri Friends"
+
+    Private _Status As Integer
+
+    ''' <summary>
+    '''     Il Messaggio in KO quando la risposta
+    '''     data ha avuto esito secondo le specifiche
+    '''     di protocollo intesa con KO tecnico
+    ''' </summary>
+    ''' <returns>Stringa congtenente il messaggio di KO per esteso</returns>
+    Public ReadOnly Property SuccessMessage() As String
+        Get
+            If Me.Successfull Then
+                Return (Me.Description & " " & Me.Result).Trim()
+            Else
+                Return (Me.Description & " " & Me.Result).Trim()
+            End If
+        End Get
+    End Property
+
+    ''' <summary>
+    '''     Il Messaggio in KO quando la risposta
+    '''     data ha avuto esito secondo le specifiche
+    '''     di protocollo intesa con KO tecnico
+    ''' </summary>
+    ''' <returns>Stringa congtenente il messaggio di KO per esteso</returns>
+    Public ReadOnly Property ErrorMessage() As String
+        Get
+            If Me.Successfull Then
+                Return (Me.Description & " " & Me.Result).Trim()
+            Else
+                Return (Me.Description & " " & Me.Result).Trim()
+            End If
+        End Get
+    End Property
+
+    ''' <summary>
+    '''     Il Messaggio di Stato relativo alla risposta
+    '''     data secondo le specifiche di protocollo.
+    ''' </summary>
+    ''' <returns>Stringa congtenente il messaggio di Stato per esteso</returns>
+    Public ReadOnly Property Status() As Integer
+        Get
+            Return _Status
+        End Get
+    End Property
+
+    ''' <summary>
+    '''     Il Valore ripreso dall'Amount stringa
+    '''     riportato in Decimal.
+    ''' </summary>
+    ''' <returns>Stringa congtenente il messaggio di Stato per esteso</returns>
+    Public Function GetAmountValue(ByVal Fract As Integer) As Decimal
+        If Me.Amount = "" Or Me.Amount = Nothing Then
+            Return 0
+        Else
+            Return CDec(Me.Amount) / Fract
+        End If
+    End Function
+
+    ''' <summary>
+    '''     Restituisce codificato lo stato dell'operazione
+    '''     rispetto al suo ReturnCode da protocollo e lo stato
+    '''     interno di risposta.
+    ''' </summary>
+    ''' <returns></returns>
+    Public Function GetStatusOperation() As String
+        Return Me.Result & "-" & Me.CodeResult
+    End Function
+
+#End Region
+
 #Region "CSV All Fields"
+
+    ''' <summary>
+    '''     Richiesta di conferma a 0 o a 1 per i BPC o BPE
+    '''     0 OK 1 Richiede altra conferma operatore
+    ''' </summary>
+    Public RequireCommit As Boolean = False
 
     ''' <summary>
     '''     EsitoCode su azione effettuata in argentea 
@@ -86,12 +185,6 @@ Public Class ArgenteaFunctionReturnObject
     Public Abi As String = ""
 
     ''' <summary>
-    '''     Richiesta di conferma a 0 o a 1 per i BPC o BPE
-    '''     0 OK 1 Richiede altra conferma operatore
-    ''' </summary>
-    Public RequireCommit As String = ""
-
-    ''' <summary>
     '''     Indica il circuito del tipo di buono cartacet
     ''' </summary>
     Public Provider As String = ""
@@ -100,6 +193,24 @@ Public Class ArgenteaFunctionReturnObject
     '''     Da protocollo corrisponde a Codici Emettitori di Ticket (RFU)
     ''' </summary>
     Public CodeIssuer As String = ""
+
+    ''' <summary>
+    '''     Da protocollo corrisponde al nome dell'Emettiotre dei Buoni Pasto 
+    ''' </summary>
+    Public NameIssuer As String = ""
+
+    ''' <summary>
+    '''     Nelle chiamate e risposte dal terminale hardware
+    '''     il numero dei buoni che sono stati usati sul sistema.
+    ''' </summary>
+    Public NumBPEvalutated As Integer = 0
+
+    ''' <summary>
+    '''     Nelle chiamate e risposte dal terminale hardware
+    '''     L'elenco create fittizio di riporto alle funzioni 
+    '''     suddiviso per ogni taglio consumato.
+    ''' </summary>
+    Public ListBPsEvaluated As System.Collections.Generic.Dictionary(Of String, Decimal)
 
 #End Region
 
