@@ -6,7 +6,7 @@ Imports TPDotnet.IT.Common.Pos.EFT
 Imports TPDotnet.Pos
 Imports System.Windows.Forms
 
-#Const DEBUG_SERVICE = 0
+#Const DEBUG_SERVICE = 1
 
 ''' <summary>
 '''     Oggetto Proxy di Comunicazione e  gestione
@@ -109,6 +109,16 @@ Public Class ClsProxyArgentea
     ' Se un operazione interna ha sollevato eccezione e non ha
     ' potuto completare l'evento per ripassarlo ai media.
     Private Const GLB_ERROR_NOT_UNEXPECTED2 As String = "Error-EXCEPTION-UNEXPECTED2"
+
+    ' Eccezione nell'istanza di questa classe se  non  dovesse
+    ' caricare per qualche motivo i parametri globali dedicati
+    ' alla gestione di esecuzione del  servizio  corrente  con
+    ' argentea.
+    Private Const GLB_ERROR_INSTANCE_PARAMETERS As String = "Error-ONLOAD-PARAMETERS-ARGENTEA"
+
+    ' Su errori non bloccanti ma da segnalare all'operatore
+    ' come stmapa scontrino non effettuata o altro usiamo questo.
+    Private Const GLB_SIGNAL_OPERATOR As String = "Error-SIGNALS_GENERIC"
 
     ''' <summary>
     '''     Stati interni per la Risposta 
@@ -309,24 +319,6 @@ Public Class ClsProxyArgentea
 
     End Enum
 
-
-    ''' <summary>
-    '''     Tipo di elemento da restituire 
-    '''     nel set di risultati del servizio.
-    ''' </summary>
-    Public Structure BPType
-
-        Public szKey As String
-        Public szVal As String
-
-        Public Sub New(sKey As String, sVal As String)
-            szKey = sKey
-            szVal = sVal
-        End Sub
-
-    End Structure
-
-
 #End Region
 
 #Region "Membri Privati"
@@ -354,22 +346,27 @@ Public Class ClsProxyArgentea
     '
     Private m_Paid As Decimal                               ' <-- Il Pagato fino ad adesso all'entrata
     Private m_PayableAmount As Decimal                      ' <-- Il pagabile con le azioni del servizio
-    Private m_Void As Decimal                               ' <-- Lo Storno attuale fino ad adesso all'entrata
+    Private m_VoidAmount As Decimal                          ' <-- Lo Storno attuale fino ad adesso all'entrata
     Private m_VoidableAmount As Decimal                     ' <-- Lo Stornabile o lo stornato con le azioni del servizio
 
     '
     ' Aggiornati per il Risultato
     '
-    Shared m_TotalBPUsed_CS As Integer                      ' <-- Il Numero dei buoni utilizzati in questa sessione di pagamento
-    Shared m_TotalPayed_CS As Decimal                       ' <-- L'Accumulutaroe Globale al Proxy corrente nella sessione corrente
+    Shared m_TotalBPUsed_CS As Integer                      ' <-- Il Numero dei buoni utilizzati in questa sessione di pagamento o strorno
+    '
+    Shared m_TotalPayed_CS As Decimal                       ' <-- L'Accumulutaroe Globale al Proxy corrente nella sessione corrente per il pagamento
     Shared m_TotalValueExcedeed_CS As Decimal               ' <-- Il Totale in eccesso se l'opzione per accettare valori maggiori è abilitata
+    '
+    Shared m_TotalVoided_CS As Decimal                      ' <-- L'Accumulutaroe Globale al Proxy corrente nella sessione corrente per lo storno
+    Shared m_TotalVoidedExcedeed_CS As Decimal              ' <-- Il Totale in eccesso/difetto se l'opzione per accettare valori maggiori è abilitata in storno
 
     '
     ' Variabili private
     '
 
-    Private m_LastStatus As String                          ' <-- Ultimo Status di Costante per errore in STDOUT
-    Private m_LastErrorMessage As String                    ' <-- Ultimo Messaggio di errore STDOUT
+    Private m_LastStatus As String                                      ' <-- Ultimo Status di Costante per errore in STDOUT
+    Private m_LastErrorMessage As String                                ' <-- Ultimo Messaggio di errore STDOUT
+    Private m_LastResponseRawArgentea As ArgenteaFunctionReturnObject   ' <-- Ultima risposta di Argentea per STDOUT (di utilità al reprint dello scontrino)
 
 
     Private m_FirstCall As Boolean = False                  ' <-- Inizializzazione alla prima chiamata dal Form di scansione per i Barcode vs Argentea
@@ -388,6 +385,28 @@ Public Class ClsProxyArgentea
     '
     Protected m_taobj As TA
     Protected m_TheModcntr As ModCntr
+
+    '
+    ' Parametri Globali di applicazione predefiniti
+    ' nel contesto backStore per Argentea.
+    '
+    Private st_Parameters_Argentea As ArgenteaParameters    ' <-- Riprende dal modello statico tutti i parametri globali nel contesto corrente dedicati ad Argentea
+
+#End Region
+
+#Region "Properties di Classe"
+
+    ''' <summary>
+    '''     All'entrata definisce il Pagato al momento
+    '''     All'usscita è aggiornato con il pagato dopo lo STDIN
+    ''' </summary>
+    ''' <returns>Valore espresso in decimal</returns>
+    Friend ReadOnly Property ArgenteaParameters() As ArgenteaParameters
+        Get
+            Return st_Parameters_Argentea
+        End Get
+    End Property
+
 
 #End Region
 
@@ -425,13 +444,51 @@ Public Class ClsProxyArgentea
     ''' <param name="TypeBehavior">Definisce il comportamente di questa istanza proxy su servizio <see cref="enTypeProxy"/></param>
     ''' <param name="CurrentTransactionID">L'ID della transazione in corso.</param>
     ''' <param name="CurrentPaymentsTotal">Il Totale pagato fino adesso prima di effettuare l'eggiornamento dai dati del proxy corrente.</param>
-    Protected Friend Sub New(ByRef theModCntr As ModCntr, ByRef taobj As TA, TypeBehavior As enTypeProxy,
-                             ByVal CurrentTransactionID As String, ByVal CurrentPaymentsTotal As Decimal
+    Protected Friend Sub New(
+                             ByRef theModCntr As ModCntr,
+                             ByRef taobj As TA,
+                             TypeBehavior As enTypeProxy,
+                             ByVal CurrentTransactionID As String,
+                             ByVal CurrentPaymentsTotal As Decimal
                              )
 
+        ' Tipo BEHAVIOR
         m_TypeProxy = TypeBehavior
+
+        ' Dati fondamentali
         m_CurrentTransactionID = CurrentTransactionID
         m_CurrentPaymentsTotal = CurrentPaymentsTotal
+
+        '
+        '
+        ' Caricamento dei Parametri Argentea
+        ' globali ripresi dal Backstore come
+        ' utilizzati nel contesto corrente.
+        '
+        Try
+
+            '
+            ' Legge per impostazione statica 
+            ' tutti i parametri  applicativi
+            ' che influenzano il comportamento.
+            '
+            st_Parameters_Argentea = New ArgenteaParameters()
+            st_Parameters_Argentea.LoadParameters(theModCntr)
+
+        Catch ex As Exception
+
+
+            ' Signal come errore di stampa ma non bloccante
+            m_LastStatus = GLB_ERROR_INSTANCE_PARAMETERS
+            m_LastErrorMessage = "Non è stato possibile caricare i parametri applicativi per eseguire il servizio Argentea"
+
+            ' message box: atenzione non sono riuscito a stampare la ricevuta ma la transazione è valida
+            msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPSTOP)
+
+            ' Bloccante
+            Throw New Exception(m_LastStatus, ex)
+
+        End Try
 
         ' BEHAVIOR
         If TypeBehavior = enTypeProxy.Pos Then
@@ -519,12 +576,12 @@ Public Class ClsProxyArgentea
     '''     All'uscita è aggiornato con lo Storno dopo lo STDIN
     ''' </summary>
     ''' <returns>Valore espresso in decimal</returns>
-    Public Property Void() As Decimal
+    Public Property AmountVoid() As Decimal
         Get
-            Return m_Void
+            Return m_VoidAmount
         End Get
         Set(ByVal value As Decimal)
-            m_Void = value
+            m_VoidAmount = value
             _updatePosForm()
         End Set
     End Property
@@ -534,7 +591,7 @@ Public Class ClsProxyArgentea
     '''     All'uscita è aggiornato con lo stornato dopo lo STDIN
     ''' </summary>
     ''' <returns>Valore espresso in decimal</returns>
-    Public Property Voidable() As Decimal
+    Public Property AmountVoidable() As Decimal
         Get
             Return m_VoidableAmount
         End Get
@@ -642,13 +699,12 @@ Public Class ClsProxyArgentea
 
         Dim funcName As String = "ProxyArgentea.Connect"
 
-        ' Reset conteggio
-        m_TotalPayed_CS = 0
-        m_TotalValueExcedeed_CS = 0
-        m_TotalBPUsed_CS = 0
 
         ' Salvo Sempre che non sia stato già avviato
         If Not m_bWaitActive Then
+
+            ' Reset conteggio
+            Me.Reset()
 
             ' Istanza della Lib Argentea MONETICA
             ArgenteaCOMObject = Nothing
@@ -796,9 +852,16 @@ Public Class ClsProxyArgentea
 
         ' Reset dello status dei contatori
         _DataResponse = Nothing
+
+        ' Totalizzatori di sessione
         m_TotalPayed_CS = 0
         m_TotalValueExcedeed_CS = 0
         m_TotalBPUsed_CS = 0
+
+        m_TotalVoided_CS = 0
+        m_TotalVoidedExcedeed_CS = 0
+
+        '
         m_CurrentTransactionID = String.Empty
         m_CurrentBarcodeScan = String.Empty
         m_bWaitActive = False
@@ -806,7 +869,7 @@ Public Class ClsProxyArgentea
         m_PayableAmount = 0
         m_Paid = 0
         m_VoidableAmount = 0
-        m_Void = 0
+        m_VoidAmount = 0
 
     End Sub
 
@@ -987,6 +1050,73 @@ Public Class ClsProxyArgentea
 
 #End Region
 
+#Region "Functions Utility"
+
+    ''' <summary>
+    '''     Stampa uno scontrino separato sulla cassa
+    '''     riportando la transazione di argentea relativa
+    '''     ai buoni pasto che sono stati dematerializzati.
+    ''' </summary>
+    ''' <param name="returnArgenteaObject"></param>
+    Private Sub PrintReceipt(returnArgenteaObject As ArgenteaFunctionReturnObject)
+        Dim funcName As String = "PrintReceipt"
+
+        ' Riprendo l'helper per Argentea
+        Dim objTPTAHelperArgentea As New TPTAHelperArgentea
+
+        ' Creo un Record compatibile per Argenta
+        Dim TaArgenteaEMVRec As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = objTPTAHelperArgentea.ArgenteaFunctionReturnObjectToTaArgenteaEMVRec(m_taobj, returnArgenteaObject)
+        If TaArgenteaEMVRec Is Nothing Then
+            ' error non vincolante
+        End If
+
+        'RegistryHelper.SetLastPaymentADVTransactionIdentifier(ArgenteaFunctionReturnObject(0).TerminalID)
+        'RegistryHelper.SetLastPaymentADVTransactionAmount(CInt(MyTaMediaRec.dTaPaidTotal * 100))
+        'RegistryHelper.SetLastPaymentADVTransactionType(OpType)
+
+
+        ' Creo da 0 una nuova transaction che serve alla stampante
+        Dim eftTA As TPDotnet.Pos.TA = objTPTAHelperArgentea.CreateTA(m_taobj, m_TheModcntr, TaArgenteaEMVRec, False)
+
+        If eftTA Is Nothing Then
+            'error non vincolante
+        End If
+
+        '
+        ' Imposto per la classe proxy la ristampa dello
+        ' scontrino in cassa riportandolo dai parametri
+        ' globali che dfiniscono il comportamento.
+        '
+        Dim OPT_EftReceiptCashierCopiesPayment As Integer = st_Parameters_Argentea.EftReceiptCashierCopiesPayment  '   <-- Parametro globale se printare lo scontrino della transazione bp su stampante di cassa locale
+
+        ' In base al parametro globale si decide se stamparlo o meno.
+        For I As Integer = 1 To OPT_EftReceiptCashierCopiesPayment
+
+            ' Qui comunichiamo con la stampantina
+            ' per stampare tutta la tranazione.
+            Dim PAYMENT As Boolean = objTPTAHelperArgentea.PrintReceipt(eftTA, m_TheModcntr)
+
+            If Not PAYMENT Then
+
+                ' Errore non bloccante
+                If returnArgenteaObject.Successfull Then
+
+                    ' Signal come errore di stampa ma non bloccante
+                    m_LastStatus = GLB_SIGNAL_OPERATOR
+                    m_LastErrorMessage = getPosTxtNew(m_TheModcntr.contxt, "POSLevelITCommonPrinterFailed", 0)
+
+                    ' message box: atenzione non sono riuscito a stampare la ricevuta ma la transazione è valida
+                    msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPWARNING)
+
+                End If
+
+            End If
+
+        Next
+
+    End Sub
+
+#End Region
 
 #Region "** TERMINALE LOCALE POS HARDWARE -> Con i sui metodi nella dll COM in gestione al dispositivo"
 
@@ -1661,6 +1791,13 @@ Public Class ClsProxyArgentea
         Try
 
             '
+            '   Print Last Receipt
+            '
+            If Not m_LastResponseRawArgentea IsNot Nothing Then
+                PrintReceipt(m_LastResponseRawArgentea)
+            End If
+
+            '
             '   Evento chiave di chiusura
             '
             RaiseEvent Event_ProxyCollectDataTotalsAtEnd(Me, _DataResponse)
@@ -1713,6 +1850,7 @@ Public Class ClsProxyArgentea
         '
 
 #If DEBUG_SERVICE = 0 Then
+
         If m_CommandToCall = enCommandToCall.Payment Then
 
             retCode = ArgenteaCOMObject.PaymentBPE(
@@ -1731,20 +1869,21 @@ Public Class ClsProxyArgentea
 
         End If
 #Else
+
         ''' Per Test
         If m_CommandToCall = enCommandToCall.Payment Then
             ''' 
             RefTo_MessageOut = "OK;TRANSAZIONE ACCETTATA;2|5|1020|1|414;104;PELLEGRINI;  PAGAMENTO BUONO PASTO " ' <-- x test 
         ElseIf m_CommandToCall = enCommandToCall.Void Then
             ''' 
-            RefTo_MessageOut = "OK;TRANSAZIONE ACCETTATA;2|5|1020|1|414;104;PELLEGRINI;  PAGAMENTO BUONO PASTO " ' <-- x test 
+            RefTo_MessageOut = "OK;TRANSAZIONE ACCETTATA;2|4|1020|1|414;104;PELLEGRINI;  PAGAMENTO BUONO PASTO " ' <-- x test 
         End If
         retCode = ArgenteaFunctionsReturnCode.OK
         ''' to remove:
 #End If
 
 
-        ' Riprendiamo la Risposta cos' come è stata
+        ' Riprendiamo la Risposta così comè stata
         ' data per il log di debug grezza
         LOG_Debug(getLocationString(funcName), "ReturnCode: " & retCode.ToString & ". BP: Hardware Output: " & RefTo_MessageOut)
 
@@ -1754,7 +1893,7 @@ Public Class ClsProxyArgentea
             ' in ogni formatto il returnString
             ' ma con la variante che già mi filla
             ' l'attributro ErrorMessage
-            Dim ParseErr As ArgenteaFunctionReturnObject = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
 
             ' Non inizializzata su Errori di comunicazione
             ' o per risposta remota data da Argentea KO.
@@ -1764,12 +1903,12 @@ Public Class ClsProxyArgentea
         Else
 
             ' Riprendiamo la Risposta da protocollo Argentea
-            Dim RespSrv As ArgenteaFunctionReturnObject = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
 
             ' Se Argentea mi dà Successo Procedo altrimenti 
             ' sono un un errore remoto, su eccezione locale
             ' di parsing esco a priori e non passo.
-            If RespSrv.Successfull Then
+            If m_LastResponseRawArgentea.Successfull Then
 
                 ' Incrementiamo di uno l'azione al numero di chiamate verso argentea
                 'IncrementProgressiveCall()
@@ -1779,14 +1918,14 @@ Public Class ClsProxyArgentea
                 ' di TA quanti sono stati inoltrati nel
                 ' dispositivo.
                 '
-                m_TotalBPUsed_CS = RespSrv.NumBPEvalutated          ' <-- Il Numero dei buoni utilizzati in questa sessione di pagamento
-                m_TotalPayed_CS = RespSrv.Amount                    ' <-- L'Accumulutaroe Globale al Proxy corrente nella sessione corrente
-                m_TotalValueExcedeed_CS = 0                         ' <-- ?? TODO:: Il Totale in eccesso se l'opzione per accettare valori maggiori è abilitata
+                m_TotalBPUsed_CS = m_LastResponseRawArgentea.NumBPEvalutated        ' <-- Il Numero dei buoni utilizzati in questa sessione di pagamento
+                m_TotalPayed_CS = m_LastResponseRawArgentea.Amount                  ' <-- L'Accumulutaroe Globale al Proxy corrente nella sessione corrente
+                m_TotalValueExcedeed_CS = 0                                         ' <-- ?? TODO:: Il Totale in eccesso se l'opzione per accettare valori maggiori è abilitata
 
                 ' Riprendo l'elenco riportato dall'hardware
                 ' per ogni taglio e colloco ricopiandolo il 
                 ' pezzo interessato
-                For Each itm As Object In RespSrv.ListBPsEvaluated
+                For Each itm As Object In m_LastResponseRawArgentea.ListBPsEvaluated
 
                     ' Questo dall'hardware non c'è l'abbiamo
                     ' e portiamo un code contatore
@@ -1794,7 +1933,7 @@ Public Class ClsProxyArgentea
                     Dim faceValue As Decimal = itm.Value
 
                     m_CurrentBarcodeScan = itm.Key
-                    m_CurrentTerminalID = RespSrv.TerminalID
+                    m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
 
                     ' Aggiungo in una collection specifica in uso
                     ' interno l'elemento Buono appena accodato in
@@ -1810,7 +1949,7 @@ Public Class ClsProxyArgentea
 
 
                 ' ** ATTESA COMPLETATA e corretamente chiamata vs Hardware Terminal POS
-                LOG_Debug(getLocationString(funcName), "BP comunication with terminal pos successfuly on call first with message " & RespSrv.SuccessMessage)
+                LOG_Debug(getLocationString(funcName), "BP comunication with terminal pos successfuly on call first with message " & m_LastResponseRawArgentea.SuccessMessage)
                 Return True
 
             Else
@@ -1870,7 +2009,7 @@ Public Class ClsProxyArgentea
             ' in ogni formatto il returnString
             ' ma con la variante che già mi filla
             ' l'attributro ErrorMessage
-            Dim ParseErr As ArgenteaFunctionReturnObject = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
 
             ' Non inizializzata su Errori di comunicazione
             ' o per risposta remota data da Argentea KO.
@@ -1880,18 +2019,18 @@ Public Class ClsProxyArgentea
         Else
 
             ' Riprendiamo la Risposta da protocollo Argentea
-            Dim RespSrv As ArgenteaFunctionReturnObject = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
 
             ' Se Argentea mi dà Successo Procedo altrimenti 
             ' sono un un errore remoto, su eccezione locale
             ' di parsing esco a priori e non passo.
-            If RespSrv.Successfull Then
+            If m_LastResponseRawArgentea.Successfull Then
 
                 ' Incrementiamo di uno l'azione al numero di chiamate verso argentea
                 IncrementProgressiveCall()
 
                 ' ** INIZIALIZZATA e corretamente chiamata ad Argentea
-                LOG_Debug(getLocationString(funcName), "BP inizialization " & m_CurrentBarcodeScan & " successfuly on call first with message " & RespSrv.SuccessMessage)
+                LOG_Debug(getLocationString(funcName), "BP inizialization " & m_CurrentBarcodeScan & " successfuly on call first with message " & m_LastResponseRawArgentea.SuccessMessage)
                 Return True
 
             Else
@@ -1941,50 +2080,50 @@ Public Class ClsProxyArgentea
             ' in ogni formatto il returnString
             ' ma con la variante che già mi filla
             ' l'attributro ErrorMessage
-            Dim ParseErr As ArgenteaFunctionReturnObject = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
 
             ' Non inizializzata su Errori di comunicazione
             ' o per risposta remota data da Argentea KO.
             LOG_Error(getLocationString(funcName), "Dematerialization for BP with  " & m_CurrentBarcodeScan & " returns error: " & m_LastErrorMessage & ". The message raw output is: " & RefTo_MessageOut)
 
             ' Esco dal  flow immediatamente
-            m_CurrentValueOfBP = ParseErr.GetAmountValue(1)
-            m_CurrentTerminalID = ParseErr.TerminalID
+            m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+            m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
             Return CallDematerialize
 
         Else
 
             ' Riprendiamo la Risposta da protocollo Argentea
-            Dim RespSrv As ArgenteaFunctionReturnObject = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
 
             ' Se Argentea mi dà Successo Procedo altrimenti 
             ' sono un un errore remoto, su eccezione locale
             ' di parsing esco a priori e non passo.
-            If RespSrv.Successfull Then
+            If m_LastResponseRawArgentea.Successfull Then
 
                 ' Incrementiamo di uno l'azione al numero di chiamate verso argentea
                 IncrementProgressiveCall()
 
                 ' Se la risposta argenta richiede un ulteriore 
                 ' conferma allora procedo ad uscire per il flow.
-                If RespSrv.RequireCommit Then
+                If m_LastResponseRawArgentea.RequireCommit Then
 
                     ' ** DEMATERIALIZZATO in check corretamente da chiamata ad Argentea
-                    LOG_Debug(getLocationString(funcName), "BP dematirializated with wait confirm " & m_CurrentBarcodeScan & " successfuly on call with message " & RespSrv.SuccessMessage)
+                    LOG_Debug(getLocationString(funcName), "BP dematirializated with wait confirm " & m_CurrentBarcodeScan & " successfuly on call with message " & m_LastResponseRawArgentea.SuccessMessage)
 
                     ' RICHIESTO CONFERMA
-                    m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                    m_CurrentTerminalID = RespSrv.TerminalID
+                    m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                    m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                     CallDematerialize = StatusCode.CONFIRMREQUEST
                     Return CallDematerialize
                 Else
 
                     ' ** DEMATERIALIZZATO corretamente da chiamata ad Argentea
-                    LOG_Debug(getLocationString(funcName), "BP dematirializated " & m_CurrentBarcodeScan & " successfuly on call with message " & RespSrv.SuccessMessage)
+                    LOG_Debug(getLocationString(funcName), "BP dematerializated " & m_CurrentBarcodeScan & " successfuly on call with message " & m_LastResponseRawArgentea.SuccessMessage)
 
                     ' COMPLETATO
-                    m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                    m_CurrentTerminalID = RespSrv.TerminalID
+                    m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                    m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                     CallDematerialize = StatusCode.OK
                     Return CallDematerialize
                 End If
@@ -1996,8 +2135,8 @@ Public Class ClsProxyArgentea
                 LOG_Debug(getLocationString(funcName), "BP dematerializated " & m_CurrentBarcodeScan & " remote failed on call to argentea with message code " & m_LastStatus & " relative to " & m_LastErrorMessage)
 
                 ' NON EFFETTUATO
-                m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                m_CurrentTerminalID = RespSrv.TerminalID
+                m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                 CallDematerialize = StatusCode.KO
                 Return CallDematerialize
             End If
@@ -2038,49 +2177,49 @@ Public Class ClsProxyArgentea
             ' in ogni formatto il returnString
             ' ma con la variante che già mi filla
             ' l'attributro ErrorMessage
-            Dim ParseErr As ArgenteaFunctionReturnObject = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
 
             ' Non inizializzata su Errori di comunicazione
             ' o per risposta remota data da Argentea KO.
             LOG_Error(getLocationString(funcName), "Reverse Dematerialization for BPC with  " & m_CurrentBarcodeScan & " returns error: " & m_LastErrorMessage & ". The message raw output is: " & RefTo_MessageOut)
 
             ' Esco dal  flow immediatamente
-            m_CurrentValueOfBP = ParseErr.GetAmountValue(1)
+            m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
             CallReverseMaterializated = StatusCode.KO
             Return CallReverseMaterializated
         Else
 
             ' Riprendiamo la Risposta da protocollo Argentea
-            Dim RespSrv As ArgenteaFunctionReturnObject = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
 
             ' Se Argentea mi dà Successo Procedo altrimenti 
             ' sono un un errore remoto, su eccezione locale
             ' di parsing esco a priori e non passo.
-            If RespSrv.Successfull Then
+            If m_LastResponseRawArgentea.Successfull Then
 
                 ' Incrementiamo di uno l'azione al numero di chiamate verso argentea
                 IncrementProgressiveCall()
 
                 ' Se la risposta argenta richiede un ulteriore 
                 ' conferma allora procedo ad uscire per il flow.
-                If RespSrv.RequireCommit Then
+                If m_LastResponseRawArgentea.RequireCommit Then
 
                     ' ** REVERSE SU DEMATERIALIZZATO in check corretamente da chiamata ad Argentea
-                    LOG_Debug(getLocationString(funcName), "BP reverse dematirializated with wait confirm " & m_CurrentBarcodeScan & " successfuly on call with message " & RespSrv.SuccessMessage)
+                    LOG_Debug(getLocationString(funcName), "BP reverse dematirializated with wait confirm " & m_CurrentBarcodeScan & " successfuly on call with message " & m_LastResponseRawArgentea.SuccessMessage)
 
                     ' RICHIESTO CONFERMA
-                    m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                    m_CurrentTerminalID = RespSrv.TerminalID
+                    m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                    m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                     CallReverseMaterializated = StatusCode.CONFIRMREQUEST
                     Return CallReverseMaterializated
                 Else
 
                     ' ** REVERSE SU DEMATERIALIZZATO corretamente da chiamata ad Argentea
-                    LOG_Debug(getLocationString(funcName), "BP reverse dematirializated " & m_CurrentBarcodeScan & " successfuly on call with message " & RespSrv.SuccessMessage)
+                    LOG_Debug(getLocationString(funcName), "BP reverse dematirializated " & m_CurrentBarcodeScan & " successfuly on call with message " & m_LastResponseRawArgentea.SuccessMessage)
 
                     ' COMPLETATO
-                    m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                    m_CurrentTerminalID = RespSrv.TerminalID
+                    m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                    m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                     CallReverseMaterializated = StatusCode.OK
                     Return CallReverseMaterializated
                 End If
@@ -2092,8 +2231,8 @@ Public Class ClsProxyArgentea
                 LOG_Debug(getLocationString(funcName), "BP reverse dematerializated " & m_CurrentBarcodeScan & " remote failed on call to argentea with message code " & m_LastStatus & " relative to " & m_LastErrorMessage)
 
                 ' NON EFFETTUATO
-                m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                m_CurrentTerminalID = RespSrv.TerminalID
+                m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                 CallReverseMaterializated = StatusCode.KO
                 Return CallReverseMaterializated
             End If
@@ -2137,35 +2276,35 @@ Public Class ClsProxyArgentea
             ' in ogni formatto il returnString
             ' ma con la variante che già mi filla
             ' l'attributro ErrorMessage
-            Dim ParseErr As ArgenteaFunctionReturnObject = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseErrorAndMapToParams(funcName, retCode, RefTo_MessageOut)
 
             ' Non inizializzata su Errori di comunicazione
             ' o per risposta remota data da Argentea KO.
             LOG_Error(getLocationString(funcName), "Confirm " & sConfirmOperation & " for BP with  " & m_CurrentBarcodeScan & " returns error: " & m_LastErrorMessage & ". The message raw output is: " & RefTo_MessageOut)
 
             ' Esco dal  flow immediatamente
-            m_CurrentValueOfBP = ParseErr.GetAmountValue(1)
+            m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
             CallConfirmOperation = StatusCode.KO
             Return CallConfirmOperation
         Else
 
             ' Riprendiamo la Risposta da protocollo Argentea
-            Dim RespSrv As ArgenteaFunctionReturnObject = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
+            m_LastResponseRawArgentea = Me.ParseResponseProtocolArgentea(funcName, RefTo_MessageOut)
 
             ' Se Argentea mi dà Successo Procedo altrimenti 
             ' sono un un errore remoto, su eccezione locale
             ' di parsing esco a priori e non passo.
-            If RespSrv.Successfull Then
+            If m_LastResponseRawArgentea.Successfull Then
 
                 ' Incrementiamo di uno l'azione al numero di chiamate verso argentea
                 IncrementProgressiveCall()
 
                 ' ** CONFIRM su REVERSE o DEMATERIALIZZATO effettuata corretamente da chiamata ad Argentea
-                LOG_Debug(getLocationString(funcName), "BP confirm " & sConfirmOperation & " for " & m_CurrentBarcodeScan & " successfuly on call with message " & RespSrv.SuccessMessage)
+                LOG_Debug(getLocationString(funcName), "BP confirm " & sConfirmOperation & " for " & m_CurrentBarcodeScan & " successfuly on call with message " & m_LastResponseRawArgentea.SuccessMessage)
 
                 ' COMPLETATO
-                m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                m_CurrentTerminalID = RespSrv.TerminalID
+                m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                 CallConfirmOperation = StatusCode.OK
                 Return CallConfirmOperation
             Else
@@ -2175,8 +2314,8 @@ Public Class ClsProxyArgentea
                 LOG_Debug(getLocationString(funcName), "BP confirm " & sConfirmOperation & " for " & m_CurrentBarcodeScan & " remote failed on call to argentea with message code " & m_LastStatus & " relative to " & m_LastErrorMessage)
 
                 ' NON EFFETTUATO
-                m_CurrentValueOfBP = RespSrv.GetAmountValue(1)
-                m_CurrentTerminalID = RespSrv.TerminalID
+                m_CurrentValueOfBP = m_LastResponseRawArgentea.GetAmountValue(1)
+                m_CurrentTerminalID = m_LastResponseRawArgentea.TerminalID
                 CallConfirmOperation = StatusCode.KO
                 Return CallConfirmOperation
             End If

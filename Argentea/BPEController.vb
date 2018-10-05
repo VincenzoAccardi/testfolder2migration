@@ -432,7 +432,6 @@ Public Class BPEController
 
             End If
 
-
             '
             ' Preparo l'oggetto a quello che si deve a  spettare
             ' come totale da pagare e quello pagabile
@@ -545,8 +544,8 @@ Public Class BPEController
             ' Preparo l'oggetto a quello che si deve a  spettare
             ' come totale da stornare e quello stornato
             '
-            service.Void = 0
-            service.Voidable = dVoidableAmount
+            service.AmountVoid = 0
+            service.AmountVoidable = dVoidableAmount
 
             ' Definisco questa  variabile  Privata 
             ' per il conteggio dei Buoni eventuali
