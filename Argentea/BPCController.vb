@@ -244,6 +244,19 @@ Public Class BPCController
 
     End Function
 
+
+    ''' <summary>
+    '''     Azione da TA del controller Padre su Cassa
+    '''     per eseguire lo storno su chiamate del tasto
+    '''     Annullo sulla cassa per la voce specifica.
+    ''' </summary>
+    ''' <param name="Parameters">Dictionary di Parametri dinamici</param>
+    ''' <returns>Stato a completamente o errore sull'azione principe corrente!! <see cref="IBPReturnCode"/></returns>
+    Public Function Void(ByRef Parameters As Dictionary(Of String, Object)) As IBPReturnCode Implements IBPDematerialize.Void
+        Void = IBPReturnCode.KO
+        Dim funcName As String = "Void"
+    End Function
+
 #End Region
 
 #Region "Handler Internal Form Action"
@@ -324,7 +337,7 @@ Public Class BPCController
         '
         ' RUN -> Avvio il FORM Locale ed attendo!! with try entrapment
         '
-        If Not service.IsInRunning Then
+        If Not service.IsLive Then
             service.Connect()
         Else
             service.Unpark()
@@ -332,6 +345,12 @@ Public Class BPCController
         '
         ' >>>> ***************************************** <<<<<<
 
+
+        ' Del resto concludo
+        Dim StatusResult As ClsProxyArgentea.enProxyStatus = service.ProxyStatus
+        service.Close()
+
+        ' E restituisco 
         If service.ProxyStatus = ClsProxyArgentea.enProxyStatus.OK Then
 
             ' Tutto è filato come doveva e  le 

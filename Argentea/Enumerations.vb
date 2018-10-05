@@ -38,6 +38,14 @@ Public Enum InternalArgenteaFunctionTypes
     '''     Protocollo in risposta a Pagamento su POS locale fornito da Argentea
     ''' </summary>
     BPEPayment
+    ''' <summary>
+    '''     Protocollo in riposta a Storno su Servizio remoto Argentea
+    ''' </summary>
+    BPEVoid
+    ''' <summary>
+    '''     Protocollo in risposta a Storno su POS locale fornito da Argentea
+    ''' </summary>
+    BPCVoid
 End Enum
 
 Public Enum ArgenteaFunctionsReturnCode

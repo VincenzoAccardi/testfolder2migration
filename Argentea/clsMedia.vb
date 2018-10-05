@@ -702,16 +702,43 @@ Public Class clsMedia
                 Exit Function
             End If
 
-            ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
-            ' che avvia il form e rimane sulla gestione tramite eventi sul form per
-            ' la scansione e validazione dei BPE E finale sta per gli Elettronici (Controller dedicato)
 
-            ProcessBPElettronico = handler.Dematerialize(New Dictionary(Of String, Object) From {
+            '
+            ' Controllo che se arrivati fin qui dal ModLineVoid
+            ' che tratta le selzioni sulla TA principale l'operatore
+            ' non abbia cliccato sul tasto ANNULLO che ha fatto
+            ' si di invertire l'azione sulla voce di  selezione 
+            ' impostando l'importo in negativo.
+            ' (Quindi posso capire se sono su uno STORNO)
+            '
+            If MyTaMediaRec.dTaPaid < 0 Then
+
+                ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
+                ' che avvia il form e rimane sulla gestione tramite eventi sul form per
+                ' la scansione e validazione dei BPE E finale sta per gli Elettronici (Controller dedicato)
+
+                ProcessBPElettronico = handler.Void(New Dictionary(Of String, Object) From {
                                                               {"Controller", TheModCntr},
                                                               {"Transaction", taobj},
                                                               {"MediaRecord", MyTaMediaRec},
                                                               {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
                                                           })
+
+            Else
+
+                ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
+                ' che avvia il form e rimane sulla gestione tramite eventi sul form per
+                ' la scansione e validazione dei BPE E finale sta per gli Elettronici (Controller dedicato)
+
+                ProcessBPElettronico = handler.Dematerialize(New Dictionary(Of String, Object) From {
+                                                              {"Controller", TheModCntr},
+                                                              {"Transaction", taobj},
+                                                              {"MediaRecord", MyTaMediaRec},
+                                                              {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
+                                                          })
+
+            End If
+
         Catch ex As Exception
             Try
                 LOG_Error(getLocationString(funcName), ex)

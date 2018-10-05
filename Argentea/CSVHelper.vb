@@ -241,7 +241,81 @@ Public Class CSVHelper
                         _NumB = 0
                         For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
                             For Y As Integer = 0 To CInt(Itms(X) - 1)
-                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1)))
+                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
+                                _Partial += CDec(Itms(X + 1))
+                                _NumB += 1
+                            Next
+                            '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
+                        Next
+                        MyRefRet.ListBPsEvaluated = _DictBPs
+                        MyRefRet.Amount = CDec(_Partial) / 100
+                        MyRefRet.NumBPEvalutated = _NumB
+                        MyRefRet.TerminalID = "POS"
+                        MyRefRet.RequireCommit = False
+                        MyRefRet.CodeIssuer = CSV(J + 3)
+                        MyRefRet.NameIssuer = CSV(J + 4)
+                        MyRefRet.Provider = "ARGENTEA"
+                        MyRefRet.Description = MyRefRet.Description & " - " & CSV(J + 5)
+                        MyRefRet.Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
+                    Case InternalArgenteaFunctionTypes.BPEVoid
+
+                        '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  STORNO BUONO PASTO "
+                        Dim _Partial As Decimal, _NumB As Integer
+                        Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
+
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.CodeResult = IIf(MyRefRet.Successfull, 1, 0)
+                        MyRefRet.Description = CSV(1)
+                        Dim Itms(200) As String
+                        ReDim Itms(CInt(CSV(2).Split("|")(0)))
+                        Itms = CSV(2).Split("|")
+                        ' il 3 è il numero di BP evasi in Tagli
+                        _NumB = 0
+                        For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
+                            For Y As Integer = 0 To CInt(Itms(X) - 1)
+                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
+                                _Partial += CDec(Itms(X + 1))
+                                _NumB += 1
+                            Next
+                            '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
+                        Next
+                        MyRefRet.ListBPsEvaluated = _DictBPs
+                        MyRefRet.Amount = CDec(_Partial) / 100
+                        MyRefRet.NumBPEvalutated = _NumB
+                        MyRefRet.TerminalID = "POS"
+                        MyRefRet.RequireCommit = False
+                        MyRefRet.CodeIssuer = CSV(J + 3)
+                        MyRefRet.NameIssuer = CSV(J + 4)
+                        MyRefRet.Provider = "ARGENTEA"
+                        MyRefRet.Description = MyRefRet.Description & " - " & CSV(J + 5)
+                        MyRefRet.Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
+                    Case InternalArgenteaFunctionTypes.BPCVoid
+
+                        '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  PAGAMENTO BUONO PASTO "
+                        Dim _Partial As Decimal, _NumB As Integer
+                        Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
+
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.CodeResult = IIf(MyRefRet.Successfull, 1, 0)
+                        MyRefRet.Description = CSV(1)
+                        Dim Itms(200) As String
+                        ReDim Itms(CInt(CSV(2).Split("|")(0)))
+                        Itms = CSV(2).Split("|")
+                        ' il 3 è il numero di BP evasi in Tagli
+                        _NumB = 0
+                        For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
+                            For Y As Integer = 0 To CInt(Itms(X) - 1)
+                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
                                 _Partial += CDec(Itms(X + 1))
                                 _NumB += 1
                             Next
