@@ -5,8 +5,10 @@ Imports System.Collections.Generic
 Imports TPDotnet.IT.Common.Pos.EFT
 Imports TPDotnet.Pos
 Imports System.Windows.Forms
+Imports Microsoft.VisualBasic
 
-#Const DEBUG_SERVICE = 1
+
+#Const DEBUG_SERVICE = 0
 
 ''' <summary>
 '''     Oggetto Proxy di Comunicazione e  gestione
@@ -161,7 +163,7 @@ Public Class ClsProxyArgentea
     Private ReadOnly Property GetPar_RUPP() As String
         Get
             ' tech. primo accesso ( * per i parametri uso questo trick )
-            If m_RUPP <> Nothing And m_RUPP <> "" Then m_RUPP = m_TheModcntr.getParam(PARAMETER_MOD_CNTR + "." + "Argentea" + "." + OPT_BPParameterRuppArgentea)
+            m_RUPP = st_Parameters_Argentea.BPRupp
             Return m_RUPP
         End Get
     End Property
@@ -473,7 +475,7 @@ Public Class ClsProxyArgentea
             ' che influenzano il comportamento.
             '
             st_Parameters_Argentea = New ArgenteaParameters()
-            st_Parameters_Argentea.LoadParameters(theModCntr)
+            st_Parameters_Argentea.LoadParametersByReflection(theModCntr)
 
         Catch ex As Exception
 
@@ -866,7 +868,7 @@ Public Class ClsProxyArgentea
         m_CurrentBarcodeScan = String.Empty
         m_bWaitActive = False
         m_ServiceStatus = enProxyStatus.Uninitializated
-        m_PayableAmount = 0
+        'm_PayableAmount = 0
         m_Paid = 0
         m_VoidableAmount = 0
         m_VoidAmount = 0
@@ -1087,10 +1089,10 @@ Public Class ClsProxyArgentea
         ' scontrino in cassa riportandolo dai parametri
         ' globali che dfiniscono il comportamento.
         '
-        Dim OPT_EftReceiptCashierCopiesPayment As Integer = st_Parameters_Argentea.EftReceiptCashierCopiesPayment  '   <-- Parametro globale se printare lo scontrino della transazione bp su stampante di cassa locale
+        Dim OPT_BPEReceiptCashierCopiesPayment As Integer = st_Parameters_Argentea.BPECopies  '   <-- Parametro globale se printare lo scontrino della transazione bp su stampante di cassa locale
 
         ' In base al parametro globale si decide se stamparlo o meno.
-        For I As Integer = 1 To OPT_EftReceiptCashierCopiesPayment
+        For I As Integer = 1 To OPT_BPEReceiptCashierCopiesPayment
 
             ' Qui comunichiamo con la stampantina
             ' per stampare tutta la tranazione.
@@ -1101,18 +1103,26 @@ Public Class ClsProxyArgentea
                 ' Errore non bloccante
                 If returnArgenteaObject.Successfull Then
 
-                    ' Signal come errore di stampa ma non bloccante
-                    m_LastStatus = GLB_SIGNAL_OPERATOR
-                    m_LastErrorMessage = getPosTxtNew(m_TheModcntr.contxt, "POSLevelITCommonPrinterFailed", 0)
+                    LOG_Debug(getLocationString(funcName), "Printer failure")
+                    TPMsgBox(PosDef.TARMessageTypes.TPERROR,
+                                                    getPosTxtNew(m_TheModcntr.contxt,
+                                                    "POSLevelITCommonPrinterFailed", 0),
+                                                    0,
+                                                    m_TheModcntr,
+                                                    "POSLevelITCommonPrinterFailed")
 
-                    ' message box: atenzione non sono riuscito a stampare la ricevuta ma la transazione è valida
-                    msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPWARNING)
 
                 End If
 
             End If
 
         Next
+
+        Dim lTaCreateNmbr As Short = m_taobj.GetTALine(m_taobj.getLastMediaRecNr).theHdr.lTaCreateNmbr
+        TaArgenteaEMVRec.theHdr.lTaCreateNmbr = 0
+        TaArgenteaEMVRec.theHdr.lTaRefToCreateNmbr = lTaCreateNmbr
+        TaArgenteaEMVRec.bPrintReceipt = st_Parameters_Argentea.BPEPrintWithinTa
+        m_taobj.Add(TaArgenteaEMVRec)
 
     End Sub
 
@@ -1158,14 +1168,20 @@ Public Class ClsProxyArgentea
             ' Emulo l'event Handler come in modalità service
             CloseOperationHandler(Nothing, Nothing)
 
-            ' Dichiaro come concluso correttamente tutto
-            If m_ServiceStatus = enProxyStatus.InRunning Then
-
-                ' Se era rimasto in Running e non InError
-                ' tutto è filato liscio e torno con OK
+            If _CallHardware Then
                 m_ServiceStatus = enProxyStatus.OK
+            Else
+                m_ServiceStatus = enProxyStatus.KO
 
             End If
+            '' Dichiaro come concluso correttamente tutto
+            'If m_ServiceStatus = enProxyStatus.InRunning Then
+
+            '    ' Se era rimasto in Running e non InError
+            '    ' tutto è filato liscio e torno con OK
+            '    m_ServiceStatus = enProxyStatus.OK
+
+            'End If
 
         Catch ex As Exception
 
@@ -1392,7 +1408,7 @@ Public Class ClsProxyArgentea
                 '       Se il Numero di Buoni pagabili per una vendita
                 '       è superiore al numero di buoni passato procediamo
                 '       con la sgnazlazione.
-                Dim OptPayablesBPStr As String = m_TheModcntr.getParam(PARAMETER_MOD_CNTR + "." + "Argentea" + "." + OPT_BPNumMaxPayablesOnVoid).Trim()
+                Dim OptPayablesBPStr As String = st_Parameters_Argentea.BP_NumMaxPayablesOnVoid
                 Dim OptPayablesBP As Integer = CInt(Microsoft.VisualBasic.IIf(OptPayablesBPStr = "" Or OptPayablesBPStr = Nothing, "0", OptPayablesBPStr))
 
                 ' Controllo anche il numero di BP in totale globali alla Vendita corrente
@@ -1465,7 +1481,7 @@ Public Class ClsProxyArgentea
                     '       Se il Totale in ingresso è minore rispetto 
                     '       al valore di facciata del Buono Pasto una volta
                     '       ottenuto dalla materializzazione, opto per troncare su totale.
-                    Dim OptAcceptExceeded As Boolean = Microsoft.VisualBasic.IIf(m_TheModcntr.getParam(PARAMETER_MOD_CNTR + "." + "Argentea" + "." + OPT_BPAcceptExcedeedValues).Trim().ToUpper() = "Y", True, False)
+                    Dim OptAcceptExceeded As Boolean = st_Parameters_Argentea.BP_AcceptExcedeedValues
 
                     ' Mi conteggio eventuali eccessi su pagato
                     m_TotalValueExcedeed_CS = 0
@@ -1790,17 +1806,18 @@ Public Class ClsProxyArgentea
 
         Try
 
-            '
-            '   Print Last Receipt
-            '
-            If Not m_LastResponseRawArgentea IsNot Nothing Then
-                PrintReceipt(m_LastResponseRawArgentea)
-            End If
 
             '
             '   Evento chiave di chiusura
             '
             RaiseEvent Event_ProxyCollectDataTotalsAtEnd(Me, _DataResponse)
+
+            '
+            '   Print Last Receipt
+            '
+            If m_LastResponseRawArgentea IsNot Nothing Then
+                PrintReceipt(m_LastResponseRawArgentea)
+            End If
 
         Catch ex As Exception
 
@@ -1825,7 +1842,7 @@ Public Class ClsProxyArgentea
     Private Function CallHardware(funcName As String) As Boolean
 
         ' OUT su chiamate
-        Dim RefTo_MessageOut As String = Nothing
+        Dim RefTo_MessageOut As String = String.Empty
 
         CallHardware = False
 

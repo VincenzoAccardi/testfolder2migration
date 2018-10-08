@@ -469,6 +469,10 @@ Public Class clsMedia
             Else ' MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPE" Then
                 'Ticket Elettronico Basato su POS Argentea
                 _DoSpecialHandling4Vouchers2 = ProcessBPElettronico(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
+
+                If _DoSpecialHandling4Vouchers2 = IBPReturnCode.KO Then
+                    TPMsgBox(TPDotnet.Pos.PosDef.TARMessageTypes.TPERROR, getPosTxtNew(theModCntr.contxt, "UserMessage", TXT_EFT_PAYMENT_ABORT), TXT_EFT_PAYMENT_ABORT, theModCntr, "UserMessage")
+                End If
             End If
 
             ' Se il risultato del Processo è stato

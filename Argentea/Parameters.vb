@@ -495,6 +495,70 @@ Public Class ArgenteaParameters
 
 #End Region
 
+#Region "BuoniPasto"
+
+    Private _BPRupp As String
+    <ArgenteaParameters("BP_ParameterRuppArgentea", "")>
+    Public Property BPRupp() As String
+        Get
+            Return _BPRupp
+        End Get
+        Set(ByVal value As String)
+            _BPRupp = value
+        End Set
+    End Property
+
+
+    Private _BP_AcceptExcedeedValues As Boolean
+    <ArgenteaParameters("BP_AcceptExcedeedValues", False)>
+    Public Property BP_AcceptExcedeedValues() As Boolean
+        Get
+            Return _BP_AcceptExcedeedValues
+        End Get
+        Set(ByVal value As Boolean)
+            _BP_AcceptExcedeedValues = value
+        End Set
+    End Property
+
+    Private _BP_NumMaxPayablesOnVoid As Integer
+    <ArgenteaParameters("BP_NumMaxPayablesOnVoid", 0)>
+    Public Property BP_NumMaxPayablesOnVoid() As Integer
+        Get
+            Return _BP_NumMaxPayablesOnVoid
+        End Get
+        Set(ByVal value As Integer)
+            _BP_NumMaxPayablesOnVoid = value
+        End Set
+    End Property
+
+#Region "BPE"
+    Private _BPECopies As Integer
+    <ArgenteaParameters("BPE_COPIES", 1)>
+    Public Property BPECopies() As Integer
+        Get
+            Return _BPECopies
+        End Get
+        Set(ByVal value As Integer)
+            _BPECopies = value
+        End Set
+    End Property
+
+
+    Private _BPEPrintWithinTa As Boolean
+    <ArgenteaParameters("BPE_PRINT_WITHIN_TA", True)>
+    Public Property BPEPrintWithinTa() As Boolean
+        Get
+            Return _BPEPrintWithinTa
+        End Get
+        Set(ByVal value As Boolean)
+            _BPEPrintWithinTa = value
+        End Set
+    End Property
+
+#End Region
+
+#End Region
+
 #End Region
 
 #Region "Common"

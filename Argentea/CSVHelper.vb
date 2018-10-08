@@ -235,18 +235,20 @@ Public Class CSVHelper
                         MyRefRet.CodeResult = IIf(MyRefRet.Successfull, 1, 0)
                         MyRefRet.Description = CSV(1)
                         Dim Itms(200) As String
-                        ReDim Itms(CInt(CSV(2).Split("|")(0)))
+                        ReDim Itms(CInt(SetNumeric(CSV(2).Split("|")(0))))
                         Itms = CSV(2).Split("|")
                         ' il 3 è il numero di BP evasi in Tagli
                         _NumB = 0
-                        For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
-                            For Y As Integer = 0 To CInt(Itms(X) - 1)
-                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
-                                _Partial += CDec(Itms(X + 1))
-                                _NumB += 1
+                        If Not (String.IsNullOrEmpty(CSV(2))) Then
+                            For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
+                                For Y As Integer = 0 To CInt(Itms(X) - 1)
+                                    _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
+                                    _Partial += CDec(Itms(X + 1))
+                                    _NumB += 1
+                                Next
+                                '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
                             Next
-                            '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
-                        Next
+                        End If
                         MyRefRet.ListBPsEvaluated = _DictBPs
                         MyRefRet.Amount = CDec(_Partial) / 100
                         MyRefRet.NumBPEvalutated = _NumB
@@ -257,6 +259,7 @@ Public Class CSVHelper
                         MyRefRet.Provider = "ARGENTEA"
                         MyRefRet.Description = MyRefRet.Description & " - " & CSV(J + 5)
                         MyRefRet.Result = CSV(0)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
                         ParseReturnString = True
                         Exit For
                         Exit Select
@@ -313,14 +316,18 @@ Public Class CSVHelper
                         Itms = CSV(2).Split("|")
                         ' il 3 è il numero di BP evasi in Tagli
                         _NumB = 0
-                        For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
-                            For Y As Integer = 0 To CInt(Itms(X) - 1)
-                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
-                                _Partial += CDec(Itms(X + 1))
-                                _NumB += 1
+                        If Not (String.IsNullOrEmpty(CSV(2))) Then
+
+                            For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
+                                For Y As Integer = 0 To CInt(Itms(X) - 1)
+                                    _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
+                                    _Partial += CDec(Itms(X + 1))
+                                    _NumB += 1
+                                Next
+                                '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
                             Next
-                            '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
-                        Next
+                        End If
+
                         MyRefRet.ListBPsEvaluated = _DictBPs
                         MyRefRet.Amount = CDec(_Partial) / 100
                         MyRefRet.NumBPEvalutated = _NumB

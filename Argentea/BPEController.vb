@@ -659,7 +659,8 @@ Public Class BPEController
                 ' Totalizzatori per Taglio
                 Dim _NumCurrT As Integer = 0
                 Dim _ValCurrT As Decimal = 0
-
+                Dim szValue As String = String.Empty
+                Dim lIndex As Integer = 0
                 For Each pe As PaidEntry In resultData.PaidEntryBindingSource    ' service.PaidEntryBindingSource
 
                     '
@@ -667,20 +668,32 @@ Public Class BPEController
                     '   in corso per ogni taglio il numero di
                     '   tagli usati e l'importo totale.
                     '
-                    Dim KeyQTA As String = "bpe_QUANTITY_" + pe.FaceValue.Replace(",", "_").Trim()
-                    Dim KeyTOT As String = "bpe_AMOUNT_" + pe.FaceValue.Replace(",", "_").Trim()
+                    If (String.IsNullOrEmpty(szValue)) Then
+                        szValue = pe.FaceValue.Replace(",", "_")
+                        lIndex = 1
+                    End If
+                    If (szValue <> pe.FaceValue.Replace(",", "_")) Then
+                        szValue = pe.FaceValue.Replace(",", "_")
+                        lIndex += 1
+                    End If
+                    Dim KeyQTA As String = "lBPE_QUANTITY_" + lIndex.ToString
+                    Dim KeyTOT As String = "dBPE_AMOUNT_" + lIndex.ToString
+                    Dim KeyVALUE As String = "dBPE_VALUE_" + lIndex.ToString
                     If Not NewTaMediaRec.ExistField(KeyQTA) Then
                         NewTaMediaRec.AddField(KeyQTA, DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
                         NewTaMediaRec.AddField(KeyTOT, DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+                        NewTaMediaRec.AddField(KeyVALUE, DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
                         _NumCurrT = 0
                         _ValCurrT = 0
                     Else
                         _NumCurrT = NewTaMediaRec.GetPropertybyName(KeyQTA)
-                        _ValCurrT = NewTaMediaRec.GetPropertybyName(KeyTOT)
+                        _ValCurrT = CDec(NewTaMediaRec.GetPropertybyName(KeyTOT).Replace(".", ","))
                     End If
                     '
                     NewTaMediaRec.setPropertybyName(KeyQTA, _NumCurrT + 1)
                     NewTaMediaRec.setPropertybyName(KeyTOT, _ValCurrT + CDec(pe.Value))
+                    NewTaMediaRec.setPropertybyName(KeyVALUE, CDec(pe.Value))
+
 
                     '
                     ' Se nella sessione c'è stato un eccesso
