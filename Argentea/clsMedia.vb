@@ -491,7 +491,6 @@ Public Class clsMedia
             LOG_FuncExit(getLocationString(funcName), "Function " + funcName + " returns " & DoSpecialHandling4Vouchers2.ToString)
         End Try
 
-
     End Function
 
 
@@ -653,16 +652,48 @@ Public Class clsMedia
 
             End If
 
-            ' Richiama il metodo dell'interfaccia --> "BPCController.Dematerialize"
-            ' che avvia il form e rimane sulla gestione tramite eventi sul form per
-            ' la scansione e validazione dei BPC C finale sta per i Cartacei (Controller dedicato)
             '
-            ProcessBPCartaceo = handler.Dematerialize(New Dictionary(Of String, Object) From {
+            ' Preparo l'insieme degli argomenti dinamici da dare in pasto 
+            ' al processo che si occupa di dematirialazzare o stornare un
+            ' set di bp 
+            '
+            Dim Args As Dictionary(Of String, Object) = New Dictionary(Of String, Object) From {
                                                               {"Controller", TheModCntr},
                                                               {"Transaction", taobj},
                                                               {"MediaRecord", MyTaMediaRec},
                                                               {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
-                                                          })
+                                                          }
+
+            ' BEHAVIOR
+
+            '
+            ' Controllo che se arrivati fin qui dal ModLineVoid
+            ' che tratta le selzioni sulla TA principale l'operatore
+            ' non abbia cliccato sul tasto ANNULLO che ha fatto
+            ' si di invertire l'azione sulla voce di  selezione 
+            ' impostando l'importo in negativo.
+            ' (Quindi posso capire se sono su uno STORNO)
+            '
+            If MyTaMediaRec.dTaPaid < 0 Then
+
+                ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
+                ' che avvia il form e rimane sulla gestione tramite eventi sul form per
+                ' la scansione e validazione dei BPC C finale sta per i cartacei (Controller dedicato)
+
+                ProcessBPCartaceo = handler.Void(Args)
+
+            Else
+
+                ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
+                ' che avvia il form e rimane sulla gestione tramite eventi sul form per
+                ' la scansione e validazione dei BPC C finale sta per i cartacei (Controller dedicato)
+
+                ProcessBPCartaceo = handler.Dematerialize(Args)
+
+            End If
+
+
+
         Catch ex As Exception
             Try
                 LOG_Error(getLocationString(funcName), ex)
@@ -706,6 +737,18 @@ Public Class clsMedia
                 Exit Function
             End If
 
+            '
+            ' Preparo l'insieme degli argomenti dinamici da dare in pasto 
+            ' al processo che si occupa di dematirialazzare o stornare un
+            ' set di bp 
+            '
+            Dim Args As Dictionary(Of String, Object) = New Dictionary(Of String, Object) From {
+                                                              {"Controller", TheModCntr},
+                                                              {"Transaction", taobj},
+                                                              {"MediaRecord", MyTaMediaRec},
+                                                              {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
+                                                          }
+            ' BEHAVIOR
 
             '
             ' Controllo che se arrivati fin qui dal ModLineVoid
@@ -718,28 +761,18 @@ Public Class clsMedia
             If MyTaMediaRec.dTaPaid < 0 Then
 
                 ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
-                ' che avvia il form e rimane sulla gestione tramite eventi sul form per
-                ' la scansione e validazione dei BPE E finale sta per gli Elettronici (Controller dedicato)
+                ' che si mette in attesa sulla schermata mentre sotto attende la risposta
+                ' del terminale pos che fa le validazione dei BPE E finale sta per gli Elettronici (Controller dedicato)
 
-                ProcessBPElettronico = handler.Void(New Dictionary(Of String, Object) From {
-                                                              {"Controller", TheModCntr},
-                                                              {"Transaction", taobj},
-                                                              {"MediaRecord", MyTaMediaRec},
-                                                              {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
-                                                          })
+                ProcessBPElettronico = handler.Void(Args)
 
             Else
 
                 ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
-                ' che avvia il form e rimane sulla gestione tramite eventi sul form per
-                ' la scansione e validazione dei BPE E finale sta per gli Elettronici (Controller dedicato)
+                ' che si mette in attesa sulla schermata mentre sotto attende la risposta
+                ' del terminale pos che fa lo storno dei BPE E finale sta per gli Elettronici (Controller dedicato)
 
-                ProcessBPElettronico = handler.Dematerialize(New Dictionary(Of String, Object) From {
-                                                              {"Controller", TheModCntr},
-                                                              {"Transaction", taobj},
-                                                              {"MediaRecord", MyTaMediaRec},
-                                                              {"MediaMemberDetailRecord", MyTaMediaMemberDetailRec}
-                                                          })
+                ProcessBPElettronico = handler.Dematerialize(Args)
 
             End If
 

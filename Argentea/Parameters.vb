@@ -495,6 +495,9 @@ Public Class ArgenteaParameters
 
 #End Region
 
+
+#End Region
+
 #Region "BuoniPasto"
 
     Private _BPRupp As String
@@ -520,6 +523,17 @@ Public Class ArgenteaParameters
         End Set
     End Property
 
+    Private _BP_AccorpateOnTA As Boolean
+    <ArgenteaParameters("BP_AccorpateOnTA", False)>
+    Public Property BP_AccorpateOnTA() As Boolean
+        Get
+            Return _BP_AccorpateOnTA
+        End Get
+        Set(ByVal value As Boolean)
+            _BP_AccorpateOnTA = value
+        End Set
+    End Property
+
     Private _BP_NumMaxPayablesOnVoid As Integer
     <ArgenteaParameters("BP_NumMaxPayablesOnVoid", 0)>
     Public Property BP_NumMaxPayablesOnVoid() As Integer
@@ -528,6 +542,17 @@ Public Class ArgenteaParameters
         End Get
         Set(ByVal value As Integer)
             _BP_NumMaxPayablesOnVoid = value
+        End Set
+    End Property
+
+    Private _BP_MaxBPPayableSomeSession As Integer
+    <ArgenteaParameters("BP_MaxBPPayableSomeSession", 0)>
+    Public Property BP_MaxBPPayableSomeSession() As Integer
+        Get
+            Return _BP_MaxBPPayableSomeSession
+        End Get
+        Set(ByVal value As Integer)
+            _BP_MaxBPPayableSomeSession = value
         End Set
     End Property
 
@@ -554,8 +579,6 @@ Public Class ArgenteaParameters
             _BPEPrintWithinTa = value
         End Set
     End Property
-
-#End Region
 
 #End Region
 

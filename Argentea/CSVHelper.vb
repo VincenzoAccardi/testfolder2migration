@@ -34,7 +34,11 @@ Public Class CSVHelper
     ''' <param name="argenteaFunctionReturnObject">L'oggetto da fillare con gli attributi dati dalla risposta dopo codifica</param>
     ''' <param name="szCharSeparator">Il separatore nella ripsota CSV remota che solitamente è - </param>
     ''' <returns>Se True (se non ci sono cambiamenti nel protocollo Argentea errori di Parsing non ci dovrebbero essere) Altrimenti è un Errore si Parsing sul Protocollo di risposte Argentea</returns>
-    Public Shared Function ParseReturnString(ByVal returnString As String, ByVal argenteaFunction As InternalArgenteaFunctionTypes, ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, Optional ByRef szCharSeparator As String = ";") As Boolean
+    Public Shared Function ParseReturnString(ByVal returnString As String,
+                                             ByVal argenteaFunction As InternalArgenteaFunctionTypes,
+                                             ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject,
+                                             Optional ByVal szCharSeparator As String = ";",
+                                             Optional ByVal iFractParser As Integer = 1) As Boolean
         ParseReturnString = False
         Dim I, J As Integer
         Dim funcName As String = "ParseReturnString"
@@ -71,7 +75,7 @@ Public Class CSVHelper
 
         ' Per i valori attesi numerici  se stringa vuota riporta False o se "0" Riporta False o se "1" Riporta True
         Dim SetBoolState As Func(Of String, String) = Function(ByVal strFieldCSV As String) 'As String
-                                                          If strFieldCSV = String.Empty Then Return False Else Return True
+                                                          If strFieldCSV = String.Empty OrElse strFieldCSV.Trim() = "0" Then Return False Else Return True
                                                       End Function
 
 
@@ -206,15 +210,16 @@ Public Class CSVHelper
                         Exit For
                         Exit Select
 
-                    ' AZIONDE DEL CASO: Buoni Pasto Cartacei da protocollo in risposta dal SERVICE remoto Argentea
-                    Case InternalArgenteaFunctionTypes.BPCPayment
+                    Case InternalArgenteaFunctionTypes.SinglePaid_BP
                         '"OK-0 - BUONO VALIDATO CON SUCCESSO-68195717306007272725069219400700-700-ARGENTEA-201809181448517-0-202--"    ' <-- x test 
+                        ' AZIONDE DEL CASO: Buoni Pasto Cartacei da protocollo in risposta dal SERVICE remoto Argentea
                         MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
                         MyRefRet.CodeResult = SetNumeric(CSV(1))
                         MyRefRet.Description = CSV(2)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
                         ' il 3 c'è già
-                        MyRefRet.Amount = SetNumeric(CSV(4))
+                        MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
                         MyRefRet.Provider = CSV(5)
                         MyRefRet.TerminalID = CSV(6)
                         MyRefRet.RequireCommit = SetBoolState(CSV(7))
@@ -224,9 +229,9 @@ Public Class CSVHelper
                         Exit For
                         Exit Select
 
-                    ' AZIONDE DEL CASO: Buoni Pasto Elettronici  da protocollo in risposta dal POS locale fornito da Argentea
-                    Case InternalArgenteaFunctionTypes.BPEPayment
+                    Case InternalArgenteaFunctionTypes.MultiPaid_BP
                         '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  PAGAMENTO BUONO PASTO "
+                        ' AZIONE DEL CASO: Buoni Pasto Elettronici  da protocollo in risposta dal POS locale fornito da Argentea
                         Dim _Partial As Decimal, _NumB As Integer
                         Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
 
@@ -239,33 +244,30 @@ Public Class CSVHelper
                         Itms = CSV(2).Split("|")
                         ' il 3 è il numero di BP evasi in Tagli
                         _NumB = 0
-                        If Not (String.IsNullOrEmpty(CSV(2))) Then
-                            For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
-                                For Y As Integer = 0 To CInt(Itms(X) - 1)
-                                    _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
-                                    _Partial += CDec(Itms(X + 1))
-                                    _NumB += 1
-                                Next
-                                '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
+                        For X As Integer = 1 To (CInt(SetNumeric(Itms(0))) + 1) Step 2
+                            For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
+                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
+                                _Partial += CDec(SetNumeric(Itms(X + 1)))
+                                _NumB += 1
                             Next
-                        End If
+                            '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
+                        Next
                         MyRefRet.ListBPsEvaluated = _DictBPs
-                        MyRefRet.Amount = CDec(_Partial) / 100
+                        MyRefRet.Amount = CDec(_Partial) / iFractParser
                         MyRefRet.NumBPEvalutated = _NumB
                         MyRefRet.TerminalID = "POS"
                         MyRefRet.RequireCommit = False
                         MyRefRet.CodeIssuer = CSV(J + 3)
                         MyRefRet.NameIssuer = CSV(J + 4)
                         MyRefRet.Provider = "ARGENTEA"
-                        MyRefRet.Description = MyRefRet.Description & " - " & CSV(J + 5)
-                        MyRefRet.Result = CSV(0)
+                        MyRefRet.Description = MyRefRet.Description '& " - " & CSV(J + 5)
                         MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
+                        MyRefRet.Result = CSV(0)
                         ParseReturnString = True
                         Exit For
                         Exit Select
 
-                    Case InternalArgenteaFunctionTypes.BPEVoid
-
+                    Case InternalArgenteaFunctionTypes.MultiVoid_BP
                         '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  STORNO BUONO PASTO "
                         Dim _Partial As Decimal, _NumB As Integer
                         Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
@@ -275,68 +277,48 @@ Public Class CSVHelper
                         MyRefRet.CodeResult = IIf(MyRefRet.Successfull, 1, 0)
                         MyRefRet.Description = CSV(1)
                         Dim Itms(200) As String
-                        ReDim Itms(CInt(CSV(2).Split("|")(0)))
+                        ReDim Itms(CInt(SetNumeric(CSV(2).Split("|")(0))))
                         Itms = CSV(2).Split("|")
                         ' il 3 è il numero di BP evasi in Tagli
                         _NumB = 0
-                        For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
-                            For Y As Integer = 0 To CInt(Itms(X) - 1)
-                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
-                                _Partial += CDec(Itms(X + 1))
+                        For X As Integer = 1 To (CInt(SetNumeric(Itms(0))) + 1) Step 2
+                            For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
+                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
+                                _Partial += CDec(SetNumeric(Itms(X + 1)))
                                 _NumB += 1
                             Next
                             '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
                         Next
                         MyRefRet.ListBPsEvaluated = _DictBPs
-                        MyRefRet.Amount = CDec(_Partial) / 100
+                        MyRefRet.Amount = CDec(_Partial) / iFractParser
                         MyRefRet.NumBPEvalutated = _NumB
                         MyRefRet.TerminalID = "POS"
                         MyRefRet.RequireCommit = False
                         MyRefRet.CodeIssuer = CSV(J + 3)
                         MyRefRet.NameIssuer = CSV(J + 4)
                         MyRefRet.Provider = "ARGENTEA"
-                        MyRefRet.Description = MyRefRet.Description & " - " & CSV(J + 5)
+                        MyRefRet.Description = MyRefRet.Description '& " - " & CSV(J + 5)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
                         MyRefRet.Result = CSV(0)
                         ParseReturnString = True
                         Exit For
                         Exit Select
 
-                    Case InternalArgenteaFunctionTypes.BPCVoid
-
-                        '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  PAGAMENTO BUONO PASTO "
-                        Dim _Partial As Decimal, _NumB As Integer
+                    Case InternalArgenteaFunctionTypes.SingleVoid_BP
+                        '"OK-0 - BUONO STORNATO CON SUCCESSO-68195717306007272725069219400700-700-ARGENTEA-201809181448517-0-202--"
                         Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
 
                         MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
-                        MyRefRet.CodeResult = IIf(MyRefRet.Successfull, 1, 0)
-                        MyRefRet.Description = CSV(1)
-                        Dim Itms(200) As String
-                        ReDim Itms(CInt(CSV(2).Split("|")(0)))
-                        Itms = CSV(2).Split("|")
-                        ' il 3 è il numero di BP evasi in Tagli
-                        _NumB = 0
-                        If Not (String.IsNullOrEmpty(CSV(2))) Then
-
-                            For X As Integer = 1 To (CInt(Itms(0)) + 1) Step 2
-                                For Y As Integer = 0 To CInt(Itms(X) - 1)
-                                    _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(Itms(X + 1) / 100))
-                                    _Partial += CDec(Itms(X + 1))
-                                    _NumB += 1
-                                Next
-                                '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
-                            Next
-                        End If
-
-                        MyRefRet.ListBPsEvaluated = _DictBPs
-                        MyRefRet.Amount = CDec(_Partial) / 100
-                        MyRefRet.NumBPEvalutated = _NumB
-                        MyRefRet.TerminalID = "POS"
-                        MyRefRet.RequireCommit = False
-                        MyRefRet.CodeIssuer = CSV(J + 3)
-                        MyRefRet.NameIssuer = CSV(J + 4)
-                        MyRefRet.Provider = "ARGENTEA"
-                        MyRefRet.Description = MyRefRet.Description & " - " & CSV(J + 5)
+                        MyRefRet.CodeResult = SetNumeric(CSV(1))
+                        MyRefRet.Description = CSV(2)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
+                        ' il 3 c'è già
+                        MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
+                        MyRefRet.Provider = CSV(5)
+                        MyRefRet.TerminalID = CSV(6)
+                        MyRefRet.RequireCommit = SetBoolState(CSV(7))
+                        MyRefRet.CodeIssuer = CSV(8)
                         MyRefRet.Result = CSV(0)
                         ParseReturnString = True
                         Exit For
