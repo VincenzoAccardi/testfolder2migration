@@ -42,5 +42,22 @@ Public Interface IBPDematerialize
     ''' <returns></returns>
     Function Void(ByRef Parameters As System.Collections.Generic.Dictionary(Of String, Object)) As IBPReturnCode
 
+
+    ''' <summary>
+    '''     Azione di Chiusura
+    '''     (per uso e consumo della clsEndTAHandling)
+    '''     fa sì che si chiudano tutte le transazioni in corso per i BP
+    '''     ti tipo TicketRestaurant denominati BPC (Buoni Pasti Cartacei)
+    '''     chiamando l'API dedicata sul servizio di Argentea Close
+    ''' </summary>
+    ''' <param name="Parameters">
+    '''     Il Set di parametri dinamici ad uso e consumo
+    '''     del Controller che implementa il metodo passati
+    '''     in modo dinamico previsti sul DB di BackStore
+    ''' </param>
+    ''' <returns>True se l'azione API ha dato esito OK altrimenti False</returns>
+    Function Close(ByRef Parameters As System.Collections.Generic.Dictionary(Of String, Object), SilentMode As Boolean) As Boolean
+
+
 End Interface
 #End Region
