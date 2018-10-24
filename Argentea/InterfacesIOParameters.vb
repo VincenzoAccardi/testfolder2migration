@@ -839,8 +839,12 @@ Public Class CommonParameters
     ''' <returns>Il numero di Buoni Pasto già utilizzati in corso della vendita.</returns>
     Protected Friend Function GetAlreadyOnTAScanned() As Integer
 
-        Dim doc As Xml.Linq.XDocument = _Transaction.TAtoXDocument(False, 0, False)
-        Return doc.XPathSelectElements("/TAS/NEW_TA/MEDIA[szBPC or szBPE]").Count()
+        Try
+            Dim doc As Xml.Linq.XDocument = _Transaction.TAtoXDocument(False, 0, False)
+            Return doc.XPathSelectElements("/TAS/NEW_TA/MEDIA[szBPC or szBPE]").Count()
+        Catch ex As Exception
+            Return 0
+        End Try
 
     End Function
 

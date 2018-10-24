@@ -32,6 +32,21 @@ Public Enum InternalArgenteaFunctionTypes
     ADVVoid
 
     ''' <summary>
+    '''     Chiamata alle API di Argentea per l'Inizializazzione di un chiamata di dematerializzazione o storno
+    ''' </summary>
+    Initialization_AG
+
+    ''' <summary>
+    '''     Chiamata alle API di Argentea per il Reset del conteggio remoto delle chiamate
+    ''' </summary>
+    ResetCounter_AG
+
+    ''' <summary>
+    '''     Chiamata alle API di Argentea per alcuni tipi di dematerializzazione che richiedono un ultriore conferma alla chiamata
+    ''' </summary>
+    Confirmation_AG
+
+    ''' <summary>
     '''     Protocollo in riposta a Pagamento su Servizio remoto Argentea
     ''' </summary>
     SinglePaid_BP
@@ -53,6 +68,12 @@ Public Enum InternalArgenteaFunctionTypes
     '''     Multi elementi di risposta
     ''' </summary>
     MultiVoid_BP
+
+    ''' <summary>
+    '''     Chiamata alle API di Argentea per il Close finale su un inizio di comunicazione per il demat remoto 
+    ''' </summary>
+    Close_AG
+
 
 End Enum
 

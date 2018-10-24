@@ -422,7 +422,7 @@ Public Class clsMedia
     End Function
 
     ''' <summary>
-    '''     Gestione spcializzata al pagamento  dietro
+    '''     Gestione spcializzata al pagamento  dietro (Punto d'ingresso da ModLineVoid in base al Tipo 7)
     '''     i tipi di Buono Pasto in gestione Argentea
     '''     
     '''       BPC ->  Buono Pasto Cartaceo (Tasto su pagamenti in Tab dedicata con Cartaceo)

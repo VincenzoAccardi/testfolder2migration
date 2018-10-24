@@ -50,16 +50,15 @@ Public Class CSVHelper
 
         ' Formatta il campo scpeciale Recipt senza vincoli dei vbcrlf di vb
         Dim ReplaceVbCRLF As Func(Of String, String) = Function(ByVal strFieldCSV As String) 'As String
-
                                                            strFieldCSV = Replace(strFieldCSV,
-                                                    Microsoft.VisualBasic.vbCrLf,
-                                                    Microsoft.VisualBasic.vbLf)
+                                                            Microsoft.VisualBasic.vbCrLf,
+                                                            Microsoft.VisualBasic.vbLf)
                                                            strFieldCSV = Replace(strFieldCSV,
-                                                    Microsoft.VisualBasic.vbCr,
-                                                    Microsoft.VisualBasic.vbLf)
+                                                            Microsoft.VisualBasic.vbCr,
+                                                            Microsoft.VisualBasic.vbLf)
                                                            strFieldCSV = Replace(strFieldCSV,
-                                                                    Microsoft.VisualBasic.vbLf,
-                                                                    Microsoft.VisualBasic.vbCrLf)
+                                                            Microsoft.VisualBasic.vbLf,
+                                                            Microsoft.VisualBasic.vbCrLf)
                                                            Return strFieldCSV
                                                        End Function
 
@@ -78,6 +77,52 @@ Public Class CSVHelper
                                                           If strFieldCSV = String.Empty OrElse strFieldCSV.Trim() = "0" Then Return False Else Return True
                                                       End Function
 
+
+        Dim SetErrResponse As Func(Of String, EFT.ArgenteaFunctionReturnObject) = Function(msg As String) ' As ArgenteaFunctionReturnObject
+                                                                                      Dim CSVE(200) As String
+                                                                                      CSVE = returnString.Split("-") 'szCharSeparator)
+                                                                                      Dim MyRefErr As New ArgenteaFunctionReturnObject
+                                                                                      '"KO-903-PROGRESSIVO FUORI SEQUENZA-----0---"  ' <-- x test (su ko remoti)
+                                                                                      MyRefErr.ArgenteaFunction = argenteaFunction
+                                                                                      MyRefErr.Successfull = False
+                                                                                      MyRefErr.CodeResult = CSVE(1)
+                                                                                      MyRefErr.Description = CSVE(2)
+                                                                                      MyRefErr.Receipt = msg
+                                                                                      MyRefErr.Amount = "0"
+                                                                                      MyRefErr.Provider = ""
+                                                                                      MyRefErr.TerminalID = ""
+                                                                                      MyRefErr.RequireCommit = False
+                                                                                      MyRefErr.CodeIssuer = ""
+                                                                                      MyRefErr.Result = CSVE(0)
+                                                                                      Return MyRefErr
+                                                                                  End Function
+
+        Dim GetResultAndDictBPs As Func(Of String,
+            Tuple(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal))) =
+            Function(msg As String) As Tuple(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal))
+                Dim _Partial As Decimal, _NumB As Integer
+                Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
+
+                Dim Itms(200) As String
+                ReDim Itms(CInt(SetNumeric(CSV(2).Split("|")(0))))
+                Itms = CSV(2).Split("|")
+                ' il 3 è il numero di BP evasi in Tagli
+                _NumB = 0
+                For X As Integer = 1 To (CInt(SetNumeric(Itms(0))) + 1) Step 2
+                    For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
+                        _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
+                        _Partial += CDec(SetNumeric(Itms(X + 1)))
+                        _NumB += 1
+                    Next
+                    '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
+                Next
+                Return Tuple.Create(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal))(
+                    _Partial,
+                    _NumB,
+                    _DictBPs
+                )
+
+            End Function
 
         Try
 
@@ -210,21 +255,109 @@ Public Class CSVHelper
                         Exit For
                         Exit Select
 
+                    Case InternalArgenteaFunctionTypes.Initialization_AG
+                        '"OK--TICKET APERTO-----0---"    ' <-- x test 
+                        '"KO-903-PROGRESSIVO FUORI SEQUENZA-----0---"  ' <-- x test (su ko remoti)
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.CodeResult = "0"
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.Receipt = ""
+                            MyRefRet.Amount = "0"
+                            MyRefRet.Provider = ""
+                            MyRefRet.TerminalID = ""
+                            MyRefRet.RequireCommit = False
+                            MyRefRet.CodeIssuer = ""
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
+                    Case InternalArgenteaFunctionTypes.ResetCounter_AG
+                        '"OK-0 - BUONO VALIDATO CON SUCCESSO-68195717306007272725069219400700-700-ARGENTEA-201809181448517-0-202--"    ' <-- x test 
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.CodeResult = SetNumeric(CSV(1))
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
+                            MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
+                            MyRefRet.Provider = CSV(5)
+                            MyRefRet.TerminalID = CSV(6)
+                            MyRefRet.RequireCommit = SetBoolState(CSV(7))
+                            MyRefRet.CodeIssuer = CSV(8)
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
+                    Case InternalArgenteaFunctionTypes.Confirmation_AG
+                        '"OK-0 -CONFERMATO CON SUCCESSO-----0-2--"    ' <-- x test 
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.CodeResult = SetNumeric(CSV(1))
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
+                            MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
+                            MyRefRet.Provider = CSV(5)
+                            MyRefRet.TerminalID = CSV(6)
+                            MyRefRet.RequireCommit = False
+                            MyRefRet.CodeIssuer = CSV(8)
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
+                    Case InternalArgenteaFunctionTypes.Close_AG
+                        '"OK-0 -OPERAZIONE COMPLETATA---ARGENTEA--0---"    ' <-- x test 
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.CodeResult = SetNumeric(CSV(1))
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
+                            MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
+                            MyRefRet.Provider = CSV(5)
+                            MyRefRet.TerminalID = CSV(6)
+                            MyRefRet.RequireCommit = False
+                            MyRefRet.CodeIssuer = CSV(8)
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
                     Case InternalArgenteaFunctionTypes.SinglePaid_BP
                         '"OK-0 - BUONO VALIDATO CON SUCCESSO-68195717306007272725069219400700-700-ARGENTEA-201809181448517-0-202--"    ' <-- x test 
                         ' AZIONDE DEL CASO: Buoni Pasto Cartacei da protocollo in risposta dal SERVICE remoto Argentea
-                        MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
-                        MyRefRet.CodeResult = SetNumeric(CSV(1))
-                        MyRefRet.Description = CSV(2)
-                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
-                        ' il 3 c'è già
-                        MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
-                        MyRefRet.Provider = CSV(5)
-                        MyRefRet.TerminalID = CSV(6)
-                        MyRefRet.RequireCommit = SetBoolState(CSV(7))
-                        MyRefRet.CodeIssuer = CSV(8)
-                        MyRefRet.Result = CSV(0)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.CodeResult = SetNumeric(CSV(1))
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
+                            MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
+                            MyRefRet.Provider = CSV(5)
+                            MyRefRet.TerminalID = CSV(6)
+                            MyRefRet.RequireCommit = SetBoolState(CSV(7))
+                            MyRefRet.CodeIssuer = CSV(8)
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
                         ParseReturnString = True
                         Exit For
                         Exit Select
@@ -232,94 +365,71 @@ Public Class CSVHelper
                     Case InternalArgenteaFunctionTypes.MultiPaid_BP
                         '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  PAGAMENTO BUONO PASTO "
                         ' AZIONE DEL CASO: Buoni Pasto Elettronici  da protocollo in risposta dal POS locale fornito da Argentea
-                        Dim _Partial As Decimal, _NumB As Integer
-                        Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
-
-                        MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
-                        MyRefRet.CodeResult = IIf(MyRefRet.Successfull, 1, 0)
-                        MyRefRet.Description = CSV(1)
-                        Dim Itms(200) As String
-                        ReDim Itms(CInt(SetNumeric(CSV(2).Split("|")(0))))
-                        Itms = CSV(2).Split("|")
-                        ' il 3 è il numero di BP evasi in Tagli
-                        _NumB = 0
-                        For X As Integer = 1 To (CInt(SetNumeric(Itms(0))) + 1) Step 2
-                            For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
-                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
-                                _Partial += CDec(SetNumeric(Itms(X + 1)))
-                                _NumB += 1
-                            Next
-                            '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
-                        Next
-                        MyRefRet.ListBPsEvaluated = _DictBPs
-                        MyRefRet.Amount = CDec(_Partial) / iFractParser
-                        MyRefRet.NumBPEvalutated = _NumB
-                        MyRefRet.TerminalID = "POS"
-                        MyRefRet.RequireCommit = False
-                        MyRefRet.CodeIssuer = CSV(J + 3)
-                        MyRefRet.NameIssuer = CSV(J + 4)
-                        MyRefRet.Provider = "ARGENTEA"
-                        MyRefRet.Description = MyRefRet.Description '& " - " & CSV(J + 5)
-                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
-                        MyRefRet.Result = CSV(0)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            Dim Collect As Tuple(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal)) = GetResultAndDictBPs("Res")
+                            MyRefRet.ListBPsEvaluated = Collect.Item3
+                            MyRefRet.Amount = Collect.Item1 / iFractParser
+                            MyRefRet.NumBPEvalutated = Collect.Item2
+                            MyRefRet.TerminalID = "POS"
+                            MyRefRet.RequireCommit = False
+                            MyRefRet.CodeIssuer = CSV(J + 3)
+                            MyRefRet.NameIssuer = CSV(J + 4)
+                            MyRefRet.Provider = "ARGENTEA"
+                            MyRefRet.Description = MyRefRet.Description '& " - " & CSV(J + 5)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
                         ParseReturnString = True
                         Exit For
                         Exit Select
 
                     Case InternalArgenteaFunctionTypes.MultiVoid_BP
                         '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  STORNO BUONO PASTO "
-                        Dim _Partial As Decimal, _NumB As Integer
-                        Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
-
-                        MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
-                        MyRefRet.CodeResult = IIf(MyRefRet.Successfull, 1, 0)
-                        MyRefRet.Description = CSV(1)
-                        Dim Itms(200) As String
-                        ReDim Itms(CInt(SetNumeric(CSV(2).Split("|")(0))))
-                        Itms = CSV(2).Split("|")
-                        ' il 3 è il numero di BP evasi in Tagli
-                        _NumB = 0
-                        For X As Integer = 1 To (CInt(SetNumeric(Itms(0))) + 1) Step 2
-                            For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
-                                _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
-                                _Partial += CDec(SetNumeric(Itms(X + 1)))
-                                _NumB += 1
-                            Next
-                            '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
-                        Next
-                        MyRefRet.ListBPsEvaluated = _DictBPs
-                        MyRefRet.Amount = CDec(_Partial) / iFractParser
-                        MyRefRet.NumBPEvalutated = _NumB
-                        MyRefRet.TerminalID = "POS"
-                        MyRefRet.RequireCommit = False
-                        MyRefRet.CodeIssuer = CSV(J + 3)
-                        MyRefRet.NameIssuer = CSV(J + 4)
-                        MyRefRet.Provider = "ARGENTEA"
-                        MyRefRet.Description = MyRefRet.Description '& " - " & CSV(J + 5)
-                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
-                        MyRefRet.Result = CSV(0)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+
+                        If MyRefRet.Successfull Then
+                            Dim Collect As Tuple(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal)) = GetResultAndDictBPs("Res")
+                            MyRefRet.ListBPsEvaluated = Collect.Item3
+                            MyRefRet.Amount = Collect.Item1 / iFractParser
+                            MyRefRet.NumBPEvalutated = Collect.Item2
+                            MyRefRet.TerminalID = "POS"
+                            MyRefRet.RequireCommit = False
+                            MyRefRet.CodeIssuer = CSV(J + 3)
+                            MyRefRet.NameIssuer = CSV(J + 4)
+                            MyRefRet.Provider = "ARGENTEA"
+                            MyRefRet.Description = MyRefRet.Description '& " - " & CSV(J + 5)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
                         ParseReturnString = True
                         Exit For
                         Exit Select
 
                     Case InternalArgenteaFunctionTypes.SingleVoid_BP
                         '"OK-0 - BUONO STORNATO CON SUCCESSO-68195717306007272725069219400700-700-ARGENTEA-201809181448517-0-202--"
-                        Dim _DictBPs As New Collections.Generic.Dictionary(Of String, Decimal)
-
-                        MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
-                        MyRefRet.CodeResult = SetNumeric(CSV(1))
-                        MyRefRet.Description = CSV(2)
-                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
-                        ' il 3 c'è già
-                        MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
-                        MyRefRet.Provider = CSV(5)
-                        MyRefRet.TerminalID = CSV(6)
-                        MyRefRet.RequireCommit = SetBoolState(CSV(7))
-                        MyRefRet.CodeIssuer = CSV(8)
-                        MyRefRet.Result = CSV(0)
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                            MyRefRet.CodeResult = SetNumeric(CSV(1))
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
+                            MyRefRet.Amount = CDec(SetNumeric(CSV(4))) / iFractParser
+                            MyRefRet.Provider = CSV(5)
+                            MyRefRet.TerminalID = CSV(6)
+                            MyRefRet.RequireCommit = SetBoolState(CSV(7))
+                            MyRefRet.CodeIssuer = CSV(8)
+                            MyRefRet.Result = CSV(0)
+                        Else
+                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
+                        End If
                         ParseReturnString = True
                         Exit For
                         Exit Select

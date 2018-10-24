@@ -42,11 +42,6 @@ Public Class BPCController
     ' da cui viene avviato e la transazione in corso.
     Private Const GLB_ERROR_INTERNAL_START As String = "ERRPR_START_PROXY_INTERNAL"
 
-    ' Su Errore Parsing utilizzata per segnalazione
-    ' di errore su protocollo non previsto.
-    '   Errore classificato su risposta Argentea .: RetVal.CodeResult 
-    Private Const GLB_ERROR_PARSING As String = "ERROR-PARSING"
-
     ' Su Errore Pagabile rispetto all'ammontare del pagamento
     ' assegno errore di non valido per uscire dal pagamento BP
     Private Const GLB_ERROR_PAYABLE As String = "ERROR_PAYABLE"
@@ -69,7 +64,7 @@ Public Class BPCController
 
     ' Nel riprendere i dati provenienti dal proxy di Argentea (proxy mode)
     ' il controller di gestione corrente ha sollevato un eccezione.
-    Private Const GLB_ERROR_COLLECT_DATA_SERVICE As String = "EXCEPTION-COLLECT-PROCY-DATA"
+    Private Const GLB_ERROR_COLLECT_DATA_SERVICE As String = "EXCEPTION-COLLECT-SRVC-DATA"
 
     ' Nel Flow della funzione Entry il Throw non
     ' previsto.
@@ -352,6 +347,9 @@ Public Class BPCController
                 ' Questo è quello che si può pagare in totale.
                 m_VoidAmount = +(TotalToVoid)
 
+                ' Partiamo Che non è risucita
+                Void = IBPReturnCode.KO
+
                 '
                 '** >>>>>>>> Handle sul service remoto Argentea <<<<<<<<<<<<< **
                 '
@@ -359,8 +357,39 @@ Public Class BPCController
                 ' passando l'intera transazione il Controller corrente
                 ' Il Metodo di pagamento passato come argomento
                 '
-                If HandleVoidBPCall(m_VoidAmount) Then
-                    Void = IBPReturnCode.OK
+                ' Se ci stiamo facendo un Annullo su un elemento che non è
+                ' un Raggruppamento ed ha questa proprietà a  False allora
+                ' possiamo direttamente richiamare l'API di Void Singola per
+                ' il titolo selezionato in corso.b
+                ' Altrimenti essendo un Ragguppamento ripresentiamo l'intero
+                ' elenco dei titoli per dare iterazione all'utente di annullare
+                ' scandedo i barcode o clicando sull'icona a lato di ogni singolo
+                ' elemento presente in questo raggurppamento.
+                '
+                If CBool(m_CurrMedia.GetPropertybyName("bGroupedPaymentsOrder")) = False Then
+
+                    ' VOID singolo per questo Titolo Singolo
+
+                    Dim CurrentBarcode As String = m_CurrMedia.GetPropertybyName("szbp_grp_itm")
+                    Dim CurrentCrcTransactionId As String = m_CurrMedia.GetPropertybyName("szbp_grp_itm_IDTransaction")
+                    Dim CurrentTotValueBp As Decimal = CDec(m_CurrMedia.GetPropertybyName("dbp_grp_itm_Value"))
+
+                    If HandleSingleVoidBPCall(True, CurrentBarcode, CurrentCrcTransactionId, CurrentTotValueBp) Then
+
+                        Void = IBPReturnCode.OK
+
+                    End If
+
+                Else
+
+                    ' VOID con eleneco dei titoli raggrupapti
+
+                    If HandleVoidBPCall(m_VoidAmount) Then
+
+                        Void = IBPReturnCode.OK
+
+                    End If
+
                 End If
                 '
                 '** >>>>>>>> Handle sul service remoto Argentea <<<<<<<<<<<<< **
@@ -561,14 +590,16 @@ Public Class BPCController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al service di Argentea.
             '
+            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
                 m_taobj,                                '   <-- Il Riferimento alla transazione (per altri dati che servono)
                 MODE_PROXY_USE,                         '   <-- Il Proxy servizio avviato in modalità
-                pParams.TransactionID,                  '   <-- L'id della transazione in corso
+                NmRnd.ToString(),
                 m_CurrMedia.dTaPaidTotal                '   <-- Il Pagato fino adesso insieme agli altri media
             )
+                'pParams.TransactionID,                  '   <-- L'id della transazione in corso
 
                 '
                 ' Preparo ad accettare l'handler degli eventi gestiti
@@ -577,6 +608,9 @@ Public Class BPCController
                 AddHandler proxyPos.Event_ProxyCollectDataTotalsAtEnd, AddressOf ProxyCollectDataTotalsAtEnd_Handler
 
             End If
+
+            ' PAYMENT Service Mode
+            proxyPos.Command = ClsProxyArgentea.enCommandToCall.Payment
 
             '
             ' Preparo l'oggetto a quello che si deve a  spettare
@@ -618,7 +652,6 @@ Public Class BPCController
         '
         ' RUN -> Avvio il FORM Locale ed attendo!! with try entrapment
         '
-        proxyPos.Command = ClsProxyArgentea.enCommandToCall.Payment
         If Not proxyPos.IsLive Then
             proxyPos.Connect()
         Else
@@ -672,14 +705,16 @@ Public Class BPCController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
+            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
                 m_taobj,                                '   <-- Il Riferimento alla transazione (per altri dati che servono)
                 MODE_PROXY_USE,                         '   <-- Il Proxy servizio avviato in modalità
-                pParams.TransactionID,                  '   <-- L'id della transazione in corso
+                NmRnd.ToString(),
                 m_CurrMedia.dTaPaidTotal                '   <-- Il Pagato fino adesso insieme agli altri media
             )
+                'pParams.TransactionID,                  '   <-- L'id della transazione in corso
 
                 '
                 ' Preparo ad accettare l'handler degli eventi gestiti
@@ -689,13 +724,8 @@ Public Class BPCController
 
             End If
 
-
-            '
-            ' Preparo l'oggetto a quello che si deve a  spettare
-            ' come totale da stornare e quello stornato
-            '
-            proxyPos.AmountVoid = 0
-            proxyPos.AmountVoidable = dVoidableAmount
+            ' VOID Proxy Service Mode
+            proxyPos.Command = ClsProxyArgentea.enCommandToCall.Void
 
             '
             ' Dato che è uno storno vediamo se sul POS
@@ -706,6 +736,13 @@ Public Class BPCController
             If Not m_CurrMedia Is Nothing Then
                 proxyPos.PrefillVoidable = CheckAndFillListOfGroupItems(proxyPos.FractParsing)
             End If
+
+            '
+            ' Preparo l'oggetto a quello che si deve a  spettare
+            ' come totale da stornare e quello stornato
+            '
+            proxyPos.AmountVoid = 0
+            proxyPos.AmountVoidable = dVoidableAmount
 
             ' Definisco questa  variabile  Privata 
             ' per il conteggio dei Buoni eventuali
@@ -741,7 +778,6 @@ Public Class BPCController
         ' RUN -> Avvio il FORM Locale ed attendo!! with try entrapment
         '
         If Not proxyPos.IsLive Then
-            proxyPos.Command = ClsProxyArgentea.enCommandToCall.Void
             proxyPos.Connect()
         Else
             proxyPos.Unpark()
@@ -772,6 +808,103 @@ Public Class BPCController
 
     End Function
 
+
+    ''' <summary>
+    '''     Handle per eseguire il comando di VoidSingle
+    '''     sul servizio Argentea Remoto come chiamata a 
+    '''     storno su un titolo in base al suo id di transazione.
+    ''' </summary>
+    ''' <param name="SilentMode">Se avviare il Proxy con messaggi e segnalazioni utente o in modo silenzioso senza messaggi</param>
+    ''' <returns>Boolean True (Conslusa operazione senza eccezioni)</returns>
+    Protected Overridable Function HandleSingleVoidBPCall(SilentMode As Boolean, barcode As String, idCrcTransaction As String, TotValueOfBP As Decimal) As Boolean
+        Dim funcName As String = "HandleSingleVoidBPCall"
+        Dim proxyPos As ClsProxyArgentea = Nothing
+
+        ' GO
+        Try
+
+            ' START & LOG
+            HandleSingleVoidBPCall = False
+            LOG_FuncStart(getLocationString(funcName))
+
+            '
+            ' Istanza principale del Form relativo
+            ' alla gestione della scansione dei codici
+            ' dei Buoni Pasto e relativa validazione
+            ' tramite chiamata al proxy di Argentea.
+            '
+            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            If proxyPos Is Nothing Then
+                proxyPos = New ClsProxyArgentea(
+                m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
+                m_taobj,                                '   <-- Il Riferimento alla transazione (per altri dati che servono)
+                MODE_PROXY_USE,                         '   <-- Il Proxy servizio avviato in modalità
+                NmRnd.ToString(),
+                m_CurrMedia.dTaPaidTotal                '   <-- Il Pagato fino adesso insieme agli altri media
+            )
+                'pParams.TransactionID,                  '   <-- L'id della transazione in corso
+
+                proxyPos.SilentMode = SilentMode
+
+            End If
+
+        Catch ex As Exception
+
+            LOG_Debug(getLocationString(funcName), "Instance proxyPos Argentea ::KO:: Local")
+
+            ' Etichettiamo l'errore per la gestione
+            m_LastStatus = GLB_ERROR_INSTANCE_SERVICE
+            m_LastErrorMessage = "Eccezione non gestita nell'istanza della classe servizio di Argentea"
+
+            If Not SilentMode Then
+
+                ' Se per qualche motivo o perchè manca il file di trasformazione
+                ' o per errori in esecuzione non applica il filtro esco dalla gestione.
+                msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPSTOP)
+
+            End If
+
+            ' Log locale
+            LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage)
+            LOG_ErrorInTry(getLocationString("HandleControllerArgentea"), ex)
+
+            Return False
+
+        Finally
+            ''
+        End Try
+
+        ' >>>> ***************************************** <<<<<<
+        '
+        ' CALL -> Esecuzione dell'API sul sistema service Remoto!! with response entrapment
+        '
+        Dim ArgBarCode As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("BarCode", barcode)
+        Dim IdCrcTransatcion As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("IdCrcTransatcion", idCrcTransaction)
+        Dim TotValueItem As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("TotFaceValue", TotValueOfBP)
+
+        Dim StatusResult As ClsProxyArgentea.enProxyStatus = proxyPos.CallAPI("SINGLEVOID", ArgBarCode, IdCrcTransatcion, TotValueItem)
+        '
+        ' >>>> ***************************************** <<<<<<
+
+        ' E restituisco 
+        If StatusResult = ClsProxyArgentea.enProxyStatus.OK Then
+
+            ' Tutto è filato come doveva e  le 
+            ' operazioni sono conformi per cio
+            ' che era previsto.
+            Return True
+
+        Else
+
+            ' Può essere che c'è stato un  non
+            ' OK in qualche procedura che  non
+            ' valida la transazione.
+            Return False
+
+        End If
+
+    End Function
+
     ''' <summary>
     '''     Handle per eseguire il comando di Close
     '''     sul servizio Argentea Remoto come chiamata a 
@@ -780,7 +913,7 @@ Public Class BPCController
     ''' <param name="SilentMode">Se avviare il Proxy con messaggi e segnalazioni utente o in modo silenzione senza messaggi</param>
     ''' <returns>Boolean True (Conslusa operazione senza eccezioni)</returns>
     Protected Overridable Function HandleCloseBPCall(SilentMode As Boolean) As Boolean
-        Dim funcName As String = "HandleVoidBPCall"
+        Dim funcName As String = "HandleCloseBPCall"
         Dim proxyPos As ClsProxyArgentea = Nothing
 
         ' GO
@@ -796,14 +929,16 @@ Public Class BPCController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
+            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
                 m_taobj,                                '   <-- Il Riferimento alla transazione (per altri dati che servono)
                 MODE_PROXY_USE,                         '   <-- Il Proxy servizio avviato in modalità
-                pParams.TransactionID,                  '   <-- L'id della transazione in corso
+                NmRnd.ToString(),
                 m_CurrMedia.dTaPaidTotal                '   <-- Il Pagato fino adesso insieme agli altri media
             )
+                'pParams.TransactionID,                  '   <-- L'id della transazione in corso
 
                 proxyPos.SilentMode = SilentMode
 
@@ -888,7 +1023,14 @@ Public Class BPCController
             '
 
             Dim itmBarCode As String
+            Dim itmValueDc As Decimal
             Dim itmFaceVal As Decimal
+            Dim itmIDCrcTr As String
+            Dim itmOtherMd As String
+            Dim itmEmitter As String
+            Dim itmCodIssr As String
+            Dim itmNamIssr As String
+            Dim itmToPass As PaidEntry
 
             CheckAndFillListOfGroupItems = New Dictionary(Of String, PaidEntry)
 
@@ -907,10 +1049,28 @@ Public Class BPCController
                 '
                 KeyCBP = "bp_itm_" + CStr(x + 1)
                 itmBarCode = m_CurrMedia.GetPropertybyName("sz" & KeyCBP)
-                itmFaceVal = m_CurrMedia.GetPropertybyName("d" & KeyCBP + "_Value") / FractToValues
+                itmValueDc = m_CurrMedia.GetPropertybyName("d" & KeyCBP + "_Value") '* FractToValues
+                itmFaceVal = m_CurrMedia.GetPropertybyName("d" & KeyCBP + "_FaceValue") '* FractToValues
+                itmIDCrcTr = m_CurrMedia.GetPropertybyName("sz" & KeyCBP + "_IDTransaction")
+                itmOtherMd = m_CurrMedia.GetPropertybyName("sz" & KeyCBP + "_OtherInfo")
+                itmEmitter = itmOtherMd.Split("-")(0)
+                itmCodIssr = itmOtherMd.Split("-")(1)
+                itmNamIssr = itmOtherMd.Split("-")(2)
 
-                CheckAndFillListOfGroupItems.Add(itmBarCode, New PaidEntry(itmBarCode, itmFaceVal))
+                itmToPass = New PaidEntry(
+                                itmBarCode,
+                                CStr(itmValueDc),
+                                CStr(itmFaceVal),
+                                itmEmitter,
+                                itmIDCrcTr
+                )
+                itmToPass.CodeIssuer = itmCodIssr
+                itmToPass.NameIssuer = itmNamIssr
+
+                CheckAndFillListOfGroupItems.Add(itmBarCode, itmToPass)
+
                 _NumCurrT += 1
+
             Next
 
             '
@@ -924,12 +1084,26 @@ Public Class BPCController
 
                     KeyVBP = "bp_itm_voided_" + CStr(x + 1)
                     itmBarCode = m_CurrMedia.GetPropertybyName("sz" & KeyVBP)
-                    itmFaceVal = m_CurrMedia.GetPropertybyName("d" & KeyVBP + "_Value") / FractToValues
+                    itmValueDc = m_CurrMedia.GetPropertybyName("d" & KeyVBP + "_Value") '/ FractToValues
+                    itmFaceVal = m_CurrMedia.GetPropertybyName("d" & KeyVBP + "_FaceValue") '/ FractToValues
+                    itmIDCrcTr = m_CurrMedia.GetPropertybyName("sz" & KeyVBP + "_IDTransaction")
+                    itmOtherMd = m_CurrMedia.GetPropertybyName("sz" & KeyVBP + "_OtherInfo")
+                    itmEmitter = itmOtherMd.Split("-")(0)
+                    itmCodIssr = itmOtherMd.Split("-")(1)
+                    itmNamIssr = itmOtherMd.Split("-")(2)
 
-                    _ARVoided = New PaidEntry(itmBarCode, itmFaceVal)
-                    _ARVoided.Emitter = "[[VOIDED]]"
+                    itmToPass = New PaidEntry(
+                                itmBarCode,
+                                CStr(itmValueDc),
+                                CStr(itmFaceVal),
+                                itmEmitter,
+                                itmIDCrcTr
+                    )
+                    itmToPass.CodeIssuer = itmCodIssr
+                    itmToPass.NameIssuer = itmNamIssr
+                    itmToPass.Voided = True ' --> VOIDED -> Stornato
 
-                    CheckAndFillListOfGroupItems.Add(itmBarCode, _ARVoided)
+                    CheckAndFillListOfGroupItems.Add(itmBarCode, itmToPass)
                     _NumCurrT += 1
 
                 Next
@@ -1012,7 +1186,7 @@ Public Class BPCController
             If resultData.typeBPElaborated = ClsProxyArgentea.enTypeBP.TicketsCard Then
                 OptAccorpateMediaForBP = True
             End If
-            OptAccorpateMediaForBP = True
+            'OptAccorpateMediaForBP = True
 
             If OptAccorpateMediaForBP Then
 
@@ -1023,12 +1197,18 @@ Public Class BPCController
                 '
                 '       NOTA.: Viene creato Un solo MediaRecord con un riepilogo dei BP utilizzati.
                 '
-                Dim NmRnd As Integer = Rnd(999999999999999)
-                Dim ItmPe As PaidEntry = New PaidEntry("Grouped_BP_" + CStr(NmRnd), resultData.totalPayedWithBP)
+
+                ' Creo un Id di riferimento per l'ELemento con il Raggruppamento tramite MetaData
+                Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+                Dim ItmPe As PaidEntry = New PaidEntry("Group_BP_" & resultData.typeBPElaborated.ToString(), resultData.totalPayedWithBP)
+
+                ' Riporto come Id di transazione per questo titolo (raggruppato) l'id univoco
+                ItmPe.IDTransactionCrc = NmRnd.ToString()
+                ItmPe.InfoExtra = CStr(resultData.totalBPUsed)      ' <- Mi riporto il numero dei titoli che sono raggruppati
 
                 ' Aggiungo sulla Transazione corrente
                 ' la TA relativa al Media di pagamento.
-                NewTaMediaRec = AddNewTaMedia(ItmPe)
+                NewTaMediaRec = AddNewTaMedia(ItmPe, resultData.typeBPElaborated.ToString(), True)
 
                 '
                 ' Aggiungo il Riepilogo alla TA appena creata
@@ -1069,7 +1249,13 @@ Public Class BPCController
                 ' E controllo all'uscita se mi ha prodotto un
                 ' resto da accodare come Media al pagamento
                 '
-                PeExcedeedRec = AddMediaRecsForBpElaborated(m_taobj, resultData)
+
+                ' Creo un Id di riferimento per ogni Titolo che va a finire nella TA per riferimento alla sessione che li ha creati
+                Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+                Dim idGroupSessionReferement As String = "Group_Session_" & resultData.typeBPElaborated.ToString() & "_" & NmRnd.ToString()
+
+                ' Ed aggiungo tanti elementi nella TA quanti sono i BP nella sessione che sono stati usati
+                PeExcedeedRec = AddMediaRecsForBpElaborated(m_taobj, resultData, idGroupSessionReferement, resultData.totalBPUsed)
 
             End If
 
@@ -1164,9 +1350,10 @@ Public Class BPCController
     '''     per essere inserito nella Transazione
     '''     in corso come riga di pagamento.
     ''' </summary>
-    ''' <param name="PeTo">Il new entry per completare la riga <see cref="PaidEntry"/></param>
+    ''' <param name="PeTo">Il new entry di tipo Pagamento In totale se raggruppato o lo Stesso Importo del titolo se singolo<see cref="PaidEntry"/></param>
+    ''' <param name="GroupElement">True = Un Gruppo di titoli che formano un Totale di Riga inteso come pagato - False = Un Singolo elemento dove il suo Importo corrispone al totale di Riga come pagato</param>
     ''' <returns>Una Media compatibile con la transazione <see cref="TaMediaRec"/></returns>
-    Private Function AddNewTaMedia(PeTo As PaidEntry) As TaMediaRec
+    Private Function AddNewTaMedia(PeTo As PaidEntry, TypePaymentOrder As String, GroupElement As Boolean) As TaMediaRec
 
         ' Preparo la MediaRecord iniziale con cui
         ' sono entrato per farne un clone di rimpiazzo.
@@ -1185,18 +1372,30 @@ Public Class BPCController
             .theHdr.lTaRefToCreateNmbr = 0
             .theHdr.lTaCreateNmbr = 0
 
-            ' Nell'ordine di un elemento in quantità sempre 1 per ogni BP
-            ' aggiungo la Proprietà di tipo Stringa .:   BarCode relativo al buono
-            .dTaQty = 1
-            .AddField("sz" + TYPE_SPECIFIQUE, DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            .setPropertybyName("sz" + TYPE_SPECIFIQUE, PeTo.Barcode)
+            ' CODICE TIPOLOGIA e RAGGRUPPAMENTO(SI/NO) DEL TITOLO/I
 
-            ' Aggiungo il valore di facciata che mi ha restituito Argentea
-            ' ripresa dalla gridlia del form dove ho annotato.
+            ' Codice del Titolo di Pagamento BPC (Buoni/o Pasto Cartacei/o) BPE (Buoni/o Basto Elettronici/o) (Usato dalla procedura corrente)
+            .AddField("szCodePaymentOrder", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            .setPropertybyName("szCodePaymentOrder", TYPE_SPECIFIQUE)
+
+            ' Tipo di Titolo di Pagamento TicketsRestaurant (Buoni/o Pasto Cartacei/o) TicketsCard (Buoni/o Basto Elettronici/o) (Usato dal Proxy di Argentea)
+            .AddField("szTypePaymentOrder", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            .setPropertybyName("szTypePaymentOrder", TypePaymentOrder)
+
+            ' Titolo di pagamento Raggruppato o Singolo elemento
+            .AddField("bGroupedPaymentsOrder", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            .setPropertybyName("bGroupedPaymentsOrder", CStr(GroupElement))
+
+            ' Se il Titolo di pagamento è un Raggruppamento nelle info extra ho il numero di titoli che sono stati usati
+            .AddField("szGroupedNumPayments", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            .setPropertybyName("szGroupedNumPayments", PeTo.InfoExtra)
+
+            ' Il Valore Facciale del Titolo o il Totale dei Valori Facciali dei Titoli raggruppati
             .AddField("szFaceValue", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             .setPropertybyName("szFaceValue", PeTo.FaceValue)
 
             'CP#1337781:1:  default there's not rest, the mv was truncated
+            .dTaQty = 1                                                         ' Che sia un solo titolo o un raggruppamento la quantità come pagato è sempre di 1
             .dTaPaid = Convert.ToDecimal(PeTo.Value)
             .dTaPaidTotal = Convert.ToDecimal(PeTo.Value)
             .dPaidForeignCurr = Convert.ToDecimal(PeTo.Value)
@@ -1325,9 +1524,12 @@ Public Class BPCController
         Dim PeExcedeedRec As TaMediaRec = Nothing
         Dim _NumCurrT As Integer = 0
         Dim _NumVoidedT As Integer = 0
+        Dim _TotValPayed As Decimal = 0
         Dim _TotValVoided As Decimal = 0
         Dim KeyCBP As String
         Dim KeyVBP As String
+        Dim KeyBP As String
+        Dim OtherInfo As String
 
         For Each pe As PaidEntry In resultData.PaidEntryBindingSource    ' proxyPos.PaidEntryBindingSource
 
@@ -1343,33 +1545,43 @@ Public Class BPCController
             ' Vuol dire che siamo in una operazione di
             ' storno e quindi lo etichettiamo in  modo
             ' diverso per il presentation
-            If pe.Emitter = "[[VOIDED]]" Then
-
+            If pe.Voided = True Then ' --> VOIDED -> Stornato
                 _NumVoidedT += 1
-
-                ' itm BarCode
-                RootTaMediaRec.AddField("sz" & KeyVBP, DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-                RootTaMediaRec.setPropertybyName("sz" & KeyVBP, pe.Barcode)
-
-                ' itm Value
-                RootTaMediaRec.AddField("d" & KeyVBP + "_Value", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
-                RootTaMediaRec.setPropertybyName("d" & KeyVBP + "_Value", CDec(pe.Value))
-
-                _TotValVoided += CDec(pe.Value)
-
-            Else
-
+                KeyBP = KeyVBP
+            Else ' USED
                 _NumCurrT += 1
+                KeyBP = KeyCBP
+            End If
 
-                ' itm BarCode
-                RootTaMediaRec.AddField("sz" & KeyCBP, DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-                RootTaMediaRec.setPropertybyName("sz" & KeyCBP, pe.Barcode)
+            ' Fillo le Meta Property
 
-                ' itm Value
-                RootTaMediaRec.AddField("d" & KeyCBP + "_Value", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
-                RootTaMediaRec.setPropertybyName("d" & KeyCBP + "_Value", CDec(pe.Value))
+            ' itm BarCode
+            RootTaMediaRec.AddField("sz" & KeyBP, DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            RootTaMediaRec.setPropertybyName("sz" & KeyBP, pe.Barcode)
 
+            ' itm Value
+            RootTaMediaRec.AddField("d" & KeyBP + "_Value", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+            RootTaMediaRec.setPropertybyName("d" & KeyBP + "_Value", CDec(pe.Value))
 
+            ' itm FaceValue
+            RootTaMediaRec.AddField("d" & KeyBP + "_FaceValue", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+            RootTaMediaRec.setPropertybyName("d" & KeyBP + "_FaceValue", CDec(pe.FaceValue))
+
+            ' itm IDCrcTransaction associata
+            RootTaMediaRec.AddField("sz" & KeyBP + "_IDTransaction", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            RootTaMediaRec.setPropertybyName("sz" & KeyBP + "_IDTransaction", pe.IDTransactionCrc)
+
+            ' itm Emitter e CodeIssuer
+            OtherInfo = pe.Emitter.Replace("-", "_") & "-" & pe.CodeIssuer.Replace("-", "_") & "-" & pe.NameIssuer.Replace("-", "_")
+            RootTaMediaRec.AddField("sz" & KeyBP + "_OtherInfo", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            RootTaMediaRec.setPropertybyName("sz" & KeyBP + "_OtherInfo", OtherInfo)
+
+            If pe.Voided = True Then
+                ' --> VOIDED -> Stornato
+                _TotValVoided += CDec(pe.Value)
+            Else
+                ' --> PAYED -> Pagato
+                _TotValPayed += CDec(pe.Value)
             End If
 
             '
@@ -1378,7 +1590,7 @@ Public Class BPCController
             ' opzionalmente c'è o meno da dare il resto
             ' (pe.Value <> pe.FaceValue) <-- Questo mi dice esatamente quale BP è in difetto rispetto al pagabile.
             '
-            If resultData.totalExcedeedWithBP <> 0 And pe.Emitter <> "[[VOIDED]]" And (pe.Value <> pe.FaceValue) AndAlso RootTaMediaRec.PAYMENTinMedia.lChangeMediaMember Then
+            If resultData.totalExcedeedWithBP <> 0 And (Not pe.Voided) And (pe.Value <> pe.FaceValue) AndAlso RootTaMediaRec.PAYMENTinMedia.lChangeMediaMember Then
 
                 '
                 ' Su un eccesso rispetto al  BP  corrente
@@ -1396,21 +1608,21 @@ Public Class BPCController
         RootTaMediaRec.AddField("ibp_GROUPED", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
         RootTaMediaRec.setPropertybyName("ibp_GROUPED", 1)
 
-        If _NumVoidedT >= 1 Then
+        'If _NumVoidedT >= 1 Then
 
-            RootTaMediaRec.AddField("ibp_TOT_BP_VOIDED", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-            RootTaMediaRec.setPropertybyName("ibp_TOT_BP_VOIDED", _NumVoidedT)
+        RootTaMediaRec.AddField("ibp_TOT_BP_VOIDED", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+        RootTaMediaRec.setPropertybyName("ibp_TOT_BP_VOIDED", _NumVoidedT)
 
-            RootTaMediaRec.AddField("dbp_TOT_VOIDED", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
-            RootTaMediaRec.setPropertybyName("dbp_TOT_VOIDED", _TotValVoided)
+        RootTaMediaRec.AddField("dbp_TOT_VOIDED", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+        RootTaMediaRec.setPropertybyName("dbp_TOT_VOIDED", _TotValVoided)   '  Che in Storno dovrebbe essere uguale a resultData.totalVoidedWithBP
 
-        End If
+        'End If
 
         RootTaMediaRec.AddField("dbp_TOT_EXCEDEED", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
         RootTaMediaRec.setPropertybyName("dbp_TOT_EXCEDEED", CDec(resultData.totalExcedeedWithBP))
 
         RootTaMediaRec.AddField("dbp_TOT_PAYED", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
-        RootTaMediaRec.setPropertybyName("dbp_TOT_PAYED", CDec(resultData.totalPayedWithBP))
+        RootTaMediaRec.setPropertybyName("dbp_TOT_PAYED", _TotValPayed)   '  Che in Pagamento dovrebbe essere uguale a resultData.totalPayedWithBP
 
         RootTaMediaRec.AddField("ibp_TOT_BP_USED", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
         RootTaMediaRec.setPropertybyName("ibp_TOT_BP_USED", _NumCurrT + _NumVoidedT) ' CDec(resultData.totalBPUsed)
@@ -1427,8 +1639,10 @@ Public Class BPCController
     ''' </summary>
     ''' <param name="RootTa">La TA di root in corso dove accodare tutte le TA di pagmaneto per ogni singolo BP</param>
     ''' <param name="resultData">Il set di risultati ottenuti dopo il processo di elaborazione sul proxy</param>
+    ''' <param name="IdSessionReferement">Ad ogni elmento sarà apposta l'etichetta di id di riferimento della sessione che ha creato la serie</param>
+    ''' <param name="TotalsCountInSession">Il Numero di Titoli coinvolti nella sessione che si stanno impilando nella TA</param>
     ''' <returns>Se nel riepilogare i bp ci accorgiamo che è stato superato per eccesso l'importo in pagamento restituiamo in un nuovo Media il resto eventuale da gestire</returns>
-    Private Function AddMediaRecsForBpElaborated(ByRef RootTa As TA, ByRef resultData As ClsProxyArgentea.DataResponse) As TaMediaRec
+    Private Function AddMediaRecsForBpElaborated(ByRef RootTa As TA, ByRef resultData As ClsProxyArgentea.DataResponse, IdSessionReferement As String, TotalsCountInSession As Integer) As TaMediaRec
         Dim NewTaMediaRec As TaMediaRec
 
         ' Durante l'aggiunta  delle TA Media per
@@ -1437,6 +1651,7 @@ Public Class BPCController
         ' eccesso il pagamento richiesto restituiamo 
         ' in forma di TA nuova la voce della differenza.
         Dim PeExcedeedRec As TaMediaRec = Nothing
+        Dim x As Integer = 0
 
         ' 
         ' Scorro per tutti i BP nell'elenco dei
@@ -1447,13 +1662,49 @@ Public Class BPCController
         '
         For Each pe As PaidEntry In resultData.PaidEntryBindingSource    ' proxyPos.PaidEntryBindingSource
 
-            ' Aggiungo sulla Transazione corrente
-            ' la TA relativa al Media di pagamento.
-            NewTaMediaRec = AddNewTaMedia(pe)
+            ' Per la sessione scrivo in Info Extra il Numero di Per es.: 1/3 che sta a a 1 di 3 poi 2 di tre etc.
+            pe.InfoExtra = CStr(x + 1) & "/" & TotalsCountInSession
+            x = x + 1
+
+            ' Aggiungo sulla Transazione corrente la TA relativa al Media di pagamento "Non Raggruppato"
+            NewTaMediaRec = AddNewTaMedia(pe, resultData.typeBPElaborated.ToString(), False)
 
             ' Identifico che questa voce è singola e non raggruppante
-            NewTaMediaRec.AddField("ibp_GROUPED", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-            NewTaMediaRec.setPropertybyName("ibp_GROUPED", 0)
+            'NewTaMediaRec.AddField("ibp_GROUPED", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            'NewTaMediaRec.setPropertybyName("ibp_GROUPED", 0)
+
+            '
+            ' Definisco per questo elemento i suoi Metadata
+            ' che servono per l'eventuale annullo e storno.
+            '
+            Dim KeyCBP As String = "bp_grp_itm"
+
+            ' Fillo le Meta Property
+
+            ' itm BarCode
+            NewTaMediaRec.AddField("sz" & KeyCBP, DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            NewTaMediaRec.setPropertybyName("sz" & KeyCBP, pe.Barcode)
+
+            ' itm Value
+            NewTaMediaRec.AddField("d" & KeyCBP + "_Value", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+            NewTaMediaRec.setPropertybyName("d" & KeyCBP + "_Value", CDec(pe.Value))
+
+            ' itm FaceValue
+            NewTaMediaRec.AddField("d" & KeyCBP + "_FaceValue", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+            NewTaMediaRec.setPropertybyName("d" & KeyCBP + "_FaceValue", CDec(pe.FaceValue))
+
+            ' itm IDCrcTransaction associata (Da Argentea)
+            NewTaMediaRec.AddField("sz" & KeyCBP + "_IDTransaction", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            NewTaMediaRec.setPropertybyName("sz" & KeyCBP + "_IDTransaction", pe.IDTransactionCrc)
+
+            ' itm IdGroupReferement associata (Da Sessione)
+            NewTaMediaRec.AddField("sz" & KeyCBP + "_IDSessionRef", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            NewTaMediaRec.setPropertybyName("sz" & KeyCBP + "_IDSessionRef", IdSessionReferement)
+
+            ' itm Emitter e CodeIssuer
+            Dim OtherInfo As String = pe.Emitter.Replace("-", "_") & "-" & pe.CodeIssuer.Replace("-", "_") & "-" & pe.NameIssuer.Replace("-", "_")
+            NewTaMediaRec.AddField("sz" & KeyCBP + "_OtherInfo", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            NewTaMediaRec.setPropertybyName("sz" & KeyCBP + "_OtherInfo", OtherInfo)
 
             '
             ' Aggiungo alla transazione l'elenco
@@ -1556,14 +1807,6 @@ Public Class BPCController
                 ' per l'eccesso su totale non riuscito.
                 '
                 Throw New Exception(GLB_ERROR_NOT_CREATE_EXCEDEED)
-
-                ' MEDIA di resto non creato per errore interno
-                'm_LastStatus = GLB_ERROR_NOT_CREATE_EXCEDEED
-                'm_LastErrorMessage = "Errore interno non previsto --exception on FillPaymentDataFromID to create excedeed media-- for voucher " & PeOnExcedeed.Barcode & ", return to default value."
-
-                ' Log e segnale non aggiornato in uscita e chiusura 
-                'LOG_Debug(getLocationString(funcName), m_LastErrorMessage + "--" + ex.InnerException.ToString())
-                'msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
 
             End If
 

@@ -44,12 +44,34 @@ Public Class ArgenteaFunctionReturnObject
 
         If StatusCurrent <> 0 Then
 
+            ' ERRORI su chiamata
+
+            If StatusCurrent = 9001 Then
+
+                ' ERRORE GENERALE DI SOCKET
+                Me.Description = "SOCKET-ERROR"
+
+            ElseIf StatusCurrent = 9002 Then
+
+                ' ERRORE GENERALE DI PARSING SU PROTOCOLLO
+                Me.Description = "PARSING-ERROR"
+
+            Else
+
+                ' ERRORE GENERALE UKNOWED SU RISPOSTA METODO
+                Me.Description = "UKNOW-ERROR"
+
+            End If
+
             ' Unsuccessfull
             Me.Successfull = False
 
-            ' E riporto nell'ordine corretto il messaggio di stato.
-            Me.Description = "Errore di connessione"
+            ' Status Code Error Object Unsuccssfull
             _Status = StatusCurrent
+
+        Else
+
+            ' STATUS OK KO di Risposta
 
         End If
 
@@ -74,7 +96,7 @@ Public Class ArgenteaFunctionReturnObject
             If Me.Successfull Then
                 Return (Me.Description & " " & Me.Result).Trim()
             Else
-                Return (Me.Description & " " & Me.Result).Trim()
+                Return ""
             End If
         End Get
     End Property
@@ -87,10 +109,10 @@ Public Class ArgenteaFunctionReturnObject
     ''' <returns>Stringa congtenente il messaggio di KO per esteso</returns>
     Public ReadOnly Property ErrorMessage() As String
         Get
-            If Me.Successfull Then
+            If Not Me.Successfull Then
                 Return (Me.Description & " " & Me.Result).Trim()
             Else
-                Return (Me.Description & " " & Me.Result).Trim()
+                Return ""
             End If
         End Get
     End Property
