@@ -14,5 +14,6 @@ Public Interface IFiscalPAYMENT
     Property bITCheckCashHalo() As Integer
     Property dITTxHALO() As Decimal
     Property bITFiscalNotPaid() As Integer
+    Property bPaymentRoundableAt5Cent() As Integer
 End Interface
 #End Region
