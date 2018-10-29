@@ -24,6 +24,7 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
     Protected m_bITFiscalNotPaid As Integer
     Protected m_dITTxHALO As Decimal
     Protected m_bITCheckCashHalo As Decimal
+    Protected m_bPaymentRoundableAt5Cent As Boolean
 
 #Region "PAYMENT Properties"
 
@@ -74,6 +75,23 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
         Set(ByVal value As Integer)
             m_bITFiscalNotPaid = value
             m.Fields_Value("bITFiscalNotPaid") = value
+        End Set
+    End Property
+
+    ''' <summary>
+    ''' gets / sets a flag indicating if this media must be 
+    ''' usated for payments roundables at 5 cent.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns>True = Payment of type Roundable - False Payment Normal</returns>
+    ''' <remarks></remarks>
+    Public Overridable Property bPaymentRoundableAt5Cent() As Integer Implements IFiscalPAYMENT.bPaymentRoundableAt5Cent
+        Get
+            bPaymentRoundableAt5Cent = m_bPaymentRoundableAt5Cent
+        End Get
+        Set(ByVal value As Integer)
+            m_bPaymentRoundableAt5Cent = value
+            m.Fields_Value("bPaymentRoundableAt5Cent") = value
         End Set
     End Property
 
