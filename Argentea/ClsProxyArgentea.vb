@@ -366,6 +366,12 @@ Public Class ClsProxyArgentea
 
     End Enum
 
+    ''' <summary>
+    '''     Globalmente alla sessione in corso evita di riaprire
+    '''     nuovamente il Ticket di Sessione per la volta successiva.
+    ''' </summary>
+    Public Shared FLAG_STATIC_INITIALIZATED As Boolean
+
 #End Region
 
 #Region "Membri Privati"
@@ -444,6 +450,18 @@ Public Class ClsProxyArgentea
     '
     Protected m_TheModcntr As ModCntr                       ' <-- Il controller principale applicativo che non deve mancare mai
     Protected m_taobj As TA                                 ' <-- la TA in corso da cui ricavare informazioni
+
+    '
+    '   Variabili private per la gestione interna
+    '   in emulazione software del servizio Argentea
+    '
+    Public Shared m_ProgressiveCall As Integer = 1            '   <--     Il progressive call Privato (Relativo a tutte le chiamate in sequenza richieste dal protocollo)"
+    Private m_RUPP As String = Nothing                  '   <--     Il RUPP necessario per comunicare con il servizio Remoto
+
+    ''' :: Flag per il tentativo di Reset del Counter remoto presso Argentea
+    Private _flagCallOnetimeResetIncrement As Boolean = False
+    ''' :: Log durante delle chiamate di ogni errore o stato precedente
+    Private m_LogErrors As Dictionary(Of Integer, tLogErr)
 
     '
     ' Parametri Globali di applicazione predefiniti
@@ -526,12 +544,6 @@ Public Class ClsProxyArgentea
 
 #Region "Properties Controller e Funzioni per Service Mode"
 
-    '
-    '   Variabili private per la gestione interna
-    '   in emulazione software del servizio Argentea
-    '
-    Private m_ProgressiveCall As Integer = 1            '   <--     Il progressive call Privato (Relativo a tutte le chiamate in sequenza richieste dal protocollo)"
-    Private m_RUPP As String = Nothing                  '   <--     Il RUPP necessario per comunicare con il servizio Remoto
 
     ''' <summary>
     '''     Restituisce per il numero delle chiamate verso il servizio remoto Argentea
@@ -871,7 +883,7 @@ Public Class ClsProxyArgentea
     '''     remoto visualizzando i risultati  in 
     '''     una griglia dedicata a video.
     ''' </summary>
-    Friend Sub Connect()
+    Friend Sub Connect(Optional bShowMessageErrorsPos As Boolean = False)
 
         Dim funcName As String = "ProxyArgentea.Connect"
 
@@ -923,7 +935,7 @@ Public Class ClsProxyArgentea
 
                 ' Avvio il pos locale con la gestione
                 ' del POS hardware tramite terminale.
-                StartPosHardware(frmEmulation)
+                StartPosHardware(frmEmulation, bShowMessageErrorsPos)
 
             End If
 
@@ -948,6 +960,12 @@ Public Class ClsProxyArgentea
         Dim Response As ArgenteaFunctionsReturnCode = ArgenteaFunctionsReturnCode.KO
 
         m_CurrentApiNameToCall = APItoCALL
+
+        ' ARGS
+        ' Istanza della Lib Argentea MONETICA
+        ArgenteaCOMObject = Nothing
+        ArgenteaCOMObject = New ARGLIB.argpay()
+
 
         ' BEHAVIOR
         If m_TypeProxy = enTypeProxy.Service Then
@@ -1103,7 +1121,7 @@ Public Class ClsProxyArgentea
         ' Reset dello status dei contatori
         _DataResponse = Nothing
         _flagCallOnetimeResetIncrement = False
-        m_ProgressiveCall = 0
+        'm_ProgressiveCall = 1
 
         m_LastStatus = Nothing
         m_LastErrorMessage = Nothing
@@ -1181,6 +1199,11 @@ Public Class ClsProxyArgentea
         ' di parsing esco a priori e non passo.
         If m_LastResponseRawArgentea.Successfull Then
 
+            ' L'Iniziailizzazione deve essere chiamata una volta sola nel contesto
+            ' della sessione in corso, se la sessione sarà conlcusa sarà  chiamata
+            ' nuovamente.
+            FLAG_STATIC_INITIALIZATED = False
+
             ' ** OK --> API CLOSE corretamente chiamata ad Argentea
             LOG_Debug(getLocationString(funcName), "API " & m_CurrentApiNameToCall & " successfuly on response with message " & m_LastResponseRawArgentea.SuccessMessage)
             Return True
@@ -1202,7 +1225,7 @@ Public Class ClsProxyArgentea
     '''     Come parametri obbligatori per questa API è necessario passare.:
     ''' 
     '''         Key = BarCode               Value = Un valore stringa identificante il Barcode da stornare
-    '''         Key = IdCrcTransatcion      Value = Un valore stringa identificante la transazione associata alla ripostasta da argentea a questo barcode quando è stato dematerilizzato
+    '''         Key = IdCrcTransaction      Value = Un valore stringa identificante la transazione associata alla ripostasta da argentea a questo barcode quando è stato dematerilizzato
     ''' 
     ''' </param>
     ''' <returns><see cref="ArgenteaFunctionsReturnCode"/></returns>
@@ -1211,12 +1234,26 @@ Public Class ClsProxyArgentea
         Dim sender As FormBuonoChiaro = New FormBuonoChiaro() ' Form fittizio
 
 
-        ' 0 = "BarCode" 1 = "IdCrcTransatcion" 2 = "Value"
+        ' 0 = "BarCode" 1 = "IdCrcTransaction" 2 = "Value"
         Dim barcode As String = Arguments(0).Value
         Dim refToCrcTransactionId As String = Arguments(1).Value
         Dim TotValueBP As String = Arguments(2).Value
 
+        'msgUtil.ShowMessage(m_TheModcntr, "Barcode = " + barcode + " Trans. = " + refToCrcTransactionId, "LevelITCommonModArgentea_", PosDef.TARMessageTypes.TPINFORMATION)
+
         _DataResponse = New DataResponse(1, TotValueBP, 0)
+
+        ' L'elemento da rimuovere (Essendo singolo sono rivlevanti solo ID Transactione e barcode)
+        Dim ItemNew As PaidEntry = WriterResultDataList.NewPaid(
+                            barcode,
+                            Value:=TotValueBP,
+                            FaceValue:=TotValueBP,
+                            Emitter:="",
+                            CodeIssuer:="",
+                            NameIssuer:="",
+                            IdTransactionCrc:=refToCrcTransactionId
+                        )
+
 
         ' Per questa API sfrutto la gestione interna del PROXY 
         ' con l'evento sull'emulatore software dei VOID da gruppo.
@@ -1586,8 +1623,10 @@ Public Class ClsProxyArgentea
                 Case enApiToCall.SinglePayment
                     _ParsingMode = InternalArgenteaFunctionTypes.SinglePaid_BP
                 Case enApiToCall.MultiplePayments
+                    _ParseSplitMode = ";"
                     _ParsingMode = InternalArgenteaFunctionTypes.MultiPaid_BP
                 Case enApiToCall.MultipleVoids
+                    _ParseSplitMode = ";"
                     _ParsingMode = InternalArgenteaFunctionTypes.MultiVoid_BP
             End Select
 
@@ -1679,17 +1718,67 @@ Public Class ClsProxyArgentea
             objTPTAHelperArgentea(0) = New ArgenteaFunctionReturnObject()
 
             ' Parsiamo la risposta argentea
-            If RefTo_MessageOut = "ERRORE SOCKET" Then
+            If RefTo_MessageOut = "ERRORE SOCKET" Or                            ' <-- Questo Arriva dalla tentata comunicazione con il Service Remoto
+                RefTo_MessageOut.ToUpper().EndsWith("ERRORE SOCKET") Then       ' <-- Questo arriva dalla tentata comunicazione con il POS Hardware
 
                 ' ** KO --> Codificato Errore Socket 9001
                 ResultResponse = New ArgenteaFunctionReturnObject(9001)
                 _ErrorTarget = ExceptionProxyArgentea.GLB_SOCKET_ERROR
                 _ErrorDescription = "-SOCKET ERROR"
 
+            ElseIf RefTo_MessageOut.ToUpper().EndsWith("FALLITO Rs232;;;;") Then
+
+                ' ** KO --> Codificato Errore di Configurazione Monetica Ini 9002
+                ResultResponse = New ArgenteaFunctionReturnObject(9002)
+                _ErrorTarget = ExceptionProxyArgentea.GLB_MONETICA_ERROR
+                _ErrorDescription = "-MONETICA ERROR CONFIG"
+
+            ElseIf RefTo_MessageOut.ToUpper().EndsWith("ERRORE TIMEOUT;") Then              ' KO;Errore timeout;;104;PELLEGRINI;Errore timeout;
+
+                ' ** KO --> Codificato Errore di Timeout richiesta su Transazione 
+                ResultResponse = New ArgenteaFunctionReturnObject(9003)
+                _ErrorTarget = ExceptionProxyArgentea.GLB_TIMEOUT_ERROR
+                _ErrorDescription = "-POS ERROR TIMEOUT"
+
+            ElseIf RefTo_MessageOut.ToUpper().StartsWith("KO;INVIO DATI FALLITO") Then      ' KO;Invio Dati Fallito ETHERNET;;104;PELLEGRINI;Errore Invio Dati;
+
+                ' ** KO --> Codificato Errore Invio Dati su Transazione POS
+                ResultResponse = New ArgenteaFunctionReturnObject(9004)
+                _ErrorTarget = ExceptionProxyArgentea.GLB_SENDDATA_FAILED
+                _ErrorDescription = "-POS ERROR SEND DATA FAILED"
+
+            ElseIf RefTo_MessageOut.ToUpper().EndsWith("OPERAZIONE ANNULLATA;") Then        ' KO;Operazione annullata;;000;;Operazione annullata; 
+
+                ' ** KO --> Codificato Errore Operazione annullata da Utente 9005
+                ResultResponse = New ArgenteaFunctionReturnObject(9005)
+                _ErrorTarget = ExceptionProxyArgentea.GLB_OPERATION_USERABORTED
+                _ErrorDescription = "-POS OPERATION ABORTED BY USER"
+
+            ElseIf RefTo_MessageOut.ToUpper().StartsWith("KO;NESSUN BUONO") Then            ' KO;NESSUN BUONO SELEZIONATO;;104;PELLEGRINI;NESSUN BUONO SELEZIONATO;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+
+                ' ** KO --> Codificato Errore Nessun Buono selezionato da Utente 9006
+                ResultResponse = New ArgenteaFunctionReturnObject(9006)
+                _ErrorTarget = ExceptionProxyArgentea.GLB_OPERATION_USERNOINPUTDATA
+                _ErrorDescription = "-POS OPERATION NO INPUT DATA BY USER"
+
+            ElseIf RefTo_MessageOut.ToUpper().StartsWith("KO;CARTA NON GESTITA") Then       ' KO;CARTA NON GESTITA;;;;NON GESTITA;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+
+                ' ** KO --> Codificato Errore Carta non gestita 9007
+                ResultResponse = New ArgenteaFunctionReturnObject(9007)
+                _ErrorTarget = ExceptionProxyArgentea.GLB_TICKETCARD_NOTVALID
+                _ErrorDescription = "-POS OPERATION TICKET CARD NOT VALID"
+
+            ElseIf RefTo_MessageOut.ToUpper().StartsWith("KO;OPERAZIONE NON SUPPORTATA") Then ' KO;OPERAZIONE NON SUPPORTATA;;;;;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
+
+                ' ** KO --> Codificato Errore Operazione Non Supportata 9008
+                ResultResponse = New ArgenteaFunctionReturnObject(9008)
+                _ErrorTarget = ExceptionProxyArgentea.GLB_OPERATION_NOT_SUPP
+                _ErrorDescription = "-POS OPERATION NOT IMPLEMENTATED"
+
             ElseIf RefTo_MessageOut Is Nothing Or (RefTo_MessageOut = String.Empty) Then
 
-                ' ** KO --> Codificato Errore Parsing 9002
-                ResultResponse = New ArgenteaFunctionReturnObject(9002)
+                ' ** KO --> Codificato Errore Parsing 9010
+                ResultResponse = New ArgenteaFunctionReturnObject(9010)
                 _ErrorTarget = ExceptionProxyArgentea.GLB_PARSE_EMPTY
                 _ErrorDescription = "-PARSING ERROR EMPTY"
 
@@ -1701,10 +1790,22 @@ Public Class ClsProxyArgentea
                 ' Parsiamo la risposta argentea per l'azione
                 If (Not CSVHelper.ParseReturnString(RefTo_MessageOut, ParsingMode.Item1, objTPTAHelperArgentea, ParsingMode.Item2, ParsingMode.Item3)) Then
 
-                    ' ** KO --> Codificato Errore Parsing 9002
-                    ResultResponse = New ArgenteaFunctionReturnObject(9002)
+                    ' ** KO --> Codificato Errore Parsing 9010
+                    ResultResponse = New ArgenteaFunctionReturnObject(9010)
+                    Dim _part As String
+                    If RefTo_MessageOut.ToUpper().StartsWith("OK;") Then
+                        _part = "ACTION IN KO WITH --> "
+                    ElseIf RefTo_MessageOut.ToUpper().StartsWith("KO;") Then
+                        _part = "ACTION IN OK WITH --> "
+                    Else
+                        _part = "ACTION UKNOWED WITH --> "
+                    End If
+
                     _ErrorTarget = ExceptionProxyArgentea.GLB_PARSE_FAILED
-                    _ErrorDescription = "-PARSING ERROR FAILED-:: " & RefTo_MessageOut
+                    _ErrorDescription = "-PARSING ERROR FAILED-:: " & _part & "::" & RefTo_MessageOut
+
+                    ' ** KO --> Error Parsing Description
+                    LOG_Error(FuncName, "Error Parsing Protocol  .: " & _ErrorDescription)
 
                 Else
 
@@ -1735,7 +1836,7 @@ Public Class ClsProxyArgentea
             ' ** KO --> Exception sull'effettuare il Parsing Errori per mancata comunicazione con il sistema remoto Argentea.
             LOG_Error(FuncName, "Comunication Failed with Argentea for API to call .: " & ApiCalled.ToString() & " to Method Argentea .: " & MethodName & " with response received retCode .: " & RetCode & " and raw Message out is ERROR SOCKET. CHECK lan to resolve!! ")
 
-        ElseIf ResultResponse.Status = 9002 Then
+        ElseIf ResultResponse.Status = 9010 Then
 
             ' --> Su Errore di Parsing etichettiamo questa Exception per gestioni succesive da segnalare come errore di parsing sul protocollo.
             _ErrorOnParseProtocol = True
@@ -1849,7 +1950,7 @@ Public Class ClsProxyArgentea
     '''     Avvia e mette in attesa il termianale
     '''     hardware collegato alla cassa corente.
     ''' </summary>
-    Private Sub StartPosHardware(ByRef frmTo As FormBuonoChiaro)
+    Private Sub StartPosHardware(ByRef frmTo As FormBuonoChiaro, bShowMessageErrorPos As Boolean)
         Dim funcName As String = "StartPosHardware"
         Dim excepted As Exception = Nothing
 
@@ -1887,12 +1988,29 @@ Public Class ClsProxyArgentea
                     m_ServiceStatus = enProxyStatus.OK
                 Else
                     m_ServiceStatus = enProxyStatus.KO
-                End If
 
+                    ' Se mostrare i Messaggi di Errori Pos o meno
+                    If bShowMessageErrorPos Then
+
+                        If m_LastStatus >= 9002 And m_LastStatus <= 9009 Then
+
+                            ' Msg Utente    --> ** (Ultimo Status e ErrorMessage impostato dall'azione precedente)
+                            msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
+
+                        End If
+
+                    Else
+
+                        ' Scrive una riga di Log per monitorare....
+                        LOG_Info(getLocationString(funcName), m_ServiceStatus)
+
+                    End If
+
+                End If
             Else
 
                 ' Scrive una riga di Log per monitorare....
-                LOG_Info(getLocationString(funcName), m_ServiceStatus)
+                LOG_Info(getLocationString(funcName), "HARDWARE NOT RUNNING")
 
             End If
 
@@ -1933,13 +2051,17 @@ Public Class ClsProxyArgentea
                     ' un eccezione nel consumer lo catturiamo espondendo
                     ' il problema di mancato aggiornamento al chiamante.
                     '
-                    SetExceptionsStatus(funcName, excepted)
+                    SetExceptionsStatus(funcName, excepted, False)
 
                     ' Con ritorno a Status InError
                     m_ServiceStatus = enProxyStatus.InError
 
                     ' Log locale
-                    LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + "--" + excepted.InnerException.ToString())
+                    If excepted.InnerException Is Nothing Then
+                        LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + "--" + excepted.ToString())
+                    Else
+                        LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + "--" + excepted.InnerException.ToString())
+                    End If
 
                     ' Msg Utente    --> ** (Ultimo Status e ErrorMessage impostato dall'azione precedente)
                     msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
@@ -2034,13 +2156,17 @@ Public Class ClsProxyArgentea
                     ' un eccezione nel consumer lo catturiamo espondendo
                     ' il problema di mancato aggiornamento al chiamante.
                     '
-                    SetExceptionsStatus(funcName, excepted)
+                    SetExceptionsStatus(funcName, excepted, False)
 
                     ' Con Ritorno a Status InError
                     m_ServiceStatus = enProxyStatus.InError
 
                     ' Log locale
-                    LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + "--" + excepted.InnerException.ToString())
+                    If excepted.InnerException Is Nothing Then
+                        LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + "--" + excepted.ToString())
+                    Else
+                        LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + "--" + excepted.InnerException.ToString())
+                    End If
 
                     ' Msg Utente --> ** (Ultimo Status e ErrorMessage impostato dall'azione precedente)
                     msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
@@ -2737,7 +2863,7 @@ Public Class ClsProxyArgentea
 
         ' (Idle)
         If m_CommandToCall = enCommandToCall.Payment Then
-            
+
             metdName = "PaymentBPE"
             actApiCall = enApiToCall.MultiplePayments
             retCode = ArgenteaCOMObject.PaymentBPE(
@@ -2800,7 +2926,11 @@ Public Class ClsProxyArgentea
             '
             m_TotalBPUsed_CS = m_LastResponseRawArgentea.NumBPEvalutated        ' <-- Il Numero dei buoni utilizzati in questa sessione di pagamento
             m_TotalPayed_CS = m_LastResponseRawArgentea.Amount                  ' <-- L'Accumulutaroe Globale al Proxy corrente nella sessione corrente
-            m_TotalValueExcedeed_CS = 0                                         ' <-- ?? TODO:: Il Totale in eccesso se l'opzione per accettare valori maggiori è abilitata
+            If m_TotalPayed_CS > m_CurrentPaymentsTotal Then
+                m_TotalValueExcedeed_CS = m_TotalPayed_CS - m_CurrentPaymentsTotal  ' <-- ?? TODO:: Il Totale in eccesso se l'opzione per accettare valori maggiori è abilitata
+            Else
+                m_TotalValueExcedeed_CS = 0
+            End If
 
             ' Riprendo l'elenco riportato dall'hardware
             ' per ogni taglio e colloco ricopiandolo il 
@@ -2832,6 +2962,10 @@ Public Class ClsProxyArgentea
             Return True
 
         Else
+
+            ' Set dell'errore sullo status della risposta
+            m_LastStatus = m_LastResponseRawArgentea.Status
+            m_LastErrorMessage = m_LastResponseRawArgentea.ErrorMessage
 
             ' ** KO --> Non inizializzata da parte di Argentea per errore remoto in risposta a questo codice.
             LOG_Debug(getLocationString(funcName), "BPE comunication remote failed on first call to terminal argentea with message code " & m_LastStatus & " relative to " & m_LastErrorMessage)
@@ -2907,11 +3041,6 @@ Public Class ClsProxyArgentea
 
 #Region "Functions Private per Emulation Pos Software Service mode"
 
-    ''' :: Flag per il tentativo di Reset del Counter remoto presso Argentea
-    Private _flagCallOnetimeResetIncrement As Boolean = False
-    ''' :: Log durante delle chiamate di ogni errore o stato precedente
-    Private m_LogErrors As Dictionary(Of Integer, tLogErr)
-
     ''' <summary>
     '''     Classe di appoggio per i log delle chiamate
     ''' </summary>
@@ -2940,6 +3069,12 @@ Public Class ClsProxyArgentea
         Dim funcName As String = "CallInitialization"
         Dim metdName As String = "n/d"
         Dim _SignalErrorAndExitResetCounter As Boolean = False
+
+        ' Se nel contesto della sessione per questo scontrino
+        ' è già stato iniziato un nuovo Ticket non lo richiediamo.
+        If FLAG_STATIC_INITIALIZATED Then
+            Return True
+        End If
 
         ' OUT su chiamate
         Dim RefTo_MessageOut As String = Nothing
@@ -2975,6 +3110,8 @@ Public Class ClsProxyArgentea
             Get_CodeCashDevice,
             RefTo_MessageOut
         )
+
+        ''msgUtil.ShowMessage(m_TheModcntr, "INIZIAZLIZZAZIONE " + RefTo_MessageOut, "LevelITCommonModArgentea_", PosDef.TARMessageTypes.TPINFORMATION)
 
 #Else
 
@@ -3015,6 +3152,12 @@ Public Class ClsProxyArgentea
         ' sono un un errore remoto, su eccezione locale
         ' di parsing esco a priori e non passo.
         If m_LastResponseRawArgentea.Successfull Then
+
+            ' L'Iniziailizzazione deve essere chiamata una volta sola nel contesto
+            ' della sessione in corso, se la sessione sarà conlcusa sarà  chiamata
+            ' nuovamente.
+            FLAG_STATIC_INITIALIZATED = True
+
 
             ' Incrementiamo di uno l'azione al numero di chiamate verso argentea
             _IncrementProgressiveCall()
@@ -3479,6 +3622,7 @@ Public Class ClsProxyArgentea
             If m_LastResponseRawArgentea.Successfull Then
 
                 ' Reset contatori interni e progressivo statico a partire nuovamente da 1.
+                ''msgUtil.ShowMessage(m_TheModcntr, "RIALLINEO DA " + CStr(m_ProgressiveCall), "LevelITCommonModArgentea_", PosDef.TARMessageTypes.TPINFORMATION)
                 m_ProgressiveCall = -1
                 _IncrementProgressiveCall()
 
@@ -3696,7 +3840,7 @@ Public Class ClsProxyArgentea
     ''' </summary>
     ''' <param name="funcname">Il nome della funzione che sta gestendo il try</param>
     ''' <param name="ex">L'eccezione che è arrivata dalla funzione di throw</param>
-    Private Sub SetExceptionsStatus(funcname As String, ex As Exception)
+    Private Sub SetExceptionsStatus(funcname As String, ex As Exception, Optional ShowMessage As Boolean = True)
 
         ' Impostiamo per restituire la risposta e lo stato
         ' del proxy secondo l'errore in corso. Se questo è
@@ -3747,7 +3891,9 @@ Public Class ClsProxyArgentea
         End If
 
         ' Msg Utente  ( Ultimo Status e ErrorMessage impotato dal Tipo di Exception gestita )
-        msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
+        If ShowMessage Then
+            msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
+        End If
         '
 
     End Sub
@@ -4242,6 +4388,13 @@ Friend Class ExceptionProxyArgentea : Inherits System.Exception
     ' Su Errore generale di comunciazione che ha
     ' restituito una chiamata ad un metodo della dll di Argentea.
     Public Const GLB_SOCKET_ERROR As String = "SOCKET_ERROR"
+    Public Const GLB_MONETICA_ERROR As String = "MONETICA_ERROR"
+    Public Const GLB_TIMEOUT_ERROR As String = "TIMEOUT_ERROR"
+    Public Const GLB_SENDDATA_FAILED As String = "SENDDATA_FAILED"
+    Public Const GLB_OPERATION_USERABORTED As String = "USER_ABORTED"
+    Public Const GLB_TICKETCARD_NOTVALID As String = "TICKET_CARD_NOT_VALID"
+    Public Const GLB_OPERATION_NOT_SUPP As String = "OPERATION_NOT_SUPPORTED"
+    Public Const GLB_OPERATION_USERNOINPUTDATA As String = "USER_NOT_INPUT_DATA"
 
     ' Su Errori di Parsing durante la decodifica della
     ' Risposta o dell'Errore nella risposta dalla dll di Argentea.

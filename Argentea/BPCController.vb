@@ -231,6 +231,8 @@ Public Class BPCController
                 '
                 If HandlePaymentBPCall(m_PayableAmout) Then
                     Dematerialize = IBPReturnCode.OK
+                Else
+                    Dematerialize = IBPReturnCode.KO
                 End If
                 '
                 '** >>>>>>>> Handle sul service remoto Argentea <<<<<<<<<<<<< **
@@ -254,6 +256,8 @@ Public Class BPCController
             End If
 
         Catch ex As Exception
+
+            Dematerialize = IBPReturnCode.KO
 
             ' Signal come errore non previsto anulla l'operazione di pagamento
             m_LastStatus = GLB_ERROR_NOT_UNEXPECTED
@@ -371,7 +375,7 @@ Public Class BPCController
                     ' VOID singolo per questo Titolo Singolo
 
                     Dim CurrentBarcode As String = m_CurrMedia.GetPropertybyName("szbp_grp_itm")
-                    Dim CurrentCrcTransactionId As String = m_CurrMedia.GetPropertybyName("szbp_grp_itm_IDTransaction")
+                    Dim CurrentCrcTransactionId As String = m_CurrMedia.GetPropertybyName("szbp_grp_itm_IDTransaction") ' szbp_grp_itm_IDTransaction
                     Dim CurrentTotValueBp As Decimal = CDec(m_CurrMedia.GetPropertybyName("dbp_grp_itm_Value"))
 
                     If HandleSingleVoidBPCall(True, CurrentBarcode, CurrentCrcTransactionId, CurrentTotValueBp) Then
@@ -385,9 +389,9 @@ Public Class BPCController
                     ' VOID con eleneco dei titoli raggrupapti
 
                     If HandleVoidBPCall(m_VoidAmount) Then
-
                         Void = IBPReturnCode.OK
-
+                    Else
+                        Void = IBPReturnCode.KO
                     End If
 
                 End If
@@ -397,6 +401,8 @@ Public Class BPCController
             End If
 
         Catch ex As Exception
+
+            Void = IBPReturnCode.KO
 
             ' Signal come errore non previsto non permette di continuare con lo storno
             m_LastStatus = GLB_ERROR_NOT_UNEXPECTED
@@ -590,7 +596,8 @@ Public Class BPCController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al service di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -705,7 +712,8 @@ Public Class BPCController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -833,7 +841,8 @@ Public Class BPCController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -878,11 +887,11 @@ Public Class BPCController
         '
         ' CALL -> Esecuzione dell'API sul sistema service Remoto!! with response entrapment
         '
-        Dim ArgBarCode As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("BarCode", barcode)
-        Dim IdCrcTransatcion As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("IdCrcTransatcion", idCrcTransaction)
-        Dim TotValueItem As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("TotFaceValue", TotValueOfBP)
+        Dim _ArgBarCode As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("BarCode", barcode)
+        Dim _IdCrcTransaction As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("IdCrcTransaction", idCrcTransaction)
+        Dim _TotValueItem As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("TotFaceValue", TotValueOfBP)
 
-        Dim StatusResult As ClsProxyArgentea.enProxyStatus = proxyPos.CallAPI("SINGLEVOID", ArgBarCode, IdCrcTransatcion, TotValueItem)
+        Dim StatusResult As ClsProxyArgentea.enProxyStatus = proxyPos.CallAPI("SINGLEVOID", _ArgBarCode, _IdCrcTransaction, _TotValueItem)
         '
         ' >>>> ***************************************** <<<<<<
 
@@ -929,7 +938,8 @@ Public Class BPCController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -1186,7 +1196,7 @@ Public Class BPCController
             If resultData.typeBPElaborated = ClsProxyArgentea.enTypeBP.TicketsCard Then
                 OptAccorpateMediaForBP = True
             End If
-            'OptAccorpateMediaForBP = True
+            'OptAccorpateMediaForBP = False
 
             If OptAccorpateMediaForBP Then
 
@@ -1693,7 +1703,7 @@ Public Class BPCController
             NewTaMediaRec.AddField("d" & KeyCBP + "_FaceValue", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
             NewTaMediaRec.setPropertybyName("d" & KeyCBP + "_FaceValue", CDec(pe.FaceValue))
 
-            ' itm IDCrcTransaction associata (Da Argentea)
+            ' itm IDCrcTransaction associata (Da Argentea)   '''' 'szbp_grp_itm_IDTransaction'
             NewTaMediaRec.AddField("sz" & KeyCBP + "_IDTransaction", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             NewTaMediaRec.setPropertybyName("sz" & KeyCBP + "_IDTransaction", pe.IDTransactionCrc)
 

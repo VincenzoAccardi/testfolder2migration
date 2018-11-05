@@ -230,6 +230,8 @@ Public Class BPEController
                 '
                 If HandlePaymentBPCall(m_PayableAmout) Then
                     Dematerialize = IBPReturnCode.OK
+                Else
+                    Dematerialize = IBPReturnCode.KO
                 End If
                 '
                 '** >>>>>>>> Handle sul service remoto Argentea <<<<<<<<<<<<< **
@@ -253,6 +255,8 @@ Public Class BPEController
             End If
 
         Catch ex As Exception
+
+            Dematerialize = IBPReturnCode.KO
 
             ' Signal come errore non previsto anulla l'operazione di pagamento
             m_LastStatus = GLB_ERROR_NOT_UNEXPECTED
@@ -384,9 +388,9 @@ Public Class BPEController
                     ' VOID con eleneco dei titoli raggrupapti
 
                     If HandleVoidBPCall(m_VoidAmount) Then
-
                         Void = IBPReturnCode.OK
-
+                    Else
+                        Void = IBPReturnCode.KO
                     End If
 
                 End If
@@ -396,6 +400,8 @@ Public Class BPEController
             End If
 
         Catch ex As Exception
+
+            Void = IBPReturnCode.KO
 
             ' Signal come errore non previsto non permette di continuare con lo storno
             m_LastStatus = GLB_ERROR_NOT_UNEXPECTED
@@ -589,7 +595,8 @@ Public Class BPEController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al service di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -652,7 +659,7 @@ Public Class BPEController
         ' RUN -> Avvio il FORM Locale ed attendo!! with try entrapment
         '
         If Not proxyPos.IsLive Then
-            proxyPos.Connect()
+            proxyPos.Connect(True)
         Else
             proxyPos.Unpark()
         End If
@@ -704,7 +711,8 @@ Public Class BPEController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -777,7 +785,7 @@ Public Class BPEController
         ' RUN -> Avvio il FORM Locale ed attendo!! with try entrapment
         '
         If Not proxyPos.IsLive Then
-            proxyPos.Connect()
+            proxyPos.Connect(True)
         Else
             proxyPos.Unpark()
         End If
@@ -832,7 +840,8 @@ Public Class BPEController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -877,11 +886,11 @@ Public Class BPEController
         '
         ' CALL -> Esecuzione dell'API sul sistema service Remoto!! with response entrapment
         '
-        Dim ArgBarCode As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("BarCode", barcode)
-        Dim IdCrcTransatcion As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("IdCrcTransatcion", idCrcTransaction)
-        Dim TotValueItem As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("TotFaceValue", TotValueOfBP)
+        Dim _ArgBarCode As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("BarCode", barcode)
+        Dim _IdCrcTransaction As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("IdCrcTransaction", idCrcTransaction)
+        Dim _TotValueItem As KeyValuePair(Of String, Object) = New KeyValuePair(Of String, Object)("TotFaceValue", TotValueOfBP)
 
-        Dim StatusResult As ClsProxyArgentea.enProxyStatus = proxyPos.CallAPI("SINGLEVOID", ArgBarCode, IdCrcTransatcion, TotValueItem)
+        Dim StatusResult As ClsProxyArgentea.enProxyStatus = proxyPos.CallAPI("SINGLEVOID", _ArgBarCode, _IdCrcTransaction, _TotValueItem)
         '
         ' >>>> ***************************************** <<<<<<
 
@@ -928,7 +937,8 @@ Public Class BPEController
             ' dei Buoni Pasto e relativa validazione
             ' tramite chiamata al proxy di Argentea.
             '
-            Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            'Dim NmRnd As Integer = New System.Random(CType(System.DateTime.Now.Ticks Mod System.Int32.MaxValue, Integer)).Next()
+            Dim NmRnd As Integer = 12345678
             If proxyPos Is Nothing Then
                 proxyPos = New ClsProxyArgentea(
                 m_TheModcntr,                           '   <-- Il Controller di base (la cassa)
@@ -1123,10 +1133,12 @@ Public Class BPEController
 
             For x As Integer = 0 To UBound(TypeEdges) - 1
 
-                Dim KeyQTA As String = "ibp_QUANTITY_" + TypeEdges(x)
-                Dim KeyTOT As String = "dbp_AMOUNT_" + TypeEdges(x)
+                Dim KeyQTA As String = "lBP_QUANTITY_" + CStr(x + 1)
+                Dim KeyVAL As String = "dBP_VALUE_" + CStr(x + 1)
+                Dim KeyTOT As String = "dBP_AMOUNT_" + CStr(x + 1)
 
                 Dim ValQTA As Integer = m_CurrMedia.GetPropertybyName(KeyQTA)
+                Dim ValVAL As Integer = m_CurrMedia.GetPropertybyName(KeyVAL)
                 Dim ValTOT As Decimal = m_CurrMedia.GetPropertybyName(KeyTOT) / FractToValues
 
                 CheckAndFillListOfGroupItems.Add(CStr(ValQTA), New PaidEntry(CStr(ValQTA), ValTOT))

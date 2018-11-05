@@ -53,8 +53,43 @@ Public Class ArgenteaFunctionReturnObject
 
             ElseIf StatusCurrent = 9002 Then
 
+                ' ERRORE GENERALE DI CONFIGURAZIONE MONETICA INI    
+                Me.Description = "MONETICA-CONFIG-ERROR"
+
+            ElseIf StatusCurrent = 9003 Then
+
+                ' ERRORE POS IN TIMEOUT
+                Me.Description = "POS-TIMEOUT-ERROR"
+
+            ElseIf StatusCurrent = 9004 Then
+
+                ' SEND DATA FAILED
+                Me.Description = "POS-SEND-DATA-FAILED"
+
+            ElseIf StatusCurrent = 9005 Then
+
+                ' OPERAZIONE DA UTENTE ANNULLATA
+                Me.Description = "POS-OPERATION-ABORTED-BY-USER"
+
+            ElseIf StatusCurrent = 9006 Then
+
+                ' OPERAZIONE DA UTENTE NON HA SELEZIONATO BUONI PASTO
+                Me.Description = "POS-OPERATION-NOINPUTDATA-BY-USER"
+
+            ElseIf StatusCurrent = 9007 Then
+
+                ' OPERAZIONE CARTA BUONI PASTO NON VALIDA
+                Me.Description = "POS-TICKETCARD-NOTVALID"
+
+            ElseIf StatusCurrent = 9008 Then
+
+                ' OPERAZIONE NON SUPPORTATA
+                Me.Description = "POS-OPERATION-NOT-IMPLEMENTATED"
+
+            ElseIf StatusCurrent = 9010 Then
+
                 ' ERRORE GENERALE DI PARSING SU PROTOCOLLO
-                Me.Description = "PARSING-ERROR"
+                Me.Description = "GEN-PARSING-ERROR"
 
             Else
 
