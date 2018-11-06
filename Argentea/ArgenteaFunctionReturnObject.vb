@@ -86,6 +86,11 @@ Public Class ArgenteaFunctionReturnObject
                 ' OPERAZIONE NON SUPPORTATA
                 Me.Description = "POS-OPERATION-NOT-IMPLEMENTATED"
 
+            ElseIf StatusCurrent = 9009 Then
+
+                ' OPERAZIONE DATI NON RICEVUTI
+                Me.Description = "POS-OPERATION-NOINPUTDATA-RECEIVED"
+
             ElseIf StatusCurrent = 9010 Then
 
                 ' ERRORE GENERALE DI PARSING SU PROTOCOLLO
