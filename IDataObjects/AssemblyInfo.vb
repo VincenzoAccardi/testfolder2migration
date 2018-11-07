@@ -17,7 +17,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyProduct("TP.Net")> 
 <Assembly: AssemblyCopyright("Copyright (c) 1997 - 2008 Wincor Nixdorf International GmbH")> 
 <Assembly: AssemblyTrademark("TP.Net")> 
-<Assembly: AssemblyCulture("")> 
+<Assembly: AssemblyCulture("")>
 
 ' Version information for an assembly consists of the following four values:
 
@@ -29,7 +29,7 @@ Imports System.Runtime.InteropServices
 ' You can specify all the values or you can default the Revision and Build Numbers
 ' by using the '*' as shown below
 
-<Assembly: AssemblyVersion("50.17.02.00")> 
+<Assembly: AssemblyVersion("50.17.02.01")>
 
 
-<Assembly: AssemblyFileVersionAttribute("50.17.02.00")> 
+<Assembly: AssemblyFileVersion("50.17.02.01")>
