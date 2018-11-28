@@ -263,6 +263,7 @@
     <Compile Include="TaFtrRec.vb" />
     <Compile Include="TaHelloWorldRec.vb" />
     <Compile Include="TaMediaRec.vb" />
+    <Compile Include="TaServerRT.vb" />
     <Compile Include="TaSignOffRec.vb" />
     <Compile Include="TaVatExmptionReductionRec.vb" />
     <Compile Include="TaVLLCouponRec.vb" />
