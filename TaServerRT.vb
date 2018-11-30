@@ -99,6 +99,30 @@ Public Class TaServerRT
         End Set
 
     End Property
+    Public Overridable Property szTaType() As String
+        Get
+            Return m.Fields_Value("szTaType")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szTaType") = value
+        End Set
+    End Property
+    Public Overridable Property szDate() As String
+        Get
+            Return m.Fields_Value("szDate")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szDate") = value
+        End Set
+    End Property
+    Public Overridable Property szRTFileName() As String
+        Get
+            Return m.Fields_Value("szRTFileName")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szRTFileName") = value
+        End Set
+    End Property
 #End Region
 
 #Region "New/Finalize"
@@ -124,6 +148,9 @@ Public Class TaServerRT
             m.Append("lNumeroAzzeramento", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("lNumeroDocumento", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szCCDC", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szTaType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szDate", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szRTFileName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
