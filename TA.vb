@@ -8,8 +8,9 @@ Imports System.Xml.Linq
 Imports System.Xml.XPath
 Imports System.Linq
 Imports System.Windows.Forms
+Imports TPDotnet.IT.Common.Pos
 
-Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA
+Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA, IPluggableTransaction
 
 #Region "Documentation"
     ' ********** ********** ********** **********
@@ -25,6 +26,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
 #Region "Private Class fields"
     Protected m_bFiscalPrinted As Boolean
+    Protected m_bIsMainTransaction As Boolean = False
 #End Region
 
 #Region "Properties"
@@ -42,6 +44,15 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         End Get
         Set(ByVal Value As Boolean)
             m_bFiscalPrinted = Value
+        End Set
+    End Property
+
+    Public Property bIsMainTransaction() As Boolean Implements IPluggableTransaction.bIsMainTransaction
+        Get
+            Return m_bIsMainTransaction
+        End Get
+        Set(value As Boolean)
+            m_bIsMainTransaction = value
         End Set
     End Property
 
