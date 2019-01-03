@@ -24,7 +24,7 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
     Protected m_bITFiscalNotPaid As Integer
     Protected m_dITTxHALO As Decimal
     Protected m_bITCheckCashHalo As Decimal
-    Protected m_bPaymentRoundableAt5Cent As Boolean
+    Protected m_bPaymentRoundableAt5Cent As Integer
 
 #Region "PAYMENT Properties"
 
@@ -121,6 +121,7 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
             m.Append("bITFiscalNotPaid", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("dITTxHALO", DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
             m.Append("bITCheckCashHalo", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("bPaymentRoundableAt5Cent", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
             Exit Sub
 
@@ -150,6 +151,7 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
             m.Fields_Value("bITFiscalNotPaid") = 0
             m.Fields_Value("dITTxHALO") = 9999999.99
             m.Fields_Value("bITCheckCashHalo") = 0
+            m.Fields_Value("bPaymentRoundableAt5Cent") = 0
 
             Exit Sub
 
