@@ -501,7 +501,12 @@ Public Class ArgenteaParameters
 #Region "BuoniPasto"
 
     Private _BPRupp As String
-    <ArgenteaParameters("BP_ParameterRuppArgentea", "")>
+    ''' <summary>
+    '''     Codice concesso da Argntea al
+    '''     cliente che fa uso del Modulo.
+    ''' </summary>
+    ''' <returns>String</returns>
+    <ArgenteaParameters("BP_RUPP_ARGENTEA", "")>
     Public Property BPRupp() As String
         Get
             Return _BPRupp
@@ -513,7 +518,15 @@ Public Class ArgenteaParameters
 
 
     Private _BP_AcceptExcedeedValues As Boolean
-    <ArgenteaParameters("BP_AcceptExcedeedValues", False)>
+    ''' <summary>
+    '''	Se il Totale in ingresso è minore rispetto 
+    '''	al valore di facciata del Buono Pasto una volta
+    '''	ottenuto dalla materializzazione, si tronca il totale	
+    '''	riportando la differenza nel metadata del record, oppure	
+    '''	si nega l'operzione alla cassa.
+    ''' </summary>
+    ''' <returns>Boolean</returns>
+    <ArgenteaParameters("BP_ACCEPT_EXCEDEED_VALUES", False)>
     Public Property BP_AcceptExcedeedValues() As Boolean
         Get
             Return _BP_AcceptExcedeedValues
@@ -524,7 +537,14 @@ Public Class ArgenteaParameters
     End Property
 
     Private _BP_AccorpateOnTA As Boolean
-    <ArgenteaParameters("BP_AccorpateOnTA", False)>
+    ''' <summary>
+    '''     Se si vuole accorpare i BP per ogni
+    '''     sessione in un record dello scontrino
+    '''     oppure per ogni demat effettuato si ha 
+    '''     una riga sullo scontrino
+    ''' </summary>
+    ''' <returns>Boolean</returns>
+    <ArgenteaParameters("BP_ACCORPATE_ON_TA", False)>
     Public Property BP_AccorpateOnTA() As Boolean
         Get
             Return _BP_AccorpateOnTA
@@ -534,19 +554,15 @@ Public Class ArgenteaParameters
         End Set
     End Property
 
-    Private _BP_NumMaxPayablesOnVoid As Integer
-    <ArgenteaParameters("BP_NumMaxPayablesOnVoid", 0)>
-    Public Property BP_NumMaxPayablesOnVoid() As Integer
-        Get
-            Return _BP_NumMaxPayablesOnVoid
-        End Get
-        Set(ByVal value As Integer)
-            _BP_NumMaxPayablesOnVoid = value
-        End Set
-    End Property
-
     Private _BP_MaxBPPayableSomeSession As Integer
-    <ArgenteaParameters("BP_MaxBPPayableSomeSession", 0)>
+    ''' <summary>
+    '''     stabilisce il numero massimo di BP
+    '''     utilizzabili per essere usati come
+    '''     pagamento per ogni scontrino.
+    '''     Con 0 il numero massimo non ha un limite.
+    ''' </summary>
+    ''' <returns>Un numero massimo di elementi per scontrino utilizzabili o 0 per nessun limite</returns>
+    <ArgenteaParameters("BP_MAX_BP_PAYABLES_SOME_SESSION", 0)>
     Public Property BP_MaxBPPayableSomeSession() As Integer
         Get
             Return _BP_MaxBPPayableSomeSession
@@ -556,27 +572,207 @@ Public Class ArgenteaParameters
         End Set
     End Property
 
-#Region "BPE"
-    Private _BPECopies As Integer
-    <ArgenteaParameters("BPE_COPIES", 1)>
-    Public Property BPECopies() As Integer
+    Private _ViewModeElementsDeleteted As Byte
+    ''' <summary>
+    '''     Con questa proprietà definiamo alla visualizzazione
+    '''     dell'emulatore software se viene visualizzato il 
+    '''     checkbox per la scelta utente di vedere o meno gli
+    '''     elementi elimanti con 2 definito come impostazione di
+    '''     default a vederli con il check impostato a true o 3
+    '''     con il check impostato a false di non vederli, mentre con
+    '''     0 di Vederli sempre e senza dare scelta all'utente e con 
+    '''     1 a non vederli mai e senza scelta ultente.
+    ''' </summary>
+    ''' <returns>0 = Sempre Visibili - 1 = Sempre non visibili - 2 = Visibili o meno a scelta dell'utente con default a Visibili 3 = Visibili o meno a scelta dell'utente con default a Non Visibili</returns>
+    <ArgenteaParameters("BP_VIEW_MODE_ELEMENTS_DELETETED", 0)>
+    Public Property BP_ViewModeElementsDeleteted() As Byte
         Get
-            Return _BPECopies
+            Return _ViewModeElementsDeleteted
         End Get
-        Set(ByVal value As Integer)
-            _BPECopies = value
+        Set(ByVal value As Byte)
+            _ViewModeElementsDeleteted = value
+        End Set
+    End Property
+
+    Private _ViewModeTotalsAndPartials As Byte
+    ''' <summary>
+    '''     Con questa proprietà definiamo alla visualizzazione
+    '''     dell'emulatore software se viene visualizzato per
+    '''     le caselle di totali e parziali scalabili anche
+    '''     i valori rispetto alla sessione o al solo raggruppamento.
+    '''     per default a vederli 0 riporterà solo il totale di sessione
+    ''' </summary>
+    ''' <remarks>
+    '''     0 -> Visualizziamo 2 caselle con l'importo totale comprensivo del totale delle sessioni precedenti
+    '''     1 -> Visualizziamo 2 caselle con l'importo totale comprensivo del totale delle sessioni precedenti ( e nella lista gli importi paganti delle sessioni precedenti )
+    '''     2 -> Visualizziamo 2 caselle con l'importo totale comprensivo del totale delle sessioni precedenti ( e nella lista gli importi paganti e non delle sessioni precedenti )
+    '''     3 -> Visualizziamo 2 caselle escluso l'importo totale delle sessioni precedenti riportante solo il parziale della sessione corrente ( l'elenco non mostra niente solo quelli nuovi  della sesione corrente )
+    '''     4 -> Visualizziamo 4 caselle con l'importo totale delle sessioni precedenti e quello parziale della sessione corrente ( l'elenco non mostra niente solo quelli nuovi  della sesione corrente )
+    '''     5 -> Visualizziamo 4 caselle con l'importo totale delle sessioni precedenti e quello parziale della sessione corrente ( e nella lista gli importi paganti delle sessioni precedenti )
+    '''     6 -> Visualizziamo 4 caselle con l'importo totale delle sessioni precedenti e quello parziale della sessione corrente ( e nella lista gli importi paganti e non delle sessioni precedenti )
+    ''' </remarks>
+    ''' <returns>Valore da 0 a 6 a secondo dell'impostazione definita</returns>
+    <ArgenteaParameters("BP_VIEW_MODE_TOTALS_AND_PARTIALS", 0)>
+    Public Property BP_ViewModeTotalsAndPartials() As Byte
+        Get
+            Return _ViewModeTotalsAndPartials
+        End Get
+        Set(ByVal value As Byte)
+            _ViewModeTotalsAndPartials = value
+        End Set
+    End Property
+
+    Private _BP_ShowWaitScreenLevel As Byte
+    ''' <summary>
+    '''     In base al livello mostra o meno i Waitscreen
+    '''     nella chiamata al servizio di emulazione POS.
+    '''     Livello 0 Non mostra in nessun caso i WaitScreen
+    '''     Livello 1 Mostra in tutti i casi i WaitScreen
+    '''     Livello 2 Mostra i WaitScreen solo necessari a apecifiche azioni utente
+    ''' </summary>
+    ''' <returns>Byte da 0 a 2 1 a default</returns>
+    <ArgenteaParameters("BP_SHOW_WAITSCREEN_LEVEL", 1)>
+    Public Property BP_ShowWaitScreenLevel() As Byte
+        Get
+            Return _BP_ShowWaitScreenLevel
+        End Get
+        Set(ByVal value As Byte)
+            _BP_ShowWaitScreenLevel = value
+        End Set
+    End Property
+
+    Private _BP_ShowMessageBoxLevel As Byte
+    ''' <summary>
+    '''     Mostra i messaggi di stato a condizione
+    '''     che il livello di mostrare i messaggi sia
+    '''     definito secondo questa condizione.:
+    '''     Livello 0 Non mostra in nessun caso i Messagi di Errore Tranne quelli con Eccezioni Interne o di Parsing
+    '''     Livello 1 Mostra in tutti i casi i Messaggi di Errore di azioni utente e il resto
+    '''     Livello 2 Mostra i MessageBox solo necessari a apecifiche azioni utente e le eccezioni Interne o di Parsing
+    ''' </summary>
+    ''' <returns></returns>
+    <ArgenteaParameters("BP_SHOW_MESSAGEBOX_LEVEL", 1)>
+    Public Property BP_ShowMessageBoxLevel() As Byte
+        Get
+            Return _BP_ShowMessageBoxLevel
+        End Get
+        Set(ByVal value As Byte)
+            _BP_ShowMessageBoxLevel = value
+        End Set
+    End Property
+
+    Private _BP_ViewFormForMessageStatusPos As Boolean
+    ''' <summary>
+    '''     Se si vogliono far vedere i messaggi di stato
+    '''     in basso al form durante le operazioni di 
+    '''     dematerializzazione che arrivano dal POS Hardware
+    ''' </summary>
+    ''' <returns>Boolean</returns>
+    <ArgenteaParameters("BP_VIEW_FORM_FOR_MESSAGES_STATUS_POS", False)>
+    Public Property BP_ViewFormForMessagesStatusPos() As Boolean
+        Get
+            Return _BP_ViewFormForMessageStatusPos
+        End Get
+        Set(ByVal value As Boolean)
+            _BP_ViewFormForMessageStatusPos = value
+        End Set
+    End Property
+
+#Region "BPE"
+
+    Private _BPE_AutoCloseOnCompleteOperation As Boolean
+    ''' <summary>
+    '''     Nelle operazioni di  interrogazione
+    '''     e stato con il POS Hardware su True
+    '''     fa in modo che il form di comunicazione
+    '''     venga chiuso immediatamente senza 
+    '''     intervento operatore una volta completata.
+    '''     Con false appare il tasto OK sul form di
+    '''     comunicazione per far chiudere all'operatore.
+    ''' </summary>
+    ''' <returns>Boolean</returns>
+    <ArgenteaParameters("BPE_AUTOCLOSE_ON_COMPLETE_OPERATION", True)>
+    Public Property BPE_AutoCloseOnCompleteOperation() As Boolean
+        Get
+            Return _BPE_AutoCloseOnCompleteOperation
+        End Get
+        Set(ByVal value As Boolean)
+            _BPE_AutoCloseOnCompleteOperation = value
+        End Set
+    End Property
+
+    Private _BPE_ReattemptToCompleteOperation As Boolean
+    ''' <summary>
+    '''     Nelle operazioni di interrogazione
+    '''     e stato con il POS Hardware su True
+    '''     fa in modo che in caso di errore di
+    '''     comunicazione con il dispositivo o
+    '''     per annulli utente sul dispositivo 
+    '''     si voglia che appaia il tasto di ritentare
+    '''     piuttosto che uscire dal form sempre
+    '''     che l'autoclose non sia impostato a True
+    ''' </summary>
+    ''' <returns>Boolean</returns>
+    <ArgenteaParameters("BPE_REATTEMPT_TO_COMPLETE_OPERATION", False)>
+    Public Property BPE_ReattemptToCompleteOperation() As Boolean
+        Get
+            Return _BPE_ReattemptToCompleteOperation
+        End Get
+        Set(ByVal value As Boolean)
+            _BPE_ReattemptToCompleteOperation = value
         End Set
     End Property
 
 
-    Private _BPEPrintWithinTa As Boolean
+    Private _BPE_Copies As Integer
+    ''' <summary>
+    '''     Definisce il numero di copie della
+    '''     transazione Argentea da stampare una
+    '''     volta chiuso lo scontrino sempre che
+    '''     la stampa sia abilitata in chiusura.
+    ''' </summary>
+    ''' <returns>Integer</returns>
+    <ArgenteaParameters("BPE_COPIES", 1)>
+    Public Property BPECopies() As Integer
+        Get
+            Return _BPE_Copies
+        End Get
+        Set(ByVal value As Integer)
+            _BPE_Copies = value
+        End Set
+    End Property
+
+    Private _BPE_PrintWithinTa As Boolean
+    ''' <summary>
+    '''     Abilita la stampa a chiusura dello
+    '''     scontrino una volta conclusa l'operazione
+    '''     con la transazione del POS Hardware
+    ''' </summary>
+    ''' <returns>Boolean</returns>
     <ArgenteaParameters("BPE_PRINT_WITHIN_TA", True)>
     Public Property BPEPrintWithinTa() As Boolean
         Get
-            Return _BPEPrintWithinTa
+            Return _BPE_PrintWithinTa
         End Get
         Set(ByVal value As Boolean)
-            _BPEPrintWithinTa = value
+            _BPE_PrintWithinTa = value
+        End Set
+    End Property
+
+    Private _BPE_ViewMessagesOnReturnFromPos As Boolean
+    ''' <summary>
+    '''     Nel Form Hardware se si vuole far vedere
+    '''     le messagebox di errore pos che arrivano
+    '''     all'operatore.
+    ''' </summary>
+    ''' <returns>Boolean</returns>
+    <ArgenteaParameters("BPE_VIEW_MESSAGES_ON_RETURN_FROM_POS", False)>
+    Public Property BP_ViewMessagesOnReturnFromPos() As Boolean
+        Get
+            Return _BPE_ViewMessagesOnReturnFromPos
+        End Get
+        Set(ByVal value As Boolean)
+            _BPE_ViewMessagesOnReturnFromPos = value
         End Set
     End Property
 
@@ -620,6 +816,10 @@ Public Class ArgenteaParameters
                     szTmp = attr.DefaultValue
                 End If
 
+                If True Then
+                    System.Diagnostics.Debug.WriteLine(TPDotnet.Pos.PARAMETER_DLL_NAME + "." + "Argentea" + "." + attr.Name + " = " + szTmp)
+                End If
+
                 Try
 
                     If pi.PropertyType = GetType(Int32) Then
@@ -636,6 +836,10 @@ Public Class ArgenteaParameters
                             pi.SetValue(Me, Boolean.Parse(szTmp), Nothing)
                         End If
 
+                    ElseIf pi.PropertyType = GetType(Byte) Then
+
+                        pi.SetValue(Me, Byte.Parse(szTmp), Nothing)
+
                     Else
 
                         pi.SetValue(Me, szTmp, Nothing)
@@ -643,6 +847,8 @@ Public Class ArgenteaParameters
                     End If
 
                 Catch ex As Exception
+
+                    System.Diagnostics.Debug.WriteLine(TPDotnet.Pos.PARAMETER_DLL_NAME + "." + "Argentea" + "." + attr.Name + " EXCEPTED ")
 
                 End Try
 

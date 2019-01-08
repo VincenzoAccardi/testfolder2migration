@@ -472,6 +472,15 @@ Public Class clsMedia
 
                 If _DoSpecialHandling4Vouchers2 = IBPReturnCode.KO Then
                     TPMsgBox(TPDotnet.Pos.PosDef.TARMessageTypes.TPERROR, getPosTxtNew(theModCntr.contxt, "UserMessage", TXT_EFT_PAYMENT_ABORT), TXT_EFT_PAYMENT_ABORT, theModCntr, "UserMessage")
+
+                    ' Tentaivo di eliminare la coda dei messaggi
+                    'Dim MyTaMediaCloneRec As TaMediaRec = taobj.CreateTaObject(PosDef.TARecTypes.iTA_MEDIA)
+                    'MyTaMediaCloneRec.Clone(MyTaMediaRec, MyTaMediaRec.theHdr.lTaCreateNmbr)
+                    'taobj.Add(MyTaMediaCloneRec)
+                    'taobj.ChangeSign(taobj.GetPositionFromCreationNmbr(MyTaMediaCloneRec.theHdr.lTaCreateNmbr))
+                    'taobj.TARefresh()
+                    'Return True
+
                 End If
             End If
 
@@ -648,7 +657,8 @@ Public Class clsMedia
                 '
                 ' I Parametri common sempre
                 '
-                'handler.New(TheModCntr, taobj)
+
+                handler.SilentMode = True   '   <-- Definisce che i messaggi di stato non siano visualizzati all'operatore. (Tranne quelli eccezionali)
 
             End If
 
@@ -674,7 +684,7 @@ Public Class clsMedia
             ' impostando l'importo in negativo.
             ' (Quindi posso capire se sono su uno STORNO)
             '
-            If MyTaMediaRec.dTaPaid < 0 Then
+            If MyTaMediaRec.dTaPaid <= 0 Then
 
                 ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
                 ' che avvia il form e rimane sulla gestione tramite eventi sul form per
@@ -691,7 +701,6 @@ Public Class clsMedia
                 ProcessBPCartaceo = handler.Dematerialize(Args)
 
             End If
-
 
 
         Catch ex As Exception
@@ -735,6 +744,14 @@ Public Class clsMedia
                 ' gift card handler is not defined into the database
                 ProcessBPElettronico = IBPReturnCode.KO
                 Exit Function
+            Else
+
+                '
+                ' I Parametri common sempre
+                '
+
+                handler.SilentMode = True   '   <-- Definisce che i messaggi di stato non siano visualizzati all'operatore. (Tranne quelli eccezionali)
+
             End If
 
             '
@@ -751,6 +768,20 @@ Public Class clsMedia
             ' BEHAVIOR
 
             '
+            ' Un ulteriore controllo all'entrata 
+            ' per vedere se era in una condizione
+            ' dove più storni hanno creato un eccesso
+            '
+            Dim ExcedeedValue As String = MyTaMediaRec.GetPropertybyName("dbp_TOT_EXCEDEED")
+            Dim _Excedeed As Boolean = False
+            If Not (ExcedeedValue.Trim() = "" Or ExcedeedValue.Trim() = "0") Then
+                _Excedeed = True
+            End If
+
+            ' Lo aggiungo agli argomenti della funzione
+            Args.Add("Excedeed", _Excedeed)
+
+            '
             ' Controllo che se arrivati fin qui dal ModLineVoid
             ' che tratta le selzioni sulla TA principale l'operatore
             ' non abbia cliccato sul tasto ANNULLO che ha fatto
@@ -758,7 +789,7 @@ Public Class clsMedia
             ' impostando l'importo in negativo.
             ' (Quindi posso capire se sono su uno STORNO)
             '
-            If MyTaMediaRec.dTaPaid < 0 Then
+            If MyTaMediaRec.dTaPaid <= 0 Or _Excedeed Then
 
                 ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
                 ' che si mette in attesa sulla schermata mentre sotto attende la risposta

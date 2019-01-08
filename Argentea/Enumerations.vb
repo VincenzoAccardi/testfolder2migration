@@ -47,6 +47,11 @@ Public Enum InternalArgenteaFunctionTypes
     Confirmation_AG
 
     ''' <summary>
+    '''     Chiamata alle API di Argentea per interrogare il servizio su un codice (coupon/buono pasto) per controllare se valido
+    ''' </summary>
+    Check_BP
+
+    ''' <summary>
     '''     Protocollo in riposta a Pagamento su Servizio remoto Argentea
     ''' </summary>
     SinglePaid_BP
@@ -68,6 +73,12 @@ Public Enum InternalArgenteaFunctionTypes
     '''     Multi elementi di risposta
     ''' </summary>
     MultiVoid_BP
+
+    ''' <summary>
+    '''     Protocollo in risposta a Chiamata verso terminale POS Hardware POS locale fornito da Argentea
+    '''     Multi elementi di risposta
+    ''' </summary>
+    MultiItemsIC_BP
 
     ''' <summary>
     '''     Chiamata alle API di Argentea per il Close finale su un inizio di comunicazione per il demat remoto 
