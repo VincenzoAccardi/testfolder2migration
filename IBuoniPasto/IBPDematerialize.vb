@@ -59,5 +59,13 @@ Public Interface IBPDematerialize
     Function Close(ByRef Parameters As System.Collections.Generic.Dictionary(Of String, Object), SilentMode As Boolean) As Boolean
 
 
+    ''' <summary>
+    '''     Se Visualizzare o Meno i Messagi di Stato
+    '''     delle operazioni in corso.
+    ''' </summary>
+    ''' <returns>True se è impostato per visualizzare i messaggi di stato altrimenti False</returns>
+    Property SilentMode As Boolean
+
+
 End Interface
 #End Region
