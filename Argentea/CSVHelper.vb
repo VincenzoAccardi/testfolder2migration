@@ -67,10 +67,6 @@ Public Class CSVHelper
                                                                If strFieldCSV = "OK" Then Return True Else Return False
                                                            End Function
 
-        Dim SetTypeSuccessufully As Func(Of String, Boolean) = Function(ByVal strFieldCSV As String) 'As Boolean
-                                                                   If strFieldCSV = "000" Then Return True Else Return False
-                                                               End Function
-
         ' Per i valori attesi numerici  se stringa vuota riporta "0"
         Dim SetNumeric As Func(Of String, String) = Function(ByVal strFieldCSV As String) 'As String
                                                         If strFieldCSV = String.Empty Then Return "0" Else Return strFieldCSV
@@ -113,13 +109,11 @@ Public Class CSVHelper
                 ' il 3 è il numero di BP evasi in Tagli
                 _NumB = 0
                 For X As Integer = 1 To (CInt(SetNumeric(Itms(0))) + 1) Step 2
-                    If Not X = CInt(SetNumeric(Itms(0))) Then
-                        For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
-                            _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
-                            _Partial += CDec(SetNumeric(Itms(X + 1)))
-                            _NumB += 1
-                        Next
-                    End If
+                    For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
+                        _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
+                        _Partial += CDec(SetNumeric(Itms(X + 1)))
+                        _NumB += 1
+                    Next
                     '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
                 Next
                 Return Tuple.Create(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal))(
@@ -346,29 +340,6 @@ Public Class CSVHelper
                         Exit For
                         Exit Select
 
-                    Case InternalArgenteaFunctionTypes.Check_BP
-                        '  0      1   2           3       4    5         6             7
-                        '"Buono-000-Buono Valido-529-8897456-12345687-201809201733577-ARGENTEA-"            ' <-- x test su questo signal
-                        MyRefRet.Successfull = SetTypeSuccessufully(CSV(1))
-                        MyRefRet.ArgenteaFunction = argenteaFunction
-                        If MyRefRet.Successfull Then
-                            MyRefRet.Type = SetNumeric(CSV(0))
-                            MyRefRet.CodeResult = SetNumeric(CSV(1))
-                            MyRefRet.Description = CSV(2)
-                            MyRefRet.Amount = CDec(SetNumeric(CSV(3))) / iFractParser
-                            MyRefRet.Receipt = CSV(4)
-                            MyRefRet.CodeIssuer = CSV(5)
-                            MyRefRet.TerminalID = CSV(6)
-                            MyRefRet.Provider = CSV(7)
-                            MyRefRet.RequireCommit = "0"
-                            MyRefRet.Result = CSV(0)
-                        Else
-                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
-                        End If
-                        ParseReturnString = True
-                        Exit For
-                        Exit Select
-
                     Case InternalArgenteaFunctionTypes.SinglePaid_BP
                         '"OK-0 - BUONO VALIDATO CON SUCCESSO-68195717306007272725069219400700-700-ARGENTEA-201809181448517-0-202--"    ' <-- x test 
                         ' AZIONDE DEL CASO: Buoni Pasto Cartacei da protocollo in risposta dal SERVICE remoto Argentea
@@ -394,31 +365,6 @@ Public Class CSVHelper
                     Case InternalArgenteaFunctionTypes.MultiPaid_BP
                         '"OK;TRANSAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  PAGAMENTO BUONO PASTO "
                         ' AZIONE DEL CASO: Buoni Pasto Elettronici  da protocollo in risposta dal POS locale fornito da Argentea
-                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
-                        MyRefRet.ArgenteaFunction = argenteaFunction
-                        If MyRefRet.Successfull Then
-                            Dim Collect As Tuple(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal)) = GetResultAndDictBPs("Res")
-                            MyRefRet.ListBPsEvaluated = Collect.Item3
-                            MyRefRet.Amount = Collect.Item1 / iFractParser
-                            MyRefRet.NumBPEvalutated = Collect.Item2
-                            MyRefRet.TerminalID = "POS"
-                            MyRefRet.RequireCommit = False
-                            MyRefRet.CodeIssuer = CSV(J + 3)
-                            MyRefRet.NameIssuer = CSV(J + 4)
-                            MyRefRet.Provider = "ARGENTEA"
-                            MyRefRet.Description = MyRefRet.Description '& " - " & CSV(J + 5)
-                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
-                            MyRefRet.Result = CSV(0)
-                        Else
-                            argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
-                        End If
-                        ParseReturnString = True
-                        Exit For
-                        Exit Select
-
-                    Case InternalArgenteaFunctionTypes.MultiItemsIC_BP
-                        '"OK;OPERAZIONE ACCETTATA;2|5|10|1|4;104;PELLEGRINI;  INFO BUONI PASTO "
-                        ' AZIONE DEL CASO: Buoni Pasto Elettronici  da protocollo in risposta dal POS locale fornito da Argentea per le info sulla Card
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
                         MyRefRet.ArgenteaFunction = argenteaFunction
                         If MyRefRet.Successfull Then
@@ -484,6 +430,35 @@ Public Class CSVHelper
                         Else
                             argenteaFunctionReturnObject(I) = SetErrResponse("err argentea")
                         End If
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
+
+                    Case InternalArgenteaFunctionTypes.BPCeliacPayment
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.CodeResult = CSV(1)
+                        If MyRefRet.Successfull OrElse MyRefRet.CodeResult = "0300" Then
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.TerminalID = CSV(7)
+                            MyRefRet.Amount = CSV(3)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(8))
+                        End If
+                        MyRefRet.Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+
+                    Case InternalArgenteaFunctionTypes.BPCeliacVoid
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        If MyRefRet.Successfull Then
+                            MyRefRet.CodeResult = CSV(1)
+                            MyRefRet.Description = CSV(2)
+                            MyRefRet.Receipt = ReplaceVbCRLF(CSV(6))
+                        End If
+                        MyRefRet.Result = CSV(0)
                         ParseReturnString = True
                         Exit For
                         Exit Select

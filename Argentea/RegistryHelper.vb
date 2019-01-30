@@ -157,4 +157,34 @@ Public Class RegistryHelper
         End Try
     End Function
 #End Region
+
+#Region "BPCeliac"
+    Public Shared Sub SetLastPaymentBPCeliacTransactionIdentifier(ByVal LastPaymentTransactionIdentifier As String)
+        Dim REG As RegistryKey = Nothing
+        Try
+            REG = Registry.LocalMachine.OpenSubKey("SOFTWARE\Wincor Nixdorf\TPDotnet\pos\EFT", True)
+            REG.SetValue("LastPaymentBPCeliacTransactionIdentifier", LastPaymentTransactionIdentifier.ToString)
+        Catch ex As Exception
+
+        Finally
+            If Not REG Is Nothing Then
+                REG.Close()
+            End If
+        End Try
+    End Sub
+
+    Public Shared Function GetLastPaymentBPCeliacTransactionIdentifier() As String
+        Dim REG As RegistryKey = Nothing
+        Try
+            REG = Registry.LocalMachine.OpenSubKey("SOFTWARE\Wincor Nixdorf\TPDotnet\pos\EFT", True)
+            GetLastPaymentBPCeliacTransactionIdentifier = REG.GetValue("LastPaymentBPCeliacTransactionIdentifier", 0)
+        Catch ex As Exception
+            GetLastPaymentBPCeliacTransactionIdentifier = String.Empty
+        Finally
+            If Not REG Is Nothing Then
+                REG.Close()
+            End If
+        End Try
+    End Function
+#End Region
 End Class

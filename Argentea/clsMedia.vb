@@ -462,27 +462,30 @@ Public Class clsMedia
             '       BPC ->  Buono Pasto Cartaceo (Tasto su pagamenti in Tab dedicata con Cartaceo)
             '       BPE ->  Buono Pasto Elettronico (Tasto su pagamenti in Tab dedicata con Elettronico)
             Dim _DoSpecialHandling4Vouchers2 As IBPReturnCode = IBPReturnCode.KO
+            Select Case MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper
+                Case "BPC"
+                    _DoSpecialHandling4Vouchers2 = ProcessBPCartaceo(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
+                Case "BPE"
+                    _DoSpecialHandling4Vouchers2 = ProcessBPElettronico(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
+                Case "BPCELIAC"
+                    _DoSpecialHandling4Vouchers2 = BPCeliac(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
+            End Select
 
-            If MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPC" Then
-                ' Ticket Cartaceo Basato su Service Argentea    
-                _DoSpecialHandling4Vouchers2 = ProcessBPCartaceo(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
-            Else ' MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPE" Then
-                'Ticket Elettronico Basato su POS Argentea
-                _DoSpecialHandling4Vouchers2 = ProcessBPElettronico(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
-
-                If _DoSpecialHandling4Vouchers2 = IBPReturnCode.KO Then
-                    TPMsgBox(TPDotnet.Pos.PosDef.TARMessageTypes.TPERROR, getPosTxtNew(theModCntr.contxt, "UserMessage", TXT_EFT_PAYMENT_ABORT), TXT_EFT_PAYMENT_ABORT, theModCntr, "UserMessage")
-
-                    ' Tentaivo di eliminare la coda dei messaggi
-                    'Dim MyTaMediaCloneRec As TaMediaRec = taobj.CreateTaObject(PosDef.TARecTypes.iTA_MEDIA)
-                    'MyTaMediaCloneRec.Clone(MyTaMediaRec, MyTaMediaRec.theHdr.lTaCreateNmbr)
-                    'taobj.Add(MyTaMediaCloneRec)
-                    'taobj.ChangeSign(taobj.GetPositionFromCreationNmbr(MyTaMediaCloneRec.theHdr.lTaCreateNmbr))
-                    'taobj.TARefresh()
-                    'Return True
-
-                End If
+            If _DoSpecialHandling4Vouchers2 = IBPReturnCode.KO Then
+                TPMsgBox(TPDotnet.Pos.PosDef.TARMessageTypes.TPERROR, getPosTxtNew(theModCntr.contxt, "UserMessage", TXT_EFT_PAYMENT_ABORT), TXT_EFT_PAYMENT_ABORT, theModCntr, "UserMessage")
             End If
+
+            'If MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPC" Then
+            '    ' Ticket Cartaceo Basato su Service Argentea    
+            '    _DoSpecialHandling4Vouchers2 = ProcessBPCartaceo(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
+            'ElseIf MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper = "BPE" Then
+            '    'Ticket Elettronico Basato su POS Argentea
+            '    _DoSpecialHandling4Vouchers2 = ProcessBPElettronico(theModCntr, taobj, MyTaMediaRec, MyTaMediaMemberDetailRec)
+
+            '    If _DoSpecialHandling4Vouchers2 = IBPReturnCode.KO Then
+            '        TPMsgBox(TPDotnet.Pos.PosDef.TARMessageTypes.TPERROR, getPosTxtNew(theModCntr.contxt, "UserMessage", TXT_EFT_PAYMENT_ABORT), TXT_EFT_PAYMENT_ABORT, theModCntr, "UserMessage")
+            '    End If
+            'End If
 
             ' Se il risultato del Processo è stato
             ' concluso in modo corretto faccio  il
@@ -501,6 +504,8 @@ Public Class clsMedia
         End Try
 
     End Function
+
+
 
 
 #End Region
@@ -657,8 +662,7 @@ Public Class clsMedia
                 '
                 ' I Parametri common sempre
                 '
-
-                handler.SilentMode = True   '   <-- Definisce che i messaggi di stato non siano visualizzati all'operatore. (Tranne quelli eccezionali)
+                'handler.New(TheModCntr, taobj)
 
             End If
 
@@ -684,7 +688,7 @@ Public Class clsMedia
             ' impostando l'importo in negativo.
             ' (Quindi posso capire se sono su uno STORNO)
             '
-            If MyTaMediaRec.dTaPaid <= 0 Then
+            If MyTaMediaRec.dTaPaid < 0 Then
 
                 ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
                 ' che avvia il form e rimane sulla gestione tramite eventi sul form per
@@ -701,6 +705,7 @@ Public Class clsMedia
                 ProcessBPCartaceo = handler.Dematerialize(Args)
 
             End If
+
 
 
         Catch ex As Exception
@@ -744,14 +749,6 @@ Public Class clsMedia
                 ' gift card handler is not defined into the database
                 ProcessBPElettronico = IBPReturnCode.KO
                 Exit Function
-            Else
-
-                '
-                ' I Parametri common sempre
-                '
-
-                handler.SilentMode = True   '   <-- Definisce che i messaggi di stato non siano visualizzati all'operatore. (Tranne quelli eccezionali)
-
             End If
 
             '
@@ -768,20 +765,6 @@ Public Class clsMedia
             ' BEHAVIOR
 
             '
-            ' Un ulteriore controllo all'entrata 
-            ' per vedere se era in una condizione
-            ' dove più storni hanno creato un eccesso
-            '
-            Dim ExcedeedValue As String = MyTaMediaRec.GetPropertybyName("dbp_TOT_EXCEDEED")
-            Dim _Excedeed As Boolean = False
-            If Not (ExcedeedValue.Trim() = "" Or ExcedeedValue.Trim() = "0") Then
-                _Excedeed = True
-            End If
-
-            ' Lo aggiungo agli argomenti della funzione
-            Args.Add("Excedeed", _Excedeed)
-
-            '
             ' Controllo che se arrivati fin qui dal ModLineVoid
             ' che tratta le selzioni sulla TA principale l'operatore
             ' non abbia cliccato sul tasto ANNULLO che ha fatto
@@ -789,7 +772,7 @@ Public Class clsMedia
             ' impostando l'importo in negativo.
             ' (Quindi posso capire se sono su uno STORNO)
             '
-            If MyTaMediaRec.dTaPaid <= 0 Or _Excedeed Then
+            If MyTaMediaRec.dTaPaid < 0 Then
 
                 ' Richiama il metodo dell'interfaccia --> "BPEController.Dematerialize"
                 ' che si mette in attesa sulla schermata mentre sotto attende la risposta
@@ -819,6 +802,48 @@ Public Class clsMedia
 
     End Function
 
+    Private Function BPCeliac(ByRef theModCntr As ModCntr, ByRef taobj As TPDotnet.Pos.TA, ByRef myTaMediaRec As TPDotnet.Pos.TaMediaRec, ByRef myTaMediaMemberDetailRec As TaMediaMemberDetailRec) As IBPReturnCode
+
+        BPCeliac = IBPReturnCode.OK
+        Dim funcName As String = "BPCeliac"
+        Dim handler As IBPCeliachia
+
+        Try
+
+            handler = createPosModelObject(Of IBPCeliachia)(theModCntr, "BPCeliacController", 0, False)
+            If handler Is Nothing Then
+                ' gift card handler is not defined into the database
+                BPCeliac = IBPReturnCode.KO
+                Exit Function
+            End If
+            '
+            Dim parameters As Dictionary(Of String, Object) = New Dictionary(Of String, Object) From {
+                                                              {"Controller", theModCntr},
+                                                              {"Transaction", taobj},
+                                                              {"MediaRecord", myTaMediaRec},
+                                                              {"MediaMemberDetailRecord", myTaMediaMemberDetailRec}
+                                                          }
+            If myTaMediaRec.dTaPaid < 0 Then
+                'Void Method
+                BPCeliac = handler.StornoCeliachia(parameters)
+
+            Else
+                'Payment Method
+                BPCeliac = handler.PaymentCeliachia(parameters)
+
+            End If
+
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString(funcName), ex)
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString(funcName), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString(funcName), "returns ")
+        End Try
+
+    End Function
 #End Region
 
 End Class

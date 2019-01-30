@@ -232,11 +232,6 @@ Public Class ArgenteaFunctionReturnObject
     Public Amount As String = ""
 
     ''' <summary>
-    '''     Buono Pasto / Coupon
-    ''' </summary>
-    Public Type As String = ""
-
-    ''' <summary>
     '''     
     ''' </summary>
     Public Acquirer As String = ""
