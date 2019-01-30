@@ -65,6 +65,7 @@
     <Import Include="System.Threading.Tasks" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IBPCeliachia.vb" />
     <Compile Include="IBPDematerialize.vb" />
     <Compile Include="Enumerations.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
