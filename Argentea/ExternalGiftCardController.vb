@@ -119,8 +119,8 @@ Public Class ExternalGiftCardController
                         End Try
 
                         Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(p.Transaction.taCollection.Count)
-                        If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_ARGENTEA_EMV Then
-                            Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaArgenteaEMVRec)
+                        If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE Then
+                            Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
                             If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
                                 If Not myTaArgEmv.ExistField("szITSerialCode") Then myTaArgEmv.AddField("szITSerialCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
                                 myTaArgEmv.setPropertybyName("szITSerialCode", p.Barcode.ToString)
@@ -209,8 +209,8 @@ Public Class ExternalGiftCardController
             p.Status = ArgenteaExternalGiftCardStatus.Deactivated.ToString
 
             Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(p.Transaction.taCollection.Count)
-            If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_ARGENTEA_EMV Then
-                Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaArgenteaEMVRec)
+            If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE Then
+                Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
                 If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
                     If Not myTaArgEmv.ExistField("szITSerialCode") Then myTaArgEmv.AddField("szITSerialCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
                     myTaArgEmv.setPropertybyName("szITSerialCode", p.Barcode.ToString)
@@ -245,12 +245,12 @@ Public Class ExternalGiftCardController
             Me.Parameters.LoadParametersByReflection(p.Controller)
             Dim xDoc As Xml.Linq.XDocument = p.Transaction.TAtoXDocument(False, 0, False)
 
-            Dim xElActiveList As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/ARGENTEA_EMV[szFunctionID='ExternalGiftCardActivation']/szITSerialCode").ToList()
+            Dim xElActiveList As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/EXTERNAL_SERVICE[szFunctionID='ExternalGiftCardActivation']/szITSerialCode").ToList()
             Dim xElActiveSerialCode As New List(Of String)
             For Each xEl As XElement In xElActiveList
                 xElActiveSerialCode.Add(xEl.Value)
             Next
-            Dim xElDeActiveList As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/ARGENTEA_EMV[szFunctionID='ExternalGiftCardDeActivation']/szITSerialCode").ToList()
+            Dim xElDeActiveList As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/EXTERNAL_SERVICE[szFunctionID='ExternalGiftCardDeActivation']/szITSerialCode").ToList()
             Dim xElDeActiveSerialCode As New List(Of String)
             For Each xEl As XElement In xElDeActiveList
                 xElDeActiveSerialCode.Add(xEl.Value)
@@ -263,8 +263,8 @@ Public Class ExternalGiftCardController
 
             For i As Integer = 1 To p.Transaction.taCollection.Count
                 Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(i)
-                If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_ARGENTEA_EMV Then
-                    Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaArgenteaEMVRec)
+                If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE Then
+                    Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
                     If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
                         If szITSerialCodeList.Contains(myTaArgEmv.GetPropertybyName("szITSerialCode")) Then
                             argenteaTA = objTPTAHelperArgentea.CreateTA(p.Transaction, p.Controller, MyTaBaseRec, Me.Parameters.ExtGiftCardConfirmSave)
@@ -275,7 +275,7 @@ Public Class ExternalGiftCardController
                             Next
 
                             If Me.Parameters.ExtGiftCardConfirmPrintWithinTa Then
-                                Dim myTaCloneArgEmv As New TPDotnet.IT.Common.Pos.TaArgenteaEMVRec
+                                Dim myTaCloneArgEmv As New TPDotnet.IT.Common.Pos.TaExternalServiceRec
                                 myTaCloneArgEmv.Clone(myTaArgEmv, 0)
                                 myTaCloneArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardConfirm.ToString
                                 myTaCloneArgEmv.theHdr.lTaCreateNmbr = 0
@@ -292,7 +292,7 @@ Public Class ExternalGiftCardController
                 End If
 
             Next
-            Dim lCreateNumbers As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/ARGENTEA_EMV[szFunctionID='ExternalGiftCardActivation' or szFunctionID='ExternalGiftCardDeActivation']/Hdr/lTaCreateNmbr").ToList()
+            Dim lCreateNumbers As List(Of XElement) = xDoc.XPathSelectElements("/TAS/NEW_TA/EXTERNAL_SERVICE[szFunctionID='ExternalGiftCardActivation' or szFunctionID='ExternalGiftCardDeActivation']/Hdr/lTaCreateNmbr").ToList()
             For Each lCreateNmbr As XElement In lCreateNumbers
                 p.Transaction.Remove(p.Transaction.GetPositionFromCreationNmbr(CInt(lCreateNmbr.Value)))
             Next

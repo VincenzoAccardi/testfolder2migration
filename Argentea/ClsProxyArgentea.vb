@@ -1894,7 +1894,7 @@ Public Class ClsProxyArgentea
         Dim objTPTAHelperArgentea As New TPTAHelperArgentea
 
         ' Creo un Record compatibile per Argenta
-        Dim TaArgenteaEMVRec As TPDotnet.IT.Common.Pos.TaArgenteaEMVRec = objTPTAHelperArgentea.ArgenteaFunctionReturnObjectToTaArgenteaEMVRec(m_taobj, returnArgenteaObject)
+        Dim TaArgenteaEMVRec As TPDotnet.IT.Common.Pos.TaExternalServiceRec = objTPTAHelperArgentea.ArgenteaFunctionReturnObjectToTaArgenteaEMVRec(m_taobj, returnArgenteaObject)
         If TaArgenteaEMVRec Is Nothing Then
             ' error non vincolante
         End If

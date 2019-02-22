@@ -68,7 +68,7 @@ Public Class ADVController
         Dim transactionIdentifier As String = String.Empty
         Dim returnString As String = String.Empty
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
-        Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
         Dim eftTA As TPDotnet.Pos.TA = Nothing
         Dim frm As System.Windows.Forms.Form = Nothing
 
@@ -185,7 +185,7 @@ Public Class ADVController
         Dim transactionAmount As Double = 0
         Dim transactionType As Integer = 0
         Dim eftTA As TPDotnet.Pos.TA = Nothing
-        Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
         Dim frm As System.Windows.Forms.Form = Nothing
 
@@ -259,11 +259,11 @@ Public Class ADVController
                 ' error
             End If
             Dim TaBase As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.sSelReceiptLine)
-            Dim xel As XElement = taobj.TAtoXDocument(False, 0, False).XPathSelectElement("/TAS/NEW_TA/ARGENTEA_EMV/Hdr[lTaRefToCreateNmbr=" + TaBase.theHdr.lTaCreateNmbr.ToString + "]/lTaSeqNmbr")
+            Dim xel As XElement = taobj.TAtoXDocument(False, 0, False).XPathSelectElement("/TAS/NEW_TA/EXTERNAL_SERVICE/Hdr[lTaRefToCreateNmbr=" + TaBase.theHdr.lTaCreateNmbr.ToString + "]/lTaSeqNmbr")
 
             If xel IsNot Nothing Then
                 Dim lTaSeqNmbr As Integer = CInt(xel.Value)
-                Dim taArg As TaArgenteaEMVRec = CType(taobj.GetTALine(lTaSeqNmbr), TaArgenteaEMVRec)
+                Dim taArg As TaExternalServiceRec = CType(taobj.GetTALine(lTaSeqNmbr), TaExternalServiceRec)
                 If Not taArg.ExistField("bIsVoided") Then taArg.AddField("bIsVoided", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
                 taArg.setPropertybyName("bIsVoided", -1)
             End If

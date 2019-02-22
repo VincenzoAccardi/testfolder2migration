@@ -22,12 +22,12 @@ Public Class TPTAHelperArgentea
         getLocationString = TypeName(Me) & "." & actMethode & " "
     End Function
 
-    Public Overridable Function ArgenteaFunctionReturnObjectToTaArgenteaEMVRec(ByRef taobj As TPDotnet.Pos.TA, ByVal obj As ArgenteaFunctionReturnObject) As TaArgenteaEMVRec
+    Public Overridable Function ArgenteaFunctionReturnObjectToTaArgenteaEMVRec(ByRef taobj As TPDotnet.Pos.TA, ByVal obj As ArgenteaFunctionReturnObject) As TaExternalServiceRec
         ArgenteaFunctionReturnObjectToTaArgenteaEMVRec = Nothing
         Dim funcName As String = "ArgenteaFunctionReturnObjectToTaArgenteaEMVRec"
 
         Try
-            ArgenteaFunctionReturnObjectToTaArgenteaEMVRec = taobj.CreateTaObject(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_ARGENTEA_EMV)
+            ArgenteaFunctionReturnObjectToTaArgenteaEMVRec = taobj.CreateTaObject(TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_EXTERNAL_SERVICE)
             If ArgenteaFunctionReturnObjectToTaArgenteaEMVRec Is Nothing Then
                 Exit Function
             End If
@@ -219,7 +219,7 @@ Public Class TPTAHelperArgentea
                                                    ByVal returnString As String,
                                                    ByVal argenteaFunction As InternalArgenteaFunctionTypes,
                                                    ByVal parameters As ArgenteaParameters,
-                                                   Optional ByRef taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+                                                   Optional ByRef taArgenteaEMVRec As TaExternalServiceRec = Nothing
                                                    ) As Boolean
 
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject

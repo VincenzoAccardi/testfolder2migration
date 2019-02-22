@@ -246,7 +246,7 @@ Public Class EFTController
         Dim transactionIdentifier As String = String.Empty
         Dim returnString As String = String.Empty
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
-        Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
         Dim eftTA As TPDotnet.Pos.TA = Nothing
         Dim frm As System.Windows.Forms.Form = Nothing
 
@@ -388,7 +388,7 @@ Public Class EFTController
         Dim transactionIdentifier As String = String.Empty
         Dim transactionAmount As Double = 0
         Dim eftTA As TPDotnet.Pos.TA = Nothing
-        Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
         Dim frm As System.Windows.Forms.Form = Nothing
 
@@ -475,7 +475,7 @@ Public Class EFTController
         Dim returnString As String = String.Empty
         Dim transactionAmount As Double = 0
         Dim eftTA As TPDotnet.Pos.TA = Nothing
-        Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
         Dim frm As System.Windows.Forms.Form = Nothing
 
@@ -560,7 +560,7 @@ Public Class EFTController
         Dim transactionIdentifier As String = String.Empty
         Dim transactionAmount As Double = 0
         Dim eftTA As TPDotnet.Pos.TA = Nothing
-        Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
         Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
         'Dim RichiestaTotaliHostDelegate As New RichiestaTotaliHostDelegate(AddressOf ArgenteaCOMObject.RichiestaTotaliHost)
         'Dim asyncResult As IAsyncResult

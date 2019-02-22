@@ -264,7 +264,7 @@ Public Class GiftCardController
         Dim frm As System.Windows.Forms.Form = Nothing
         Dim p As GiftCardRedeemParameters = New GiftCardRedeemParameters
         Dim CSV As String = String.Empty
-        Dim taArgenteaEMVRec As TaArgenteaEMVRec = Nothing
+        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
         Dim retCode As Integer = ArgenteaFunctionsReturnCode.KO
 
         Try
