@@ -250,7 +250,7 @@
     <Compile Include="CUST.vb" />
     <Compile Include="PAYMENT.vb" />
     <Compile Include="TA.vb" />
-    <Compile Include="TaArgenteaEMVRec.vb" />
+    <Compile Include="TaExternalServiceRec.vb" />
     <Compile Include="TaArtReturnRec.vb" />
     <Compile Include="TaArtSaleRec.vb" />
     <Compile Include="TaCashFlowRec.vb" />
