@@ -64,6 +64,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enumerations.vb" />
+    <Compile Include="IElectronicFundsTransferClosure.vb" />
+    <Compile Include="IElectronicFundsTransferTotals.vb" />
     <Compile Include="IElectronicFundsTransferVoid.vb" />
     <Compile Include="IElectronicFundsTransferPay.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
