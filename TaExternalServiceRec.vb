@@ -22,6 +22,14 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
 #End Region
 
 
+
+    Public Enum ExternalServiceStatus
+        Unkown
+        PreChecked
+        Activated
+        Deleted
+    End Enum
+
 #Region "Properties"
 
     ''' <summary>
@@ -256,6 +264,58 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
+    Public Overridable Property szTransactionID() As String
+        Get
+            szTransactionID = m.Fields_Value("szTransactionID")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szTransactionID") = value
+        End Set
+    End Property
+
+    Public Overridable Property lAmount() As Integer
+        Get
+            lAmount = m.Fields_Value("lAmount")
+        End Get
+        Set(ByVal value As Integer)
+            m.Fields_Value("lAmount") = value
+        End Set
+    End Property
+
+    Public Overridable Property szServiceType() As String
+        Get
+            szServiceType = m.Fields_Value("szServiceType")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szServiceType") = value
+        End Set
+    End Property
+
+    Public Overridable Property bPrint() As Boolean
+        Get
+            bPrint = m.Fields_Value("bPrint")
+        End Get
+        Set(ByVal value As Boolean)
+            m.Fields_Value("bPrint") = value
+        End Set
+    End Property
+
+    Public Overridable Property lCopies() As Integer
+        Get
+            lCopies = m.Fields_Value("lCopies")
+        End Get
+        Set(ByVal value As Integer)
+            m.Fields_Value("lCopies") = value
+        End Set
+    End Property
+    Public Overridable Property lStatus() As Integer
+        Get
+            lStatus = m.Fields_Value("lStatus")
+        End Get
+        Set(ByVal value As Integer)
+            m.Fields_Value("lStatus") = value
+        End Set
+    End Property
 #End Region
 
 
@@ -288,6 +348,12 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("bPrintReceipt", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("bConfirmed", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("szDateTime", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szTransactionID", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("lAmount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("szServiceType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("bPrint", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("lCopies", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("lStatus", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
         Catch ex As Exception
             Try
