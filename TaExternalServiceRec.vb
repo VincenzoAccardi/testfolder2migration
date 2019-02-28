@@ -281,7 +281,23 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             m.Fields_Value("lAmount") = value
         End Set
     End Property
-
+    ''' <summary>
+    ''' Type of service.
+    ''' Values for Item:
+    ''' GIFTCARD
+    ''' PHONERECHARGE
+    ''' EXTERNALGIFTCARD
+    ''' Values for Media:
+    ''' EMEAL
+    ''' MEAL
+    ''' EFT
+    ''' GIFTCARD
+    ''' SATISPAY
+    ''' JIFFY
+    ''' BITCOIN
+    ''' PAYFAST
+    ''' </summary>
+    ''' <returns></returns>
     Public Overridable Property szServiceType() As String
         Get
             szServiceType = m.Fields_Value("szServiceType")
@@ -291,15 +307,10 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
-    Public Overridable Property bPrint() As Boolean
-        Get
-            bPrint = m.Fields_Value("bPrint")
-        End Get
-        Set(ByVal value As Boolean)
-            m.Fields_Value("bPrint") = value
-        End Set
-    End Property
-
+    ''' <summary>
+    ''' Number of Copies
+    ''' </summary>
+    ''' <returns></returns>
     Public Overridable Property lCopies() As Integer
         Get
             lCopies = m.Fields_Value("lCopies")
@@ -308,6 +319,14 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             m.Fields_Value("lCopies") = value
         End Set
     End Property
+    ''' <summary>
+    ''' Record Status
+    ''' 0 = Unkown
+    ''' 1 = PreChecked
+    ''' 2 = Activated
+    ''' 3 = Deleted
+    ''' </summary>
+    ''' <returns></returns>
     Public Overridable Property lStatus() As Integer
         Get
             lStatus = m.Fields_Value("lStatus")
