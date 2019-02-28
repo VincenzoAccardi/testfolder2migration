@@ -17,11 +17,8 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
     ' -----------------------------------
 #End Region
 
-
 #Region "Variablen"
 #End Region
-
-
 
     Public Enum ExternalServiceStatus
         Unkown
@@ -84,21 +81,6 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
     End Property
 
     ''' <summary>
-    ''' gets/sets the function ID ("Chiusura", "Riallineamento", ...)
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szFunctionID() As String
-        Get
-            szFunctionID = m.Fields_Value("szFunctionID")
-        End Get
-        Set(ByVal Value As String)
-            m.Fields_Value("szFunctionID") = Value
-        End Set
-    End Property
-
-    ''' <summary>
     ''' gets/sets the receipt returned fron host
     ''' </summary>
     ''' <value></value>
@@ -130,96 +112,6 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
     End Property
 
     ''' <summary>
-    ''' gets/sets the rupp of the terminal
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szRupp() As String
-        Get
-            szRupp = m.Fields_Value("szRupp")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szRupp") = value
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' gets/sets the result of the operation returned from host
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szOperationResult() As String
-        Get
-            szOperationResult = m.Fields_Value("szOperationResult")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szOperationResult") = value
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' gets/sets the result of the operation message returned from host
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szOperationResultMessage() As String
-        Get
-            szOperationResultMessage = m.Fields_Value("szOperationResultMessage")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szOperationResultMessage") = value
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' gets/sets the card type 
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szCardType() As String
-        Get
-            szCardType = m.Fields_Value("szCardType")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szCardType") = value
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' gets/sets the amount
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szHostAmount() As String
-        Get
-            szHostAmount = m.Fields_Value("szHostAmount")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szHostAmount") = value
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' gets/sets the currency
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szCurrency() As String
-        Get
-            szCurrency = m.Fields_Value("szCurrency")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szCurrency") = value
-        End Set
-    End Property
-
-    ''' <summary>
     ''' flag : print this node on receipt? (used by GetPresentation)
     ''' </summary>
     ''' <value></value>
@@ -234,53 +126,6 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
-    ''' <summary>
-    ''' flag : is this transaction confirmed (used by Pagamento and Storno)
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property bConfirmed() As Integer
-        Get
-            bConfirmed = m.Fields_Value("bConfirmed")
-        End Get
-        Set(ByVal value As Integer)
-            m.Fields_Value("bConfirmed") = value
-        End Set
-    End Property
-
-    ''' <summary>
-    ''' gets/sets the transaction date and time
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Overridable Property szDateTime() As String
-        Get
-            szDateTime = m.Fields_Value("szDateTime")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szDateTime") = value
-        End Set
-    End Property
-
-    Public Overridable Property szTransactionID() As String
-        Get
-            szTransactionID = m.Fields_Value("szTransactionID")
-        End Get
-        Set(ByVal value As String)
-            m.Fields_Value("szTransactionID") = value
-        End Set
-    End Property
-
-    Public Overridable Property lAmount() As Integer
-        Get
-            lAmount = m.Fields_Value("lAmount")
-        End Get
-        Set(ByVal value As Integer)
-            m.Fields_Value("lAmount") = value
-        End Set
-    End Property
     ''' <summary>
     ''' Type of service.
     ''' Values for Item:
@@ -335,8 +180,8 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             m.Fields_Value("lStatus") = value
         End Set
     End Property
-#End Region
 
+#End Region
 
 #Region "New/Finalize"
     ''' <summary>
@@ -355,23 +200,11 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
 
             ' Standard fields
             ' ---------------
-            m.Append("szFunctionID", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szReceipt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szOriginalReceipt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szRupp", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szOperationResult", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szOperationResultMessage", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szCardType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szHostAmount", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szCurrency", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("bPrintReceipt", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-            m.Append("bConfirmed", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-            m.Append("szDateTime", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szTransactionID", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("lAmount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-            m.Append("szServiceType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("bPrint", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("lCopies", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+
+            m.Append("szServiceType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("lStatus", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
         Catch ex As Exception
@@ -429,9 +262,7 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
         Return New TaExternalServiceRec
     End Function
 
-
 #End Region
-
 
 #Region "Private Functions"
 
