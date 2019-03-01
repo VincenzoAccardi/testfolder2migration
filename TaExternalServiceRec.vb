@@ -166,18 +166,18 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
     End Property
     ''' <summary>
     ''' Record Status
-    ''' 0 = Unkown
-    ''' 1 = PreChecked
-    ''' 2 = Activated
-    ''' 3 = Deleted
+    ''' Unkown
+    ''' PreChecked
+    ''' Activated
+    ''' Deleted
     ''' </summary>
     ''' <returns></returns>
-    Public Overridable Property lStatus() As Integer
+    Public Overridable Property szStatus() As String
         Get
-            lStatus = m.Fields_Value("lStatus")
+            szStatus = m.Fields_Value("szStatus")
         End Get
-        Set(ByVal value As Integer)
-            m.Fields_Value("lStatus") = value
+        Set(ByVal value As String)
+            m.Fields_Value("szStatus") = value
         End Set
     End Property
 
@@ -205,7 +205,7 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("lCopies", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
             m.Append("szServiceType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("lStatus", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("szStatus", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
