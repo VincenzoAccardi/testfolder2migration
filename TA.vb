@@ -988,7 +988,6 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                         Exit For
                     End If
 
-
                     ' we will change TA_MEDIA and Total
                     If aktsid = PosDef.TARecTypes.iTA_TOTAL AndAlso lastsId = PosDef.TARecTypes.iTA_MEDIA Then
                         TaChangeRec(i - 1, i)
@@ -1106,6 +1105,31 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                 End If
             Next i
 
+            If getLastTaxIncludedRecNr() > 0 Then
+
+                Dim activatedServices As New List(Of Integer)
+                For i = 1 To TARecords.Count()
+                    If TARecords(i).sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE Then
+                        If CType(TARecords(i), TPDotnet.IT.Common.Pos.TaExternalServiceRec).szStatus = TPDotnet.IT.Common.Pos.TaExternalServiceRec.ExternalServiceStatus.Activated.ToString Then
+                            ' activatedServices.Add(TARecords(i).theHdr.lTaCreateNmbr)
+                            activatedServices.Insert(0, TARecords(i).theHdr.lTaCreateNmbr)
+                        End If
+                    End If
+                Next
+                'activatedServices.Sort()
+                'activatedServices.Reverse()
+                activatedServices.ForEach(Sub(ByVal ii As Integer)
+
+                                              Dim activatedServicePosition As Integer = GetPositionFromCreationNmbr(ii)
+                                              Dim activatedService As TPDotnet.IT.Common.Pos.TaExternalServiceRec = GetTALine(activatedServicePosition)
+                                              TARecords.RemoveAt(activatedServicePosition - 1)
+                                              TARecords.Insert(getLastTaxIncludedRecNr(), activatedService)
+
+                                          End Sub)
+
+            End If
+
+
             TARefresh()
 
             LOG_FuncExit(getLocationString("Reorg"), "end")
@@ -1121,6 +1145,38 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             LOG_FuncExit(getLocationString("Reorg"), "")
         End Try
     End Sub
+
+    Public Overridable Function getLastTaxIncludedRecNr() As Short
+        Dim obj As TaBaseRec
+        Dim i As Short
+
+        getLastTaxIncludedRecNr = -1
+
+        Try
+
+            LOG_FuncStart(getLocationString("getLastTaxIncludedRecNr"))
+            getLastTaxIncludedRecNr = -1 ' init the returnvalue with error
+            For i = TARecords.Count() To 1 Step -1
+                obj = TARecords.Item(i)
+                If obj.sid = PosDef.TARecTypes.iTA_TAX_INCLUDED Then
+                    ' we will return the number for this entry
+                    getLastTaxIncludedRecNr = i
+                    Exit For
+                End If
+            Next i
+            obj = Nothing
+
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString("getLastMediaRecNr"), ex)
+
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString("getLastMediaRecNr"), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString("getLastMediaRecNr"), String.Concat("Function getLastMediaRecNr returns ", getLastMediaRecNr.ToString))
+        End Try
+    End Function
 
     Class PosCounter
 
