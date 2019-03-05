@@ -181,6 +181,15 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
+    Public Overridable Property bSuppressLogo As Integer
+        Get
+            bSuppressLogo = m.Fields_Value("bSuppressLogo")
+        End Get
+        Set(ByVal value As Integer)
+            m.Fields_Value("bSuppressLogo") = value
+        End Set
+    End Property
+
 #End Region
 
 #Region "New/Finalize"
@@ -203,6 +212,7 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("szReceipt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("bPrintReceipt", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("lCopies", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("bSuppressLogo", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
             m.Append("szServiceType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szStatus", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
