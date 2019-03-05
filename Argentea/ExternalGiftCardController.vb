@@ -121,7 +121,8 @@ Public Class ExternalGiftCardController
                         Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(p.Transaction.taCollection.Count)
                         If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE Then
                             Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
-                            If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
+                            Dim szFunctionID As String = IIf(myTaArgEmv.ExistField("szFunctionID"), myTaArgEmv.GetPropertybyName("szFunctionID"), String.Empty)
+                            If szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
                                 If Not myTaArgEmv.ExistField("szITSerialCode") Then myTaArgEmv.AddField("szITSerialCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
                                 myTaArgEmv.setPropertybyName("szITSerialCode", p.Barcode.ToString)
                             End If
@@ -211,7 +212,9 @@ Public Class ExternalGiftCardController
             Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(p.Transaction.taCollection.Count)
             If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE Then
                 Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
-                If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
+                Dim szFunctionID As String = IIf(myTaArgEmv.ExistField("szFunctionID"), myTaArgEmv.GetPropertybyName("szFunctionID"), String.Empty)
+
+                If szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
                     If Not myTaArgEmv.ExistField("szITSerialCode") Then myTaArgEmv.AddField("szITSerialCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
                     myTaArgEmv.setPropertybyName("szITSerialCode", p.Barcode.ToString)
                 End If
@@ -265,7 +268,9 @@ Public Class ExternalGiftCardController
                 Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = p.Transaction.GetTALine(i)
                 If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE Then
                     Dim myTaArgEmv As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
-                    If myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse myTaArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
+                    Dim szFunctionID As String = IIf(myTaArgEmv.ExistField("szFunctionID"), myTaArgEmv.GetPropertybyName("szFunctionID"), String.Empty)
+
+                    If szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardActivation.ToString OrElse szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation.ToString Then
                         If szITSerialCodeList.Contains(myTaArgEmv.GetPropertybyName("szITSerialCode")) Then
                             argenteaTA = objTPTAHelperArgentea.CreateTA(p.Transaction, p.Controller, MyTaBaseRec, Me.Parameters.ExtGiftCardConfirmSave)
                             For j As Integer = 1 To Me.Parameters.ExtGiftCardConfirmCopies
@@ -277,7 +282,8 @@ Public Class ExternalGiftCardController
                             If Me.Parameters.ExtGiftCardConfirmPrintWithinTa Then
                                 Dim myTaCloneArgEmv As New TPDotnet.IT.Common.Pos.TaExternalServiceRec
                                 myTaCloneArgEmv.Clone(myTaArgEmv, 0)
-                                myTaCloneArgEmv.szFunctionID = InternalArgenteaFunctionTypes.ExternalGiftCardConfirm.ToString
+                                If Not myTaCloneArgEmv.ExistField("szFunctionID") Then myTaCloneArgEmv.AddField("szFunctionID", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                                myTaCloneArgEmv.setPropertybyName("szFunctionID", InternalArgenteaFunctionTypes.ExternalGiftCardConfirm.ToString)
                                 myTaCloneArgEmv.theHdr.lTaCreateNmbr = 0
                                 myTaCloneArgEmv.theHdr.lTaRefToCreateNmbr = 0
                                 myTaCloneArgEmv.bPrintReceipt = True
