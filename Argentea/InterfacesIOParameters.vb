@@ -136,7 +136,7 @@ Public Class GiftCardCommonParametersRecord
 End Class
 
 Public Class BalanceParameters
-    Inherits CommonParameters
+    Inherits EFTCommonParameters
 
     Protected _GiftCardBalanceLineIdentifier As String = String.Empty
     Public Property GiftCardBalanceLineIdentifier() As String
@@ -561,7 +561,7 @@ End Class
 #Region "Common"
 
 Public Class CommonParametersRecord
-    Inherits CommonParameters
+    Inherits EFTCommonParameters
 
     Protected _Record As TPDotnet.Pos.TaBaseRec
     Protected Property Record() As TPDotnet.Pos.TaBaseRec
@@ -627,7 +627,7 @@ End Class
 ''' <summary>
 '''     Parametri comuni in Uso da dll shared
 ''' </summary>
-Public Class CommonParameters
+Public Class EFTCommonParameters
 
     Friend _ParametersBase As System.Collections.Generic.Dictionary(Of String, Object)
 

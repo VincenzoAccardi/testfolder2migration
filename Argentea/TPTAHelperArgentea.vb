@@ -32,7 +32,10 @@ Public Class TPTAHelperArgentea
                 Exit Function
             End If
 
-            ArgenteaFunctionReturnObjectToTaArgenteaEMVRec.szFunctionID = obj.ArgenteaFunction.ToString
+            If Not ArgenteaFunctionReturnObjectToTaArgenteaEMVRec.ExistField("szFunctionID") Then
+                ArgenteaFunctionReturnObjectToTaArgenteaEMVRec.AddField("szFunctionID", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            End If
+            ArgenteaFunctionReturnObjectToTaArgenteaEMVRec.setPropertybyName("szFunctionID", obj.ArgenteaFunction.ToString)
             ArgenteaFunctionReturnObjectToTaArgenteaEMVRec.szReceipt = obj.Receipt
             ' ... fills all properties
 

@@ -414,7 +414,7 @@ Public Class GiftCardController
 
     End Sub
 
-    Protected Overridable Sub ShowError(ByRef p As CommonParameters)
+    Protected Overridable Sub ShowError(ByRef p As EFTCommonParameters)
         Dim funcName As String = "ShowError"
 
         Try

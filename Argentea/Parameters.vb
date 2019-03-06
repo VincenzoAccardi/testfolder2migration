@@ -12,24 +12,12 @@
 ' -----------------------------------
 #End Region
 
-Public Class ArgenteaParametersAttribute
-    Inherits Attribute
-
-    Public Name As String
-    Public DefaultValue As Object
-
-    Public Sub New(ByVal name As String, ByVal defaultValue As Object)
-        Me.Name = name
-        Me.DefaultValue = defaultValue
-    End Sub
-
-End Class
-
 Public Class ArgenteaParameters
+    Inherits TPDotnet.IT.Common.Pos.CommonParameters
 #Region "EFT"
 
     Private _EftOperationTimeoutInSeconds As Integer
-    <ArgenteaParameters("EFT_OPERATION_TIMEOUT_IN_SEC", 60)>
+    <TPParametersAttribute("EFT_OPERATION_TIMEOUT_IN_SEC", 60)>
     Public Property EftOperationTimeoutInSeconds() As Integer
         Get
             Return _EftOperationTimeoutInSeconds
@@ -40,7 +28,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _EftReceiptCashierCopiesPayment As Integer
-    <ArgenteaParameters("NUM_RECEIPT_TO_PRINT_PAYMENT", 1)>
+    <TPParametersAttribute("NUM_RECEIPT_TO_PRINT_PAYMENT", 1)>
     Public Property EftReceiptCashierCopiesPayment() As Integer
         Get
             Return _EftReceiptCashierCopiesPayment
@@ -51,7 +39,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _EftReceiptCashierCopiesVoid As Integer
-    <ArgenteaParameters("NUM_RECEIPT_TO_PRINT_VOID", 1)>
+    <TPParametersAttribute("NUM_RECEIPT_TO_PRINT_VOID", 1)>
     Public Property EftReceiptCashierCopiesVoid() As Integer
         Get
             Return _EftReceiptCashierCopiesVoid
@@ -62,7 +50,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _EftReceiptCashierCopiesClose As Integer
-    <ArgenteaParameters("NUM_RECEIPT_TO_PRINT_CLOSE", 1)>
+    <TPParametersAttribute("NUM_RECEIPT_TO_PRINT_CLOSE", 1)>
     Public Property EftReceiptCashierCopiesClose() As Integer
         Get
             Return _EftReceiptCashierCopiesClose
@@ -73,7 +61,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _EftReceiptCashierCopiesTotals As Integer
-    <ArgenteaParameters("NUM_RECEIPT_TO_PRINT_TOTALS", 1)>
+    <TPParametersAttribute("NUM_RECEIPT_TO_PRINT_TOTALS", 1)>
     Public Property EftReceiptCashierCopiesTotals() As Integer
         Get
             Return _EftReceiptCashierCopiesTotals
@@ -84,7 +72,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _EftPaymentReceiptWithinTA As Boolean
-    <ArgenteaParameters("EFT_PAYMENT_RECEIPT_WITHIN_TA", True)>
+    <TPParametersAttribute("EFT_PAYMENT_RECEIPT_WITHIN_TA", True)>
     Public Property EftPaymentReceiptWithinTA() As Boolean
         Get
             Return _EftPaymentReceiptWithinTA
@@ -101,7 +89,7 @@ Public Class ArgenteaParameters
 #Region "Balance"
 
     Private _GiftCardBalanceLineIdentifier As String
-    <ArgenteaParameters("GC_BALANCE_LINEIDENTIFIER", "Saldo EUR ")>
+    <TPParametersAttribute("GC_BALANCE_LINEIDENTIFIER", "Saldo EUR ")>
     Public Property GiftCardBalanceLineIdentifier() As String
         Get
             Return _GiftCardBalanceLineIdentifier
@@ -112,7 +100,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardBalanceCopies As String
-    <ArgenteaParameters("GC_BALANCE_COPIES", 1)>
+    <TPParametersAttribute("GC_BALANCE_COPIES", 1)>
     Public Property GiftCardBalanceCopies() As String
         Get
             Return _GiftCardBalanceCopies
@@ -123,7 +111,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardBalanceSave As Boolean
-    <ArgenteaParameters("GC_BALANCE_SAVE", True)>
+    <TPParametersAttribute("GC_BALANCE_SAVE", True)>
     Public Property GiftCardBalanceSave() As Boolean
         Get
             Return _GiftCardBalanceSave
@@ -134,7 +122,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardBalancePrintWithinTa As Boolean
-    <ArgenteaParameters("GC_BALANCE_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("GC_BALANCE_PRINT_WITHIN_TA", True)>
     Public Property GiftCardBalancePrintWithinTa() As Boolean
         Get
             Return _GiftCardBalancePrintWithinTa
@@ -159,7 +147,7 @@ Public Class ArgenteaParameters
 #Region "Activation"
 
     Private _GiftCardActivationCopies As Integer
-    <ArgenteaParameters("GC_ACTIVATION_COPIES", 1)>
+    <TPParametersAttribute("GC_ACTIVATION_COPIES", 1)>
     Public Property GiftCardActivationCopies() As Integer
         Get
             Return _GiftCardActivationCopies
@@ -170,7 +158,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardActivationSave As Boolean
-    <ArgenteaParameters("GC_ACTIVATION_SAVE", False)>
+    <TPParametersAttribute("GC_ACTIVATION_SAVE", False)>
     Public Property GiftCardActivationSave() As Boolean
         Get
             Return _GiftCardActivationSave
@@ -181,7 +169,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardActivationPrintWithinTa As Boolean
-    <ArgenteaParameters("GC_ACTIVATION_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("GC_ACTIVATION_PRINT_WITHIN_TA", True)>
     Public Property GiftCardActivationPrintWtihinTa() As Boolean
         Get
             Return _GiftCardActivationPrintWithinTa
@@ -196,7 +184,7 @@ Public Class ArgenteaParameters
 #Region "ActivationCheck"
 
     Private _GiftCardActivationCheckCopies As Integer
-    <ArgenteaParameters("GC_ACTIVATION_CHECK_COPIES", 1)>
+    <TPParametersAttribute("GC_ACTIVATION_CHECK_COPIES", 1)>
     Public Property GiftCardActivationCheckCopies() As Integer
         Get
             Return _GiftCardActivationCheckCopies
@@ -207,7 +195,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardActivationCheckSave As Boolean
-    <ArgenteaParameters("GC_ACTIVATION_CHECK_SAVE", False)>
+    <TPParametersAttribute("GC_ACTIVATION_CHECK_SAVE", False)>
     Public Property GiftCardActivationCheckSave() As Boolean
         Get
             Return _GiftCardActivationCheckSave
@@ -222,7 +210,7 @@ Public Class ArgenteaParameters
 #Region "Redeem"
 
     Private _GiftCardRedeemCopies As Integer
-    <ArgenteaParameters("GC_REDEEM_COPIES", 1)>
+    <TPParametersAttribute("GC_REDEEM_COPIES", 1)>
     Public Property GiftCardRedeemCopies() As Integer
         Get
             Return _GiftCardRedeemCopies
@@ -233,7 +221,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardRedeemSave As Boolean
-    <ArgenteaParameters("GC_REDEEM_SAVE", False)>
+    <TPParametersAttribute("GC_REDEEM_SAVE", False)>
     Public Property GiftCardRedeemSave() As Boolean
         Get
             Return _GiftCardRedeemSave
@@ -244,7 +232,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardRedeemCheckPrintWithinTa As Boolean
-    <ArgenteaParameters("GC_REDEEM_CHECK_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("GC_REDEEM_CHECK_PRINT_WITHIN_TA", True)>
     Public Property GiftCardRedeemCheckPrintWithinTa() As Boolean
         Get
             Return _GiftCardRedeemCheckPrintWithinTa
@@ -260,7 +248,7 @@ Public Class ArgenteaParameters
 #Region "RedeemCheck"
 
     Private _GiftCardRedeemCheckCopies As Integer
-    <ArgenteaParameters("GC_REDEEM_CHECK_COPIES", 1)>
+    <TPParametersAttribute("GC_REDEEM_CHECK_COPIES", 1)>
     Public Property GiftCardRedeemCheckCopies() As Integer
         Get
             Return _GiftCardRedeemCheckCopies
@@ -271,7 +259,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardRedeemCheckSave As Boolean
-    <ArgenteaParameters("GC_REDEEM_CHECK_SAVE", False)>
+    <TPParametersAttribute("GC_REDEEM_CHECK_SAVE", False)>
     Public Property GiftCardRedeemCheckSave() As Boolean
         Get
             Return _GiftCardRedeemCheckSave
@@ -286,7 +274,7 @@ Public Class ArgenteaParameters
 #Region "RedeemCancel"
 
     Private _GiftCardRedeemCancelCopies As Integer
-    <ArgenteaParameters("GC_REDEEM_CANCEL_COPIES", 1)>
+    <TPParametersAttribute("GC_REDEEM_CANCEL_COPIES", 1)>
     Public Property GiftCardRedeemCancelCopies() As Integer
         Get
             Return _GiftCardRedeemCancelCopies
@@ -297,7 +285,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _GiftCardRedeemCancelSave As Boolean
-    <ArgenteaParameters("GC_REDEEM_CANCEL_SAVE", False)>
+    <TPParametersAttribute("GC_REDEEM_CANCEL_SAVE", False)>
     Public Property GiftCardRedeemCancelSave() As Boolean
         Get
             Return _GiftCardRedeemCancelSave
@@ -315,7 +303,7 @@ Public Class ArgenteaParameters
 #Region "Activation"
 
     Private _ExtGiftCardActivationCopies As Integer
-    <ArgenteaParameters("EXT_GC_ACTIVATION_COPIES", 1)>
+    <TPParametersAttribute("EXT_GC_ACTIVATION_COPIES", 1)>
     Public Property ExtGiftCardActivationCopies() As Integer
         Get
             Return _ExtGiftCardActivationCopies
@@ -326,7 +314,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _ExtGiftCardActivationSave As Boolean
-    <ArgenteaParameters("EXT_GC_ACTIVATION_SAVE", False)>
+    <TPParametersAttribute("EXT_GC_ACTIVATION_SAVE", False)>
     Public Property ExtGiftCardActivationSave() As Boolean
         Get
             Return _ExtGiftCardActivationSave
@@ -337,7 +325,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _ExtGiftCardActivationPrintWithinTa As Boolean
-    <ArgenteaParameters("EXT_GC_ACTIVATION_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("EXT_GC_ACTIVATION_PRINT_WITHIN_TA", True)>
     Public Property ExtGiftCardActivationPrintWithinTa() As Boolean
         Get
             Return _ExtGiftCardActivationPrintWithinTa
@@ -350,7 +338,7 @@ Public Class ArgenteaParameters
 #End Region
 #Region "DeActivation"
     Private _ExtGiftCardDeActivationCancelCopies As Integer
-    <ArgenteaParameters("EXT_GC_DEACTIVATION_CANCEL_COPIES", 1)>
+    <TPParametersAttribute("EXT_GC_DEACTIVATION_CANCEL_COPIES", 1)>
     Public Property ExtGiftCardDeActivationCancelCopies() As Integer
         Get
             Return _ExtGiftCardDeActivationCancelCopies
@@ -361,7 +349,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _ExtGiftCardDeActivationCancelSave As Boolean
-    <ArgenteaParameters("EXT_GC_DEACTIVATION_CANCEL_SAVE", False)>
+    <TPParametersAttribute("EXT_GC_DEACTIVATION_CANCEL_SAVE", False)>
     Public Property ExtGiftCardDeActivationCancelSave() As Boolean
         Get
             Return _ExtGiftCardDeActivationCancelSave
@@ -372,7 +360,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _ExtGiftCardDeActivationPrintWithinTa As Boolean
-    <ArgenteaParameters("EXT_GC_DEACTIVATION_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("EXT_GC_DEACTIVATION_PRINT_WITHIN_TA", True)>
     Public Property ExtGiftCardDeActivationPrintWithinTa() As Boolean
         Get
             Return _ExtGiftCardDeActivationPrintWithinTa
@@ -385,7 +373,7 @@ Public Class ArgenteaParameters
 #End Region
 #Region "Confirm"
     Private _ExtGiftCardConfirmCopies As Integer
-    <ArgenteaParameters("EXT_GC_CONFIRM_COPIES", 1)>
+    <TPParametersAttribute("EXT_GC_CONFIRM_COPIES", 1)>
     Public Property ExtGiftCardConfirmCopies() As Integer
         Get
             Return _ExtGiftCardConfirmCopies
@@ -396,7 +384,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _ExtGiftCardConfirmSave As Boolean
-    <ArgenteaParameters("EXT_GC_CONFIRM_SAVE", False)>
+    <TPParametersAttribute("EXT_GC_CONFIRM_SAVE", False)>
     Public Property ExtGiftCardConfirmSave() As Boolean
         Get
             Return _ExtGiftCardConfirmSave
@@ -407,7 +395,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _ExtGiftCardConfirmPrintWithinTa As Boolean
-    <ArgenteaParameters("EXT_GC_CONFIRM_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("EXT_GC_CONFIRM_PRINT_WITHIN_TA", True)>
     Public Property ExtGiftCardConfirmPrintWithinTa() As Boolean
         Get
             Return _ExtGiftCardConfirmPrintWithinTa
@@ -424,7 +412,7 @@ Public Class ArgenteaParameters
 #Region "CheckPhoneRecharge"
 
     Private _PhoneRechargeCheckCopies As Integer
-    <ArgenteaParameters("PC_RECHARGE_CHECK_COPIES", 0)>
+    <TPParametersAttribute("PC_RECHARGE_CHECK_COPIES", 0)>
     Public Property PhoneRechargeCheckCopies() As Integer
         Get
             Return _PhoneRechargeCheckCopies
@@ -435,7 +423,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _PhoneRechargeCheckSave As Boolean
-    <ArgenteaParameters("PC_RECHARGE_CHECK_SAVE", False)>
+    <TPParametersAttribute("PC_RECHARGE_CHECK_SAVE", False)>
     Public Property PhoneRechargeCheckSave() As Boolean
         Get
             Return _PhoneRechargeCheckSave
@@ -446,7 +434,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _PhoneRechargeCheckPrintWithinTa As Boolean
-    <ArgenteaParameters("PC_CHECK_PRINT_WITHIN_TA", False)>
+    <TPParametersAttribute("PC_CHECK_PRINT_WITHIN_TA", False)>
     Public Property PhoneRechargeCheckPrintWithinTa() As Boolean
         Get
             Return _PhoneRechargeCheckPrintWithinTa
@@ -461,7 +449,7 @@ Public Class ArgenteaParameters
 #Region "ActivatePhoneRecharge"
 
     Private _PhoneRechargeActivationCopies As Integer
-    <ArgenteaParameters("PC_ACTIVATION_COPIES", 1)>
+    <TPParametersAttribute("PC_ACTIVATION_COPIES", 1)>
     Public Property PhoneRechargeActivationCopies() As Integer
         Get
             Return _PhoneRechargeActivationCopies
@@ -472,7 +460,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _PhoneRechargeActivationSave As Boolean
-    <ArgenteaParameters("PC_ACTIVATION_CHECK_SAVE", False)>
+    <TPParametersAttribute("PC_ACTIVATION_CHECK_SAVE", False)>
     Public Property PhoneRechargeActivationSave() As Boolean
         Get
             Return _PhoneRechargeActivationSave
@@ -483,7 +471,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _PhoneRechargeActivationPrintWithinTa As Boolean
-    <ArgenteaParameters("PC_ACTIVATION_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("PC_ACTIVATION_PRINT_WITHIN_TA", True)>
     Public Property PhoneRechargeActivationPrintWithinTa() As Boolean
         Get
             Return _PhoneRechargeActivationPrintWithinTa
@@ -501,7 +489,7 @@ Public Class ArgenteaParameters
 #Region "BuoniPasto"
 
     Private _BPRupp As String
-    <ArgenteaParameters("BP_ParameterRuppArgentea", "")>
+    <TPParametersAttribute("BP_ParameterRuppArgentea", "")>
     Public Property BPRupp() As String
         Get
             Return _BPRupp
@@ -513,7 +501,7 @@ Public Class ArgenteaParameters
 
 
     Private _BP_AcceptExcedeedValues As Boolean
-    <ArgenteaParameters("BP_AcceptExcedeedValues", False)>
+    <TPParametersAttribute("BP_AcceptExcedeedValues", False)>
     Public Property BP_AcceptExcedeedValues() As Boolean
         Get
             Return _BP_AcceptExcedeedValues
@@ -524,7 +512,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _BP_AccorpateOnTA As Boolean
-    <ArgenteaParameters("BP_AccorpateOnTA", False)>
+    <TPParametersAttribute("BP_AccorpateOnTA", False)>
     Public Property BP_AccorpateOnTA() As Boolean
         Get
             Return _BP_AccorpateOnTA
@@ -535,7 +523,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _BP_NumMaxPayablesOnVoid As Integer
-    <ArgenteaParameters("BP_NumMaxPayablesOnVoid", 0)>
+    <TPParametersAttribute("BP_NumMaxPayablesOnVoid", 0)>
     Public Property BP_NumMaxPayablesOnVoid() As Integer
         Get
             Return _BP_NumMaxPayablesOnVoid
@@ -546,7 +534,7 @@ Public Class ArgenteaParameters
     End Property
 
     Private _BP_MaxBPPayableSomeSession As Integer
-    <ArgenteaParameters("BP_MaxBPPayableSomeSession", 0)>
+    <TPParametersAttribute("BP_MaxBPPayableSomeSession", 0)>
     Public Property BP_MaxBPPayableSomeSession() As Integer
         Get
             Return _BP_MaxBPPayableSomeSession
@@ -558,7 +546,7 @@ Public Class ArgenteaParameters
 
 #Region "BPE"
     Private _BPECopies As Integer
-    <ArgenteaParameters("BPE_COPIES", 1)>
+    <TPParametersAttribute("BPE_COPIES", 1)>
     Public Property BPECopies() As Integer
         Get
             Return _BPECopies
@@ -570,7 +558,7 @@ Public Class ArgenteaParameters
 
 
     Private _BPEPrintWithinTa As Boolean
-    <ArgenteaParameters("BPE_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("BPE_PRINT_WITHIN_TA", True)>
     Public Property BPEPrintWithinTa() As Boolean
         Get
             Return _BPEPrintWithinTa
@@ -584,7 +572,7 @@ Public Class ArgenteaParameters
 
 #Region "BPCeliac"
     Private _BPCeliacCopies As Integer
-    <ArgenteaParameters("BPCELIAC_COPIES", 1)>
+    <TPParametersAttribute("BPCELIAC_COPIES", 1)>
     Public Property BPCeliacCopies() As Integer
         Get
             Return _BPCeliacCopies
@@ -596,7 +584,7 @@ Public Class ArgenteaParameters
 
 
     Private _BPCeliacPrintWithinTa As Boolean
-    <ArgenteaParameters("BPCELIAC_PRINT_WITHIN_TA", True)>
+    <TPParametersAttribute("BPCELIAC_PRINT_WITHIN_TA", True)>
     Public Property BPCeliacPrintWithinTa() As Boolean
         Get
             Return _BPCeliacPrintWithinTa
@@ -612,7 +600,7 @@ Public Class ArgenteaParameters
 
 #Region "Common"
     Private _PrintLogoOnExternalReceipts As Boolean
-    <ArgenteaParameters("PRINT_LOGO_ON_EXTERNAL_RECEIPTS", True)>
+    <TPParametersAttribute("PRINT_LOGO_ON_EXTERNAL_RECEIPTS", True)>
     Public Property PrintLogoOnExternalReceipts() As Boolean
         Get
             Return _PrintLogoOnExternalReceipts
@@ -624,18 +612,18 @@ Public Class ArgenteaParameters
 
 #End Region
 
-    Public Function LoadParametersByReflection(ByRef TheModCntr As TPDotnet.Pos.ModCntr) As Boolean
+    Public Overloads Function LoadParametersByReflection(ByRef TheModCntr As TPDotnet.Pos.ModCntr) As Boolean
         LoadParametersByReflection = False
         Dim funcName As String = "LoadParametersByReflection"
         Dim szTmp As String = String.Empty
-        Dim attr As ArgenteaParametersAttribute
+        Dim attr As TPParametersAttribute
 
         Try
 
             For Each pi As System.Reflection.PropertyInfo In Me.GetType.GetProperties()
 
                 Try
-                    attr = pi.GetCustomAttributes(GetType(ArgenteaParametersAttribute), False)(0)
+                    attr = pi.GetCustomAttributes(GetType(TPParametersAttribute), False)(0)
                 Catch ex As Exception
                     Continue For
                 End Try

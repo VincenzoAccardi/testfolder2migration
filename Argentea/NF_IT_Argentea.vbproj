@@ -7,7 +7,7 @@
     <ProjectGuid>{E5C12CD3-2F74-4661-B7B4-0CE135C06D38}</ProjectGuid>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <AssemblyName>TPDotnet.IT.Common.Pos.EFT.Argentea</AssemblyName>
+    <AssemblyName>TPDotnet.IT.Common.Pos.Argentea</AssemblyName>
     <AssemblyOriginatorKeyMode>None</AssemblyOriginatorKeyMode>
     <DefaultClientScript>JScript</DefaultClientScript>
     <DefaultHTMLPageLayout>Grid</DefaultHTMLPageLayout>
@@ -17,7 +17,7 @@
     <OptionCompare>Binary</OptionCompare>
     <OptionExplicit>On</OptionExplicit>
     <OptionStrict>Off</OptionStrict>
-    <RootNamespace>TPDotnet.IT.Common.Pos.EFT</RootNamespace>
+    <RootNamespace>TPDotnet.IT.Common.Pos</RootNamespace>
     <StartupObject>TPDotnet.Pos.%2528None%2529</StartupObject>
     <MyType>Windows</MyType>
     <FileUpgradeFlags>
@@ -144,6 +144,14 @@
     <Reference Include="TPDotnet.IT.Common.Pos.IDataObjects, Version=50.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
+    </Reference>
+    <Reference Include="TPDotnet.IT.Common.Pos.IElectronicFundsTransfer, Version=5017.2.36.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IElectronicFundsTransfer.dll</HintPath>
+    </Reference>
+    <Reference Include="TPDotnet.IT.Common.Pos.IElectronicMealVoucher, Version=5017.2.36.3, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IElectronicMealVoucher.dll</HintPath>
     </Reference>
     <Reference Include="TPDotnet.IT.Common.Pos.IExternalGiftCard, Version=50.17.2.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -302,13 +310,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ADVController.vb" />
+    <Compile Include="ArgenteaController.vb" />
     <Compile Include="ArgenteaFunctionReturnObject.vb" />
+    <Compile Include="ArgenteaResponse.vb" />
     <Compile Include="argpay.vb" />
     <Compile Include="AssemblyInfo.vb" />
     <Compile Include="BPCeliacController.vb" />
     <Compile Include="BPEController.vb" />
     <Compile Include="BPCController.vb" />
     <Compile Include="ClsProxyArgentea.vb" />
+    <Compile Include="DTPController.vb" />
     <Compile Include="ExternalGiftCardController.vb" />
     <Compile Include="PhoneRechargeController.vb" />
     <Compile Include="TPTAHelperArgentea.vb" />

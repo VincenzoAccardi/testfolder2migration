@@ -91,20 +91,20 @@ Public Class ModArgentea
                     Case FormEFTFunctions._Options.No_Option_Selected
                         TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
 
-                    Case FormEFTFunctions._Options.Void_Last_Transaction
-                        If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Void(taobj, TheModCntr) Then
-                            TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
-                        End If
+                        'Case FormEFTFunctions._Options.Void_Last_Transaction
+                        '    If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Void(taobj, TheModCntr) Then
+                        '        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
+                        '    End If
 
-                    Case FormEFTFunctions._Options.Close_EFT
-                        If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Close(taobj, TheModCntr) Then
-                            TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
-                        End If
+                        'Case FormEFTFunctions._Options.Close_EFT
+                        '    If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Close(taobj, TheModCntr) Then
+                        '        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
+                        '    End If
 
-                    Case FormEFTFunctions._Options.Get_Totals
-                        If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.GetTotals(taobj, TheModCntr) Then
-                            TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
-                        End If
+                        'Case FormEFTFunctions._Options.Get_Totals
+                        '    If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.GetTotals(taobj, TheModCntr) Then
+                        '        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
+                        '    End If
 
                 End Select
 

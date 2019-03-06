@@ -1,5 +1,6 @@
 ﻿Imports System
 Imports TPDotnet.Pos
+Imports TPDotnet.IT.Common.Pos
 Imports System.Xml.Linq
 Imports System.Xml.XPath
 Imports Microsoft.VisualBasic
@@ -8,35 +9,11 @@ Imports Microsoft.VisualBasic
 'Imports ARGLIB = TPDotnet.IT.Common.Pos.EFT.PAGAMENTOLib_TESTOFFLINE
 '#Else
 Imports ARGLIB = PAGAMENTOLib
+Imports System.Collections.Generic
+Imports System.Linq
+
 Public Class ADVController
 
-#Region "Argentea specific"
-    Protected ArgenteaCOMObject As ARGLIB.argpay
-#End Region
-
-#Region "Instance related functions"
-
-    Protected Shared clsInstance As ADVController = Nothing ' internal member of instance
-
-    Public Shared ReadOnly Property Instance() As ADVController
-        Get
-            If clsInstance Is Nothing Then clsInstance = New ADVController()
-            Return clsInstance
-        End Get
-    End Property
-
-    Protected Sub New()
-        ArgenteaCOMObject = New ARGLIB.argpay()
-        Parameters = New ArgenteaParameters()
-    End Sub
-
-#End Region
-
-#Region "Parameters"
-
-    Protected Parameters As ArgenteaParameters
-
-#End Region
 
     Public Enum PaymentAdv
         JIFFY = 1
@@ -44,45 +21,23 @@ Public Class ADVController
         BITCOIN = 3
     End Enum
 
-    Public Function Init(ByRef taobj As TPDotnet.Pos.TA, ByRef TheModCntr As TPDotnet.Pos.ModCntr) As Boolean
-        Init = False
-        Dim funcName As String = "Init"
-
-        Try
-            ' read all parameters
-            Parameters.LoadParameters(TheModCntr)
-
-        Catch ex As Exception
-
-        End Try
-
-    End Function
-
-    Public Function Payment(ByRef taobj As TPDotnet.Pos.TA,
+    Public Function Payment(ByRef ArgenteaCOMObject As ARGLIB.argpay,
+                            ByRef taobj As TPDotnet.Pos.TA,
                             ByRef TheModCntr As TPDotnet.Pos.ModCntr,
-                            ByRef MyTaMediaRec As TPDotnet.Pos.TaMediaRec,
-                            ByRef MyTaMediaMemberDetailRec As TPDotnet.Pos.TaMediaMemberDetailRec
-                            ) As Boolean
-        Payment = False
+                            ByRef MyCurrentRecord As TPDotnet.Pos.TaBaseRec,
+                            ByRef MyCurrentDetailRecord As TPDotnet.Pos.TaBaseRec,
+                            ByRef paramArg As ArgenteaParameters) As ArgenteaResponse
         Dim funcName As String = "PaymentADV"
         Dim transactionIdentifier As String = String.Empty
         Dim returnString As String = String.Empty
-        Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
-        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
-        Dim eftTA As TPDotnet.Pos.TA = Nothing
-        Dim frm As System.Windows.Forms.Form = Nothing
+        Dim response As New ArgenteaResponse
 
         Try
+            'Init(Parameters)
+
             LOG_Debug(getLocationString(funcName), "We are entered in Argentea paymentADV function")
 
-            Parameters.LoadParameters(TheModCntr)
-
-            ' open form
-            FormHelper.ShowWaitScreen(TheModCntr, False, frm)
-
-            ' get the transaction identifier
-            'transactionIdentifier = GetTransactionIdentifier(taobj)
-
+            Dim MyTaMediaRec As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
             ' pay
             Dim szCustomerID As String = String.Empty
 
@@ -91,79 +46,45 @@ Public Class ADVController
                 taobj.getCustInfos(cust)
                 szCustomerID = cust.szCustomerID
             End If
-            Dim OpType As Integer = DirectCast([Enum].Parse(GetType(PaymentAdv), MyTaMediaRec.PAYMENTinMedia.szExternalID), PaymentAdv)
-            If ArgenteaCOMObject.PagamentoADV(OpType, CInt(MyTaMediaRec.dTaPaidTotal * 100), szCustomerID, "", "", returnString) <> ArgenteaFunctionsReturnCode.OK Then
-                Exit Function
-            End If
+            Dim OpType As Integer = GetOperationType(MyTaMediaRec.PAYMENTinMedia.szExternalID)
+
+            response.ReturnCode = ArgenteaCOMObject.PagamentoADV(OpType, CInt(MyTaMediaRec.dTaPaidTotal * 100), szCustomerID, "", "", returnString)
+            response.MessageOut = returnString
+            response.CharSeparator = CharSeparator.Minus
+            response.FunctionType = InternalArgenteaFunctionTypes.ADVPayment
 
             LOG_Debug(getLocationString(funcName), "Argentea returns string: " & returnString)
 
-            'store in registry the values of transaction and amount for future void of the EFT transaction 
-
-            ' check CSV
-            argenteaFunctionReturnObject(0) = New ArgenteaFunctionReturnObject
-            If (Not CSVHelper.ParseReturnString(returnString, InternalArgenteaFunctionTypes.ADVPayment, argenteaFunctionReturnObject, "-")) Then
-                Exit Function
-            End If
-
-            Dim objTPTAHelperArgentea As New TPTAHelperArgentea
-            taArgenteaEMVRec = objTPTAHelperArgentea.ArgenteaFunctionReturnObjectToTaArgenteaEMVRec(taobj, argenteaFunctionReturnObject(0))
-            If taArgenteaEMVRec Is Nothing Then
-                ' error
-            End If
-            RegistryHelper.SetLastPaymentADVTransactionIdentifier(argenteaFunctionReturnObject(0).TerminalID)
-            RegistryHelper.SetLastPaymentADVTransactionAmount(CInt(MyTaMediaRec.dTaPaidTotal * 100))
-            RegistryHelper.SetLastPaymentADVTransactionType(OpType)
-
-
-            ' to do create a completely new transaction
-            eftTA = objTPTAHelperArgentea.CreateTA(taobj, TheModCntr, taArgenteaEMVRec, False)
-            If eftTA Is Nothing Then
-                'error
-            End If
-
-            For I As Integer = 1 To Parameters.EftReceiptCashierCopiesPayment
-                Payment = objTPTAHelperArgentea.PrintReceipt(eftTA, TheModCntr)
-                If Not Payment Then
-                    ' error
-                    If argenteaFunctionReturnObject(0).Successfull Then
-                        LOG_Debug(getLocationString(funcName), "Printer failure")
-                        TPMsgBox(PosDef.TARMessageTypes.TPERROR,
-                                                    getPosTxtNew(TheModCntr.contxt,
-                                                    "POSLevelITCommonPrinterFailed", 0),
-                                                    0,
-                                                    TheModCntr,
-                                                    "POSLevelITCommonPrinterFailed")
-                        ' message box: atenzione non sono riuscito a stampare la ricevuta ma la transazione è valida
-                    End If
-                End If
-
-            Next
-
+            paramArg.Copies = paramArg.EftReceiptCashierCopiesPayment
+            paramArg.PrintWithinTA = paramArg.EftPaymentReceiptWithinTA
             ' handle TP transaction
-            If Not argenteaFunctionReturnObject(0).Successfull Then
-                Payment = False
-                Exit Function
-            End If
-            'If Not MyTaMediaRec.PAYMENTinMedia.szExternalID = PAYFAST Then
-            '    objTPTAHelperArgentea.SwapElectronicMedia(taobj, TheModCntr, MyTaMediaRec, argenteaFunctionReturnObject(0).Acquirer)
-            'End If
-            taArgenteaEMVRec.theHdr.lTaCreateNmbr = 0
-            taArgenteaEMVRec.theHdr.lTaRefToCreateNmbr = MyTaMediaRec.theHdr.lTaCreateNmbr
-            taArgenteaEMVRec.bPrintReceipt = Parameters.EftPaymentReceiptWithinTA
-            taobj.Add(taArgenteaEMVRec)
 
-            ' confirm 
-            ' to do : understand the following description from specification
-            '   This function is called to confirm that the receipt has been correctly printed by cash counter.
-            '   Function “Conferma” is only for Ingenico Telium pos and call to this function is optional.
-            If ArgenteaCOMObject.Conferma(0) <> ArgenteaFunctionsReturnCode.OK Then
-                ' conferma has failed but the transaction has to be considered as successfully executed
-            End If
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString(funcName), ex)
+                response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString(funcName), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString(funcName), "Function returns " & response.ReturnCode.ToString)
+        End Try
+        Return response
 
-            ' to do : understand if the transaction should be considered as valid before this step.
-            Payment = True
+    End Function
 
+    Private Function GetOperationType(ByVal szExternalID As String) As Integer
+        Dim GetService As String
+        Dim funcName As String = "GetService"
+        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia}
+
+        Try
+
+            ' get & check the current payment service
+            GetService = availableServices.Where(Function(s) szExternalID.StartsWith(s.ToUpper)).FirstOrDefault
+            If String.IsNullOrEmpty(GetService) Then Exit Function
+
+            Return DirectCast([Enum].Parse(GetType(PaymentAdv), GetService), PaymentAdv)
         Catch ex As Exception
             Try
                 LOG_Error(getLocationString(funcName), ex)
@@ -171,40 +92,44 @@ Public Class ADVController
                 LOG_ErrorInTry(getLocationString(funcName), InnerEx)
             End Try
         Finally
-            LOG_FuncExit(getLocationString(funcName), "Function returns " & Payment.ToString)
-            FormHelper.ShowWaitScreen(TheModCntr, True, frm)
+            LOG_FuncExit(getLocationString(funcName), "returns ")
         End Try
-
     End Function
-
-    Public Function Void(ByRef taobj As TPDotnet.Pos.TA, ByRef TheModCntr As TPDotnet.Pos.ModCntr) As Boolean
-        Void = False
+    Public Function Void(ByRef ArgenteaCOMObject As ARGLIB.argpay,
+                         ByRef taobj As TPDotnet.Pos.TA,
+                         ByRef TheModCntr As TPDotnet.Pos.ModCntr,
+                         ByRef MyCurrentRecord As TPDotnet.Pos.TaBaseRec,
+                         ByRef MyCurrentDetailRecord As TPDotnet.Pos.TaBaseRec,
+                         ByRef paramArg As ArgenteaParameters) As ArgenteaResponse
         Dim funcName As String = "ADVVoid"
         Dim returnString As String = String.Empty
         Dim transactionIdentifier As String = String.Empty
-        Dim transactionAmount As Double = 0
+        Dim transactionAmount As Integer = 0
         Dim transactionType As Integer = 0
         Dim eftTA As TPDotnet.Pos.TA = Nothing
-        Dim taArgenteaEMVRec As TaExternalServiceRec = Nothing
-        Dim argenteaFunctionReturnObject(0) As ArgenteaFunctionReturnObject
-        Dim frm As System.Windows.Forms.Form = Nothing
+        Dim response As New ArgenteaResponse
+        Dim myTaExternalService As New TPDotnet.IT.Common.Pos.TaExternalServiceRec
+
 
         Try
             LOG_Debug(getLocationString(funcName), "We are entered in Argentea void function")
+            Dim MyTaMediaRec As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
+            For i As Integer = taobj.taCollection.Count To 1 Step -1
+                Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(i)
+                If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE AndAlso MyTaBaseRec.theHdr.lTaRefToCreateNmbr = MyTaMediaRec.theHdr.lTaCreateNmbr Then
+                    myTaExternalService = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
+                    Exit For
+                End If
+            Next
 
-            Parameters.LoadParameters(TheModCntr)
-
-            transactionIdentifier = RegistryHelper.GetLastPaymentADVTransactionIdentifier
-            transactionAmount = RegistryHelper.GetLastPaymentADVTransactionAmount / 100
-            transactionType = RegistryHelper.GetLastPaymentADVTransactionType
-
+            transactionIdentifier = IIf(myTaExternalService.ExistField("szTransactionID"), myTaExternalService.GetPropertybyName("szTransactionID"), String.Empty)
+            transactionAmount = IIf(myTaExternalService.ExistField("lAmount"), CInt(myTaExternalService.GetPropertybyName("lAmount")), String.Empty)
+            transactionType = DirectCast([Enum].Parse(GetType(PaymentAdv), myTaExternalService.szServiceType), PaymentAdv)
             If transactionIdentifier = String.Empty Or transactionAmount < 0 Then
                 LOG_Debug(getLocationString(funcName), "No Argentea transaction to void")
-                Return False
+                response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+                Return response
             End If
-
-            ' open form
-            FormHelper.ShowWaitScreen(TheModCntr, False, frm)
 
             ' void
             Dim szCustomerID As String = String.Empty
@@ -214,75 +139,35 @@ Public Class ADVController
                 taobj.getCustInfos(cust)
                 szCustomerID = cust.szCustomerID
             End If
-            If ArgenteaCOMObject.StornoADV(transactionType, CInt(transactionAmount * 100), szCustomerID, IIf(transactionType = CInt(PaymentAdv.JIFFY), String.Empty, transactionIdentifier), IIf(transactionType = CInt(PaymentAdv.JIFFY), transactionIdentifier, String.Empty), "", returnString) <> ArgenteaFunctionsReturnCode.OK Then
-                Exit Function
-            End If
+
+            response.ReturnCode = ArgenteaCOMObject.StornoADV(transactionType, CInt(transactionAmount), szCustomerID, IIf(transactionType = CInt(PaymentAdv.JIFFY), String.Empty, transactionIdentifier), IIf(transactionType = CInt(PaymentAdv.JIFFY), transactionIdentifier, String.Empty), "", returnString)
+            response.MessageOut = returnString
+            response.CharSeparator = CharSeparator.Minus
+            response.FunctionType = InternalArgenteaFunctionTypes.ADVVoid
+
 
             LOG_Debug(getLocationString(funcName), "Argentea returns string: " & returnString)
 
             ' check CSV
-            argenteaFunctionReturnObject(0) = New ArgenteaFunctionReturnObject
-            If (Not CSVHelper.ParseReturnString(returnString, InternalArgenteaFunctionTypes.ADVVoid, argenteaFunctionReturnObject, "-")) Then
-                Exit Function
-            End If
 
-            Dim objTPTAHelperArgentea As New TPTAHelperArgentea
-            taArgenteaEMVRec = objTPTAHelperArgentea.ArgenteaFunctionReturnObjectToTaArgenteaEMVRec(taobj, argenteaFunctionReturnObject(0))
-            If taArgenteaEMVRec Is Nothing Then
-                ' error
-            End If
 
-            ' to do create a completely new transaction
-            eftTA = objTPTAHelperArgentea.CreateTA(taobj, TheModCntr, taArgenteaEMVRec, False)
-            If eftTA Is Nothing Then
-                'error
-            End If
-
-            For I As Integer = 1 To Parameters.EftReceiptCashierCopiesVoid
-                Void = objTPTAHelperArgentea.PrintReceipt(eftTA, TheModCntr)
-                If Not Void Then
-                    ' error
-                    If argenteaFunctionReturnObject(0).Successfull Then
-                        LOG_Debug(getLocationString(funcName), "Printer failure")
-                        TPMsgBox(PosDef.TARMessageTypes.TPERROR,
-                                                    getPosTxtNew(TheModCntr.contxt,
-                                                    "POSLevelITCommonPrinterFailed", 0),
-                                                    0,
-                                                    TheModCntr,
-                                                    "POSLevelITCommonPrinterFailed")
-                        ' message box: atenzione non sono riuscito a stampare la ricevuta ma la transazione è valida
-                    End If
-                End If
-            Next
-            Void = objTPTAHelperArgentea.WriteTA(eftTA, TheModCntr)
-            If Not Void Then
-                ' error
-            End If
-            Dim TaBase As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.sSelReceiptLine)
-            Dim xel As XElement = taobj.TAtoXDocument(False, 0, False).XPathSelectElement("/TAS/NEW_TA/EXTERNAL_SERVICE/Hdr[lTaRefToCreateNmbr=" + TaBase.theHdr.lTaCreateNmbr.ToString + "]/lTaSeqNmbr")
-
-            If xel IsNot Nothing Then
-                Dim lTaSeqNmbr As Integer = CInt(xel.Value)
-                Dim taArg As TaExternalServiceRec = CType(taobj.GetTALine(lTaSeqNmbr), TaExternalServiceRec)
-                If Not taArg.ExistField("bIsVoided") Then taArg.AddField("bIsVoided", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-                taArg.setPropertybyName("bIsVoided", -1)
-            End If
-            Void = True
+            paramArg.Copies = paramArg.EftReceiptCashierCopiesVoid
 
         Catch ex As Exception
             Try
                 LOG_Error(getLocationString(funcName), ex)
+                response.ReturnCode = ArgenteaFunctionsReturnCode.KO
             Catch InnerEx As Exception
                 LOG_ErrorInTry(getLocationString(funcName), InnerEx)
             End Try
         Finally
-            LOG_FuncExit(getLocationString(funcName), "Function returns " & Void.ToString)
-            FormHelper.ShowWaitScreen(TheModCntr, True, frm)
+            LOG_FuncExit(getLocationString(funcName), "Function returns " & response.ReturnCode.ToString)
         End Try
-
+        Return response
     End Function
-
     Protected Overridable Function getLocationString(ByRef actMethode As String) As String
         getLocationString = TypeName(Me) & "." & actMethode & " "
     End Function
+
+
 End Class

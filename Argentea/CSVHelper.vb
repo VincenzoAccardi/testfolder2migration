@@ -78,24 +78,24 @@ Public Class CSVHelper
                                                       End Function
 
 
-        Dim SetErrResponse As Func(Of String, EFT.ArgenteaFunctionReturnObject) = Function(msg As String) ' As ArgenteaFunctionReturnObject
-                                                                                      Dim CSVE(200) As String
-                                                                                      CSVE = returnString.Split("-") 'szCharSeparator)
-                                                                                      Dim MyRefErr As New ArgenteaFunctionReturnObject
-                                                                                      '"KO-903-PROGRESSIVO FUORI SEQUENZA-----0---"  ' <-- x test (su ko remoti)
-                                                                                      MyRefErr.ArgenteaFunction = argenteaFunction
-                                                                                      MyRefErr.Successfull = False
-                                                                                      MyRefErr.CodeResult = CSVE(1)
-                                                                                      MyRefErr.Description = CSVE(2)
-                                                                                      MyRefErr.Receipt = msg
-                                                                                      MyRefErr.Amount = "0"
-                                                                                      MyRefErr.Provider = ""
-                                                                                      MyRefErr.TerminalID = ""
-                                                                                      MyRefErr.RequireCommit = False
-                                                                                      MyRefErr.CodeIssuer = ""
-                                                                                      MyRefErr.Result = CSVE(0)
-                                                                                      Return MyRefErr
-                                                                                  End Function
+        Dim SetErrResponse As Func(Of String, ArgenteaFunctionReturnObject) = Function(msg As String) ' As ArgenteaFunctionReturnObject
+                                                                                  Dim CSVE(200) As String
+                                                                                  CSVE = returnString.Split("-") 'szCharSeparator)
+                                                                                  Dim MyRefErr As New ArgenteaFunctionReturnObject
+                                                                                  '"KO-903-PROGRESSIVO FUORI SEQUENZA-----0---"  ' <-- x test (su ko remoti)
+                                                                                  MyRefErr.ArgenteaFunction = argenteaFunction
+                                                                                  MyRefErr.Successfull = False
+                                                                                  MyRefErr.CodeResult = CSVE(1)
+                                                                                  MyRefErr.Description = CSVE(2)
+                                                                                  MyRefErr.Receipt = msg
+                                                                                  MyRefErr.Amount = "0"
+                                                                                  MyRefErr.Provider = ""
+                                                                                  MyRefErr.TerminalID = ""
+                                                                                  MyRefErr.RequireCommit = False
+                                                                                  MyRefErr.CodeIssuer = ""
+                                                                                  MyRefErr.Result = CSVE(0)
+                                                                                  Return MyRefErr
+                                                                              End Function
 
         Dim GetResultAndDictBPs As Func(Of String,
             Tuple(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal))) =
@@ -210,14 +210,15 @@ Public Class CSVHelper
                         MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
                         MyRefRet.Receipt = ReplaceVbCRLF(CSV(1))
-                        MyRefRet.Result = CSV(2)
+                        MyRefRet.Result = CSV(2).ToString()
                         ParseReturnString = True
                         Exit For
                         Exit Select
 
                     ' AZIONDE DEL CASO: GIFTCARDS tipo smartbox applepay da protocollo
                     Case InternalArgenteaFunctionTypes.ExternalGiftCardActivation,
-                         InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation
+                         InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation,
+                         InternalArgenteaFunctionTypes.ExternalGiftCardConfirm
 
                         MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
@@ -492,4 +493,9 @@ Public Class CSVHelper
     End Function
 
 
+End Class
+
+Public Class CharSeparator
+    Public Const Minus As String = "-"
+    Public Const Semicolon As String = ";"
 End Class

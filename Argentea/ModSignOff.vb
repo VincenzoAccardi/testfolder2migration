@@ -127,7 +127,7 @@ Public Class ModSignOff
 
             If TheModCntr.ModulNmbrExt = 0 Then
                 Try
-                    EFTController.Instance.Close(taobj, TheModCntr)
+                    'EFTController.Instance.Close(taobj, TheModCntr)
                 Catch ex As Exception
                     LOG_Debug(getLocationString("ModBase_run"), "argentea close function raises an error: " & ex.Message)
                 End Try

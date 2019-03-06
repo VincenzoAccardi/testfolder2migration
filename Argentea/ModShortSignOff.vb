@@ -23,12 +23,12 @@ Public Class ModShortSignOff
             If ModBase_run = 1 Then
                 If TheModCntr.ModulNmbrExt = 0 Then
                     Try
-                        EFTController.Instance.GetTotals(taobj, TheModCntr)
+                        ' EFTController.Instance.GetTotals(taobj, TheModCntr)
                     Catch ex As Exception
                         LOG_Debug(getLocationString(funcName), "Argentea GetTotals function raises an error: " & ex.Message)
                     End Try
                     Try
-                        EFTController.Instance.Close(taobj, TheModCntr)
+                        '  EFTController.Instance.Close(taobj, TheModCntr)
                     Catch ex As Exception
                         LOG_Debug(getLocationString(funcName), "Argentea Close function raises an error: " & ex.Message)
                     End Try
