@@ -210,6 +210,7 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             ' Standard fields
             ' ---------------
             m.Append("szReceipt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szOriginalReceipt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("bPrintReceipt", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("lCopies", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("bSuppressLogo", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
