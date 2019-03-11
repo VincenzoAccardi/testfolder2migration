@@ -19,6 +19,11 @@ Public Class Controller
     Implements IExternalGiftCardActivation
     Implements IExternalGiftCardDeActivation
     Implements IExternalGiftCardConfirm
+    Implements IGiftCardActivationPreCheck
+    Implements IGiftCardActivation
+    Implements IGiftCardBalanceInquiry
+    Implements IGiftCardRedeem
+    Implements IGiftCardCancellationPayment
 
 #Region "Enum"
     Protected Enum MethodParameter
@@ -52,6 +57,11 @@ Public Class Controller
         ActivationExternalGiftCard
         DeActivationExternalGiftCard
         ConfirmExternalGiftCard
+        CheckGiftCard
+        ActivateGiftCard
+        GiftCardBalanceInquiry
+        RedeemGiftCard
+        GiftCardCancellation
     End Enum
 
 #End Region
@@ -64,7 +74,11 @@ Public Class Controller
         {"BITCOIN", Controller.ADVController},
         {"EFT", Controller.EFTController},
         {"PAYFAST", Controller.DTPController},
-        {"EMEALCELIAC", Controller.BPCeliacController}
+        {"EMEALCELIAC", Controller.BPCeliacController},
+        {"GIFTCARD", Controller.GiftCardController},
+        {"EXTERNALGIFTCARD", Controller.ExternalGiftCardController},
+        {"PHONERECHARGE", Controller.PhoneRechargeController},
+        {"SIGNOFF", Controller.EFTController}
     }
 
     Protected GetStatus As New Dictionary(Of Method, TaExternalServiceRec.ExternalServiceStatus) From {
@@ -77,7 +91,12 @@ Public Class Controller
         {Method.Check, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
         {Method.ActivationExternalGiftCard, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
         {Method.DeActivationExternalGiftCard, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
-        {Method.ConfirmExternalGiftCard, TaExternalServiceRec.ExternalServiceStatus.Activated}
+        {Method.ConfirmExternalGiftCard, TaExternalServiceRec.ExternalServiceStatus.Activated},
+        {Method.CheckGiftCard, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
+        {Method.ActivateGiftCard, TaExternalServiceRec.ExternalServiceStatus.Activated},
+        {Method.GiftCardBalanceInquiry, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
+        {Method.RedeemGiftCard, TaExternalServiceRec.ExternalServiceStatus.Activated},
+        {Method.GiftCardCancellation, TaExternalServiceRec.ExternalServiceStatus.Deleted}
     }
 
     Protected OperationParameters As New Dictionary(Of Method, MethodParameter()) From {
@@ -90,7 +109,12 @@ Public Class Controller
         {Method.Check, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.MyCurrentDetailRec, MethodParameter.paramArg}},
         {Method.ActivationExternalGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
         {Method.DeActivationExternalGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
-        {Method.ConfirmExternalGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}}
+        {Method.ConfirmExternalGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
+        {Method.CheckGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
+        {Method.ActivateGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
+        {Method.GiftCardBalanceInquiry, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
+        {Method.RedeemGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
+        {Method.GiftCardCancellation, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.MyCurrentDetailRec, MethodParameter.paramArg}}
     }
 #End Region
 
@@ -146,6 +170,8 @@ Public Class Controller
                     Return CType(CType(MyCurrentRecord, TPDotnet.IT.Common.Pos.TaArtReturnRec).ARTinArtReturn, TPDotnet.IT.Common.Pos.ART).szITSpecialItemType
                 Case TPDotnet.Pos.TARecTypes.iTA_SIGN_OFF
                     Return "SIGNOFF"
+                Case TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE
+                    Return CType(MyCurrentRecord, TPDotnet.IT.Common.Pos.TaExternalServiceRec).szServiceType
                 Case Else
                     Return String.Empty
             End Select
@@ -186,11 +212,9 @@ Public Class Controller
 
             Init(Parameters)
 
-            If GetStatus(eMethod) = TaExternalServiceRec.ExternalServiceStatus.PreChecked Then
-                If Not PrecheckHandlerBeforeInvoke(eMethod, eController) Then
-                    Execute = 1
-                    Return Execute
-                End If
+            If Not HandlerBeforeInvoke(eMethod, eController) Then
+                Execute = 1
+                Return Execute
             End If
 
             TPDotnet.IT.Common.Pos.Common.ShowScreen(TheModCntr, True, paramCommon.WaitScreenName)
@@ -224,11 +248,9 @@ Public Class Controller
                 Return Execute
             End If
 
-            If GetStatus(eMethod) = TaExternalServiceRec.ExternalServiceStatus.PreChecked Then
-                If Not PrecheckHandlerAfterInvoke(eMethod, eController, argenteaFunctionReturnObject, response) Then
-                    Execute = 1
-                    Return Execute
-                End If
+            If Not HandlerAfterInvoke(eMethod, eController, argenteaFunctionReturnObject, response) Then
+                Execute = 1
+                Return Execute
             End If
 
             FillExternalServiceRecord(argenteaFunctionReturnObject, response, eMethod)
@@ -248,41 +270,7 @@ Public Class Controller
         Return Execute
     End Function
 
-    Private Function PrecheckHandlerBeforeInvoke(eMethod As Method, eController As Controller) As Boolean
-        Dim cmd As New TPDotnet.IT.Common.Pos.Common
-        Select Case eController
-            Case Controller.ExternalGiftCardController
-                PrecheckHandlerBeforeInvoke = ExtGiftCardFormHandler()
-            Case Else
-                PrecheckHandlerBeforeInvoke = True
-        End Select
-        Return PrecheckHandlerBeforeInvoke
-    End Function
 
-    Private Function ExtGiftCardFormHandler() As Boolean
-        Dim szBarcode As String = String.Empty
-        Dim szCaptionDescription As String = String.Empty
-        If TypeOf (MyCurrentRecord) Is TPDotnet.Pos.TaArtSaleRec Then
-            szBarcode = GetBarcodeFromTemplate(taobj, TheModCntr, MyCurrentRecord.GetPropertybyName("szInputString"))
-            szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaArtSaleRec).ARTinArtSale.szDesc
-        ElseIf TypeOf (MyCurrentRecord) Is TPDotnet.Pos.TaArtReturnRec Then
-            szBarcode = MyCurrentRecord.GetPropertybyName("szITExtGiftCardEAN")
-            szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaArtReturnRec).ARTinArtReturn.szDesc
-        End If
-        If String.IsNullOrEmpty(szBarcode) Then
-            szBarcode = CallForm(szCaptionDescription)
-            If String.IsNullOrEmpty(szBarcode) Then
-                ExtGiftCardFormHandler = False
-            Else
-                If Not MyCurrentRecord.ExistField("szITExtGiftCardEAN") Then MyCurrentRecord.AddField("szITExtGiftCardEAN", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-                MyCurrentRecord.setPropertybyName("szITExtGiftCardEAN", szBarcode.ToString)
-                ExtGiftCardFormHandler = True
-            End If
-        Else
-            ExtGiftCardFormHandler = True
-        End If
-        Return ExtGiftCardFormHandler
-    End Function
 
     Protected Overridable Function GetBarcodeFromTemplate(taobj As TPDotnet.Pos.TA, TheModCntr As ModCntr, ByVal szInputString As String) As String
         Dim funcName As String = "GetBarcodeFromTemplate"
@@ -317,36 +305,193 @@ Public Class Controller
         Return GetBarcodeFromTemplate
     End Function
 
+
+    Protected Sub Init(ByRef Parameters As Dictionary(Of String, Object))
+        paramArg = New ArgenteaParameters()
+        ArgenteaCOMObject = New ARGLIB.argpay()
+        TheModCntr = Parameters("Controller")
+        taobj = Parameters("Transaction")
+        paramCommon = Parameters("Parameters")
+        MyCurrentRecord = Parameters("CurrentRecord")
+        MyCurrentDetailRec = Parameters("CurrentDetailRecord")
+
+        paramArg.LoadParametersByReflection(TheModCntr, "Argentea")
+        paramCommon.WaitScreenName = TheModCntr.getParam(PARAMETER_DLL_NAME + ".Argentea." + "PROCESS_NAME").Trim
+        Dim szNameSpace As String = GetType(Controller).Namespace
+        If eController = Controller.None Then
+            eController = GetController(GetOperationType(ExternalID))
+        End If
+        NameClass = szNameSpace + "." + eController.ToString
+    End Sub
+    Protected Overridable Function getLocationString(ByRef actMethode As String) As String
+        getLocationString = TypeName(Me) & "." & actMethode & " "
+    End Function
+#End Region
+
+#Region "Private Function"
+    Private Function GetOperationType(ByVal szExternalID As String) As String
+        Dim GetService As String = String.Empty
+        Dim funcName As String = "GetService"
+        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia, ElectronicMealVoucherCeliacMedia, PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem}
+
+        Try
+            ' get & check the current payment service
+            GetService = availableServices.Where(Function(s) szExternalID.StartsWith(s.ToUpper)).FirstOrDefault
+
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString(funcName), ex)
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString(funcName), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString(funcName), "returns ")
+        End Try
+        Return GetService
+    End Function
+
+    Private Function HandlerBeforeInvoke(eMethod As Method, eController As Controller) As Boolean
+        Dim cmd As New TPDotnet.IT.Common.Pos.Common
+        Select Case eController
+            Case Controller.ExternalGiftCardController
+                If GetStatus(eMethod) = TaExternalServiceRec.ExternalServiceStatus.PreChecked Then
+                    HandlerBeforeInvoke = ExtGiftCardFormHandler()
+                Else
+                    HandlerBeforeInvoke = True
+                End If
+            Case Controller.GiftCardController
+                If eMethod = Method.CheckGiftCard Then
+                    HandlerBeforeInvoke = GiftCardFormHandler(eMethod)
+                ElseIf eMethod = Method.GiftCardBalanceInquiry Then
+                    HandlerBeforeInvoke = GiftCardFormHandler(eMethod)
+                Else
+                    HandlerBeforeInvoke = True
+                End If
+            Case Else
+                HandlerBeforeInvoke = True
+        End Select
+        Return HandlerBeforeInvoke
+    End Function
+
+    Private Function GiftCardFormHandler(ByRef eMethod As Method) As Boolean
+        Dim szCaptionDescription As String = String.Empty
+        Dim szBarcode As String = String.Empty
+
+        If eMethod = Method.CheckGiftCard Then
+            If TypeOf (MyCurrentRecord) Is TPDotnet.Pos.TaArtSaleRec Then
+                szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaArtSaleRec).ARTinArtSale.szDesc
+            End If
+            If String.IsNullOrEmpty(szBarcode) Then
+                szBarcode = CallForm(szCaptionDescription)
+            Else
+                GiftCardFormHandler = True
+            End If
+        ElseIf eMethod = Method.GiftCardBalanceInquiry Then
+            If MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
+                szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
+                Dim dValue As Double = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid
+                Dim giftForm As FormItemValueInput = TheModCntr.GetCustomizedForm(GetType(FormItemValueInput), STRETCH_TO_SMALL_WINDOW)
+                giftForm.ArticleDescription = szCaptionDescription
+                giftForm.Value = dValue.ToString(TheModCntr.getFormatString4Price)
+                szBarcode = giftForm.DisplayMe(taobj, TheModCntr, FormRoot.DialogActive.d1_DialogActive)
+                CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = giftForm.Value
+                giftForm.Close()
+            Else
+                szBarcode = CallForm(szCaptionDescription)
+            End If
+        Else
+            GiftCardFormHandler = True
+        End If
+
+        If String.IsNullOrEmpty(szBarcode) Then
+            GiftCardFormHandler = False
+        Else
+            If Not MyCurrentRecord.ExistField("szITGiftCardEAN") Then MyCurrentRecord.AddField("szITGiftCardEAN", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            MyCurrentRecord.setPropertybyName("szITGiftCardEAN", szBarcode.ToString)
+            GiftCardFormHandler = True
+        End If
+
+        Return GiftCardFormHandler
+    End Function
+
+    Private Function ExtGiftCardFormHandler() As Boolean
+        Dim szBarcode As String = String.Empty
+        Dim szCaptionDescription As String = String.Empty
+        If TypeOf (MyCurrentRecord) Is TPDotnet.Pos.TaArtSaleRec Then
+            szBarcode = GetBarcodeFromTemplate(taobj, TheModCntr, MyCurrentRecord.GetPropertybyName("szInputString"))
+            szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaArtSaleRec).ARTinArtSale.szDesc
+        ElseIf TypeOf (MyCurrentRecord) Is TPDotnet.Pos.TaArtReturnRec Then
+            szBarcode = MyCurrentRecord.GetPropertybyName("szITExtGiftCardEAN")
+            szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaArtReturnRec).ARTinArtReturn.szDesc
+        End If
+        If String.IsNullOrEmpty(szBarcode) Then
+            szBarcode = CallForm(szCaptionDescription)
+            If String.IsNullOrEmpty(szBarcode) Then
+                ExtGiftCardFormHandler = False
+            Else
+                If Not MyCurrentRecord.ExistField("szITExtGiftCardEAN") Then MyCurrentRecord.AddField("szITExtGiftCardEAN", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                MyCurrentRecord.setPropertybyName("szITExtGiftCardEAN", szBarcode.ToString)
+                ExtGiftCardFormHandler = True
+            End If
+        Else
+            ExtGiftCardFormHandler = True
+        End If
+        Return ExtGiftCardFormHandler
+    End Function
+
     Private Function CallForm(ByRef szDescription As String) As String
-        Dim giftForm As FormArgenteaItemInput = TheModCntr.GetCustomizedForm(GetType(FormArgenteaItemInput), STRETCH_TO_SMALL_WINDOW)
+        Dim giftForm As FormItemInput = TheModCntr.GetCustomizedForm(GetType(FormItemInput), STRETCH_TO_SMALL_WINDOW)
         giftForm.ArticleDescription = szDescription
         CallForm = giftForm.DisplayMe(taobj, TheModCntr, FormRoot.DialogActive.d1_DialogActive)
         giftForm.Close()
         Return CallForm
     End Function
 
-    Private Function PrecheckHandlerAfterInvoke(ByRef eMethod As Method, ByRef eController As Controller, ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, ByRef response As ArgenteaResponse) As Boolean
+    Private Function HandlerAfterInvoke(ByRef eMethod As Method, ByRef eController As Controller, ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, ByRef response As ArgenteaResponse) As Boolean
         Dim cmd As New TPDotnet.IT.Common.Pos.Common
         Select Case eController
             Case Controller.BPCeliacController
-                If Not argenteaFunctionReturnObject(0).Successfull Then
-                    If argenteaFunctionReturnObject(0).CodeResult = CodeResult.UnderFunded Then
-                        TPDotnet.IT.Common.Pos.Common.ShowScreen(TheModCntr, False, paramCommon.WaitScreenName)
-                        If MsgBoxResult.Ok = cmd.ShowQuestion(TheModCntr, "LevelITCommonArgenteaUnderFunded", CDec((CInt(argenteaFunctionReturnObject(0).Amount) / 100)).ToString) Then
-                            PrecheckHandlerAfterInvoke = True
+                If GetStatus(eMethod) = TaExternalServiceRec.ExternalServiceStatus.PreChecked Then
+                    If Not argenteaFunctionReturnObject(0).Successfull Then
+                        If argenteaFunctionReturnObject(0).CodeResult = CodeResult.UnderFunded Then
+                            TPDotnet.IT.Common.Pos.Common.ShowScreen(TheModCntr, False, paramCommon.WaitScreenName)
+                            If MsgBoxResult.Ok = cmd.ShowQuestion(TheModCntr, "LevelITCommonArgenteaUnderFunded", CDec((CInt(argenteaFunctionReturnObject(0).Amount) / 100)).ToString) Then
+                                HandlerAfterInvoke = True
+                            Else
+                                HandlerAfterInvoke = False
+                                response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+                            End If
                         Else
-                            PrecheckHandlerAfterInvoke = False
+                            HandlerAfterInvoke = True
+                            eMethod = Method.Payment
+                        End If
+                    End If
+                Else
+                    HandlerAfterInvoke = True
+                End If
+            Case Controller.GiftCardController
+                If eMethod = Method.GiftCardBalanceInquiry AndAlso MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
+                    Dim lAmount As Decimal = CDec(response.GetProperty("lAmount"))
+                    response.SetProperty("lAmount", CInt(Math.Min(CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid, lAmount) * 100))
+                    HandlerAfterInvoke = True
+                    If MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
+                        If lAmount = 0 Then
+                            cmd.ShowError(TheModCntr, ERR_GIFTCARD_HAS_NO_MONEY.ToString, "UserMessage", ERR_GIFTCARD_HAS_NO_MONEY)
+                            HandlerAfterInvoke = False
                             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
                         End If
-                    Else
-                        PrecheckHandlerAfterInvoke = True
-                        eMethod = Method.Payment
                     End If
+                Else
+                    HandlerAfterInvoke = True
                 End If
             Case Else
-                PrecheckHandlerAfterInvoke = True
+                If Not argenteaFunctionReturnObject(0).Successfull Then
+                    HandlerAfterInvoke = False
+                Else
+                    HandlerAfterInvoke = True
+                End If
         End Select
-        Return PrecheckHandlerAfterInvoke
+        Return HandlerAfterInvoke
     End Function
 
     Private Sub FillExternalServiceRecord(argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, response As ArgenteaResponse, eMethod As Method)
@@ -411,49 +556,6 @@ Public Class Controller
 
     End Sub
 
-    Protected Sub Init(ByRef Parameters As Dictionary(Of String, Object))
-        paramArg = New ArgenteaParameters()
-        ArgenteaCOMObject = New ARGLIB.argpay()
-        TheModCntr = Parameters("Controller")
-        taobj = Parameters("Transaction")
-        paramCommon = Parameters("Parameters")
-        MyCurrentRecord = Parameters("CurrentRecord")
-        MyCurrentDetailRec = Parameters("CurrentDetailRecord")
-
-        paramArg.LoadParametersByReflection(TheModCntr, "Argentea")
-        paramCommon.WaitScreenName = TheModCntr.getParam(PARAMETER_DLL_NAME + ".Argentea." + "PROCESS_NAME").Trim
-        Dim szNameSpace As String = GetType(Controller).Namespace
-        If eController = Controller.None Then
-            eController = GetController(GetOperationType(ExternalID))
-        End If
-        NameClass = szNameSpace + "." + eController.ToString
-    End Sub
-    Protected Overridable Function getLocationString(ByRef actMethode As String) As String
-        getLocationString = TypeName(Me) & "." & actMethode & " "
-    End Function
-#End Region
-
-#Region "Private Function"
-    Private Function GetOperationType(ByVal szExternalID As String) As String
-        Dim GetService As String = String.Empty
-        Dim funcName As String = "GetService"
-        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia, ElectronicMealVoucherCeliacMedia, PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem}
-
-        Try
-            ' get & check the current payment service
-            GetService = availableServices.Where(Function(s) szExternalID.StartsWith(s.ToUpper)).FirstOrDefault
-
-        Catch ex As Exception
-            Try
-                LOG_Error(getLocationString(funcName), ex)
-            Catch InnerEx As Exception
-                LOG_ErrorInTry(getLocationString(funcName), InnerEx)
-            End Try
-        Finally
-            LOG_FuncExit(getLocationString(funcName), "returns ")
-        End Try
-        Return GetService
-    End Function
 #End Region
 
 #Region "Public Function"
@@ -464,11 +566,9 @@ Public Class Controller
         Return Execute(Method.Void, Parameters)
     End Function
     Public Function ElectronicFundsTransferClosure_Closure(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicFundsTransferReturnCode Implements IElectronicFundsTransferClosure.Closure
-        eController = Controller.EFTController
         Return Execute(Method.Closure, Parameters)
     End Function
     Public Function ElectronicFundsTransferTotals_Totals(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicFundsTransferReturnCode Implements IElectronicFundsTransferTotals.Totals
-        eController = Controller.EFTController
         Return Execute(Method.Totals, Parameters)
     End Function
     Public Function IElectronicMealVoucherPay_Pay(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherPay.Pay
@@ -478,16 +578,35 @@ Public Class Controller
         Return Execute(Method.Void, Parameters)
     End Function
     Public Function CheckPhoneRecharge(ByRef Parameters As Dictionary(Of String, Object)) As IPhoneRechargeReturnCode Implements IPhoneRechargeActivationPreCheck.CheckPhoneRecharge
-        eController = Controller.PhoneRechargeController
         Return Execute(Method.CheckPhoneRecharge, Parameters)
     End Function
     Public Function ActivatePhoneRecharge(ByRef Parameters As Dictionary(Of String, Object)) As IPhoneRechargeReturnCode Implements IPhoneRechargeActivation.ActivatePhoneRecharge
-        eController = Controller.PhoneRechargeController
         Return Execute(Method.ActivatePhoneRecharge, Parameters)
     End Function
     Public Function ActivationExternalGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IExternalGiftCardReturnCode Implements IExternalGiftCardActivation.ActivationExternalGiftCard
-        eController = Controller.ExternalGiftCardController
         Return Execute(Method.ActivationExternalGiftCard, Parameters)
+    End Function
+    Public Function DeActivationExternalGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IExternalGiftCardReturnCode Implements IExternalGiftCardDeActivation.DeActivationExternalGiftCard
+        Return Execute(Method.DeActivationExternalGiftCard, Parameters)
+    End Function
+    Public Function ConfirmExternalGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IExternalGiftCardReturnCode Implements IExternalGiftCardConfirm.ConfirmExternalGiftCard
+        Return Execute(Method.ConfirmExternalGiftCard, Parameters)
+    End Function
+    Public Function CheckGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IGiftCardReturnCode Implements IGiftCardActivationPreCheck.CheckGiftCard
+        Return Execute(Method.CheckGiftCard, Parameters)
+    End Function
+    Public Function ActivateGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IGiftCardReturnCode Implements IGiftCardActivation.ActivateGiftCard
+        Return Execute(Method.ActivateGiftCard, Parameters)
+    End Function
+    Public Function GiftCardBalanceInquiry(ByRef Parameters As Dictionary(Of String, Object)) As IGiftCardReturnCode Implements IGiftCardBalanceInquiry.GiftCardBalanceInquiry
+        eController = Controller.GiftCardController
+        Return Execute(Method.GiftCardBalanceInquiry, Parameters)
+    End Function
+    Public Function RedeemGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IGiftCardReturnCode Implements IGiftCardRedeem.RedeemGiftCard
+        Return Execute(Method.RedeemGiftCard, Parameters)
+    End Function
+    Public Function GiftCardCancellation(ByRef Parameters As Dictionary(Of String, Object)) As IGiftCardReturnCode Implements IGiftCardCancellationPayment.GiftCardCancellation
+        Return Execute(Method.GiftCardCancellation, Parameters)
     End Function
 
 #Region "Check"
@@ -508,16 +627,6 @@ Public Class Controller
     End Function
     Private Function IElectronicMealVoucherVoid_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherVoid.Check
         Return IElectronicFundsTransferReturnCode.OK
-    End Function
-
-    Public Function DeActivationExternalGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IExternalGiftCardReturnCode Implements IExternalGiftCardDeActivation.DeActivationExternalGiftCard
-        eController = Controller.ExternalGiftCardController
-        Return Execute(Method.DeActivationExternalGiftCard, Parameters)
-    End Function
-
-    Public Function ConfirmExternalGiftCard(ByRef Parameters As Dictionary(Of String, Object)) As IExternalGiftCardReturnCode Implements IExternalGiftCardConfirm.ConfirmExternalGiftCard
-        eController = Controller.ExternalGiftCardController
-        Return Execute(Method.ConfirmExternalGiftCard, Parameters)
     End Function
 #End Region
 #End Region

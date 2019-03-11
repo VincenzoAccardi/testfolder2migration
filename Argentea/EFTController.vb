@@ -93,6 +93,9 @@ Public Class EFTController
                 End If
             Next
 
+            myTaExternalService.lCopies = 0
+            myTaExternalService.bPrintReceipt = False
+
             transactionIdentifier = IIf(myTaExternalService.ExistField("szTransactionID"), myTaExternalService.GetPropertybyName("szTransactionID"), String.Empty)
             transactionAmount = IIf(myTaExternalService.ExistField("lAmount"), CInt(myTaExternalService.GetPropertybyName("lAmount")), String.Empty)
             If transactionIdentifier = String.Empty Or transactionAmount < 0 Then
@@ -106,7 +109,7 @@ Public Class EFTController
             LOG_Debug(getLocationString(funcName), "Argentea returns string: " & returnString)
 
             response.MessageOut = returnString
-            response.CharSeparator = CharSeparator.Minus
+            response.CharSeparator = CharSeparator.Semicolon
             response.FunctionType = InternalArgenteaFunctionTypes.EFTVoid
 
             paramArg.Copies = paramArg.EftReceiptCashierCopiesVoid

@@ -11,7 +11,9 @@ Imports System.Windows.Forms
 Imports Microsoft.PointOfService
 Imports Microsoft.PointOfService.PosCommon
 Imports System.Collections.Generic
-
+Imports System.Xml.Linq
+Imports System.Xml.XPath
+Imports System.Linq
 
 Public Class ModArgentea
     Inherits TPDotnet.Pos.ModBase
@@ -55,7 +57,7 @@ Public Class ModArgentea
                     Exit Select
 
                 Case FunctionType.GiftCard
-                    frm = TheModCntr.GetCustomizedForm(GetTPDotNetType(Of FormArgenteaItemInput), STRETCH_TO_SMALL_WINDOW)
+                    InquiryGiftCard(TheModCntr, taobj)
                     Exit Select
 
                 Case Else
@@ -64,52 +66,28 @@ Public Class ModArgentea
 
             End Select
 
-            'If TheModCntr.ModulNmbrExt = FunctionType.GiftCard Then
-            '    frm = TheModCntr.GetCustomizedForm(GetTPDotNetType(Of FormArgenteaItemInput), STRETCH_TO_SMALL_WINDOW)
-            'Else
-            '    frm = TheModCntr.GetCustomizedForm(GetTPDotNetType(Of FormEFTFunctions), STRETCH_TO_SMALL_WINDOW)
-            'End If
+            If TypeOf frm Is FormEFTFunctions Then
 
-            frm.theModCntr = TheModCntr
-            frm.taobj = taobj
-            Dim bFrmRet As Object = frm.DisplayMe(taobj, TheModCntr, FormRoot.DialogActive.d1_DialogActive)
-            frm.Close()
-
-            If TypeOf frm Is FormArgenteaItemInput Then
-
-                Dim dBalance As Decimal = 0
-                Dim szReceipt As String = String.Empty
-
-                InquiryGiftCard(TheModCntr, taobj, frm.Tag, dBalance, szReceipt)
-
-            ElseIf TypeOf frm Is FormEFTFunctions Then
-
+                frm.theModCntr = TheModCntr
+                frm.taobj = taobj
+                Dim bFrmRet As Object = frm.DisplayMe(taobj, TheModCntr, FormRoot.DialogActive.d1_DialogActive)
+                frm.Close()
                 If Not bFrmRet Then Exit Function
 
                 Select Case CType(frm, FormEFTFunctions).OptionSelected
 
                     Case FormEFTFunctions._Options.No_Option_Selected
                         TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
-
-                        'Case FormEFTFunctions._Options.Void_Last_Transaction
-                        '    If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Void(taobj, TheModCntr) Then
-                        '        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
-                        '    End If
-
-                        'Case FormEFTFunctions._Options.Close_EFT
-                        '    If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.Close(taobj, TheModCntr) Then
-                        '        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
-                        '    End If
-
-                        'Case FormEFTFunctions._Options.Get_Totals
-                        '    If Not TPDotnet.IT.Common.Pos.EFT.EFTController.Instance.GetTotals(taobj, TheModCntr) Then
-                        '        TPMsgBox(PosDef.TARMessageTypes.TPINFORMATION, getPosTxtNew(TheModCntr.contxt, "LevelITCommonHelloWorldFailed", 0), 0, TheModCntr, "LevelITCommonHelloWorldFailed")
-                        '    End If
-
                 End Select
 
             End If
 
+            If taobj.getFtrRecNr = -1 Then
+                taobj.TAEnd(fillFooterLines(TheModCntr.con, taobj, TheModCntr))
+            End If
+            taobj.bPrintReceipt = False
+            taobj.bTAtoFile = True
+            taobj.bDelete = True
 
             ModBase_run = 0
 
@@ -125,36 +103,48 @@ Public Class ModArgentea
 
 #Region "IGiftCardBalanceInquiry"
 
-    Public Function InquiryGiftCard(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA, ByRef szBarcode As String, ByRef dBalance As System.Decimal, ByRef szReceipt As String) As IGiftCardReturnCode
+    Public Function InquiryGiftCard(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA) As IGiftCardReturnCode
         InquiryGiftCard = IGiftCardReturnCode.OK
         Dim funcName As String = "CheckRedeemGiftCard"
         Dim handler As IGiftCardBalanceInquiry
-        Dim parameters As Dictionary(Of String, Object)
-
+        Dim TaHelper As New TPDotnet.IT.Common.Pos.TPTAHelper
         Try
-            parameters = New Dictionary(Of String, Object) From { _
-                                                             {"Controller", TheModCntr}, _
-                                                             {"Transaction", taobj}, _
-                                                             {"Barcode", szBarcode}, _
-                                                             {"Value", dBalance}, _
-                                                             {"Receipt", szReceipt}, _
-                                                             {"GiftCardBalanceInternalInquiry", False} _
-                                                            }
 
-            handler = createPosModelObject(Of IGiftCardBalanceInquiry)(TheModCntr, "GiftCardController", 0, False)
+            handler = createPosModelObject(Of IGiftCardBalanceInquiry)(TheModCntr, TPDotnet.IT.Common.Pos.GiftCardItem.ToString, 0, False)
             If handler Is Nothing Then
                 ' gift card handler is not defined into the database
                 InquiryGiftCard = IGiftCardReturnCode.KO
                 Exit Function
             End If
+            Dim myheader As TPDotnet.Pos.TaHdrRec = CType(taobj.GetTALine(1), TPDotnet.Pos.TaHdrRec)
+            Dim result As Integer = handler.GiftCardBalanceInquiry(New Dictionary(Of String, Object) From {
+                                                                     {"Controller", TheModCntr},
+                                                                     {"Transaction", taobj},
+                                                                     {"CurrentRecord", myheader},
+                                                                     {"CurrentDetailRecord", Nothing},
+                                                                     {"Parameters", New TPDotnet.IT.Common.Pos.CommonParameters}
+                                                                 })
 
-            InquiryGiftCard = handler.GiftCardBalanceInquiry(parameters)
+            If result = 0 Then
 
-            ' adjustment for value data type
-            szBarcode = parameters("Barcode")
-            dBalance = parameters("Value")
-            szReceipt = parameters("Receipt")
+                Dim ExternalServiceRec As TPDotnet.IT.Common.Pos.TaExternalServiceRec
+                Dim lTaCreateNmbr As Integer = myheader.theHdr.lTaCreateNmbr
+                Dim listTaExtCreateNmbr As List(Of XElement) = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/EXTERNAL_SERVICE[Hdr/lTaRefToCreateNmbr=" + lTaCreateNmbr.ToString + "]/Hdr/lTaCreateNmbr").ToList
 
+                For Each lTaExtCreateNmbr As XElement In listTaExtCreateNmbr
+
+                    'Check if exist External Service Rercod into original TA
+                    If lTaExtCreateNmbr IsNot Nothing Then
+                        ExternalServiceRec = CType(taobj.GetTALine(taobj.GetPositionFromCreationNmbr(lTaExtCreateNmbr.Value)), TPDotnet.IT.Common.Pos.TaExternalServiceRec)
+                    Else
+                        Throw New Exception("EXTERNAL_SERVICE_RECORD_NOT_FOUND")
+                    End If
+
+                    TaHelper.ExternalTAHandler(taobj, TheModCntr, ExternalServiceRec)
+                Next
+
+
+            End If
         Catch ex As Exception
             Try
                 LOG_Error(getLocationString(funcName), ex)
