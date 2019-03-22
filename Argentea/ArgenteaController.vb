@@ -382,22 +382,18 @@ Public Class Controller
                 szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaArtSaleRec).ARTinArtSale.szDesc
             End If
             If String.IsNullOrEmpty(szBarcode) Then
-                szBarcode = CallForm(szCaptionDescription)
+                szBarcode = CallForm(GetType(FormItemInput), szCaptionDescription)
             Else
                 GiftCardFormHandler = True
             End If
         ElseIf eMethod = Method.GiftCardBalanceInquiry Then
             If MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
                 szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
-                Dim dValue As Double = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid
-                Dim giftForm As FormItemValueInput = TheModCntr.GetCustomizedForm(GetType(FormItemValueInput), STRETCH_TO_SMALL_WINDOW)
-                giftForm.ArticleDescription = szCaptionDescription
-                giftForm.Value = dValue.ToString(TheModCntr.getFormatString4Price)
-                szBarcode = giftForm.DisplayMe(taobj, TheModCntr, FormRoot.DialogActive.d1_DialogActive)
-                CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = giftForm.Value
-                giftForm.Close()
+                Dim szValue As String = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid.ToString(TheModCntr.getFormatString4Price)
+                szBarcode = CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue)
+                CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
             Else
-                szBarcode = CallForm(szCaptionDescription)
+                szBarcode = CallForm(GetType(FormItemInput), szCaptionDescription)
             End If
         Else
             GiftCardFormHandler = True
@@ -425,7 +421,7 @@ Public Class Controller
             szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaArtReturnRec).ARTinArtReturn.szDesc
         End If
         If String.IsNullOrEmpty(szBarcode) Then
-            szBarcode = CallForm(szCaptionDescription)
+            szBarcode = CallForm(GetType(FormItemInput), szCaptionDescription)
             If String.IsNullOrEmpty(szBarcode) Then
                 ExtGiftCardFormHandler = False
             Else
@@ -439,12 +435,23 @@ Public Class Controller
         Return ExtGiftCardFormHandler
     End Function
 
-    Private Function CallForm(ByRef szDescription As String) As String
-        Dim giftForm As FormItemInput = TheModCntr.GetCustomizedForm(GetType(FormItemInput), STRETCH_TO_SMALL_WINDOW)
-        giftForm.ArticleDescription = szDescription
-        CallForm = giftForm.DisplayMe(taobj, TheModCntr, FormRoot.DialogActive.d1_DialogActive)
-        giftForm.Close()
-        Return CallForm
+    Private Function CallForm(ByVal type As Type, ByRef szDescription As String, Optional ByRef szValue As String = "") As String
+        Dim frmItemInput As Object = Nothing
+        Dim szBarcode As String = String.Empty
+        If type Is GetType(FormItemInput) Then
+            frmItemInput = TheModCntr.GetCustomizedForm(GetType(FormItemInput), STRETCH_TO_SMALL_WINDOW)
+        ElseIf type Is GetType(FormItemValueInput) Then
+            frmItemInput = TheModCntr.GetCustomizedForm(GetType(FormItemValueInput), STRETCH_TO_SMALL_WINDOW)
+            frmItemInput.Value = szValue
+        End If
+
+        frmItemInput.ArticleDescription = szDescription
+        szBarcode = frmItemInput.DisplayMe(taobj, TheModCntr, FormRoot.DialogActive.d1_DialogActive)
+
+        If type Is GetType(FormItemValueInput) Then szValue = frmItemInput.Value
+
+        frmItemInput.Close()
+        Return szBarcode
     End Function
 
     Private Function HandlerAfterInvoke(ByRef eMethod As Method, ByRef eController As Controller, ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, ByRef response As ArgenteaResponse) As Boolean
