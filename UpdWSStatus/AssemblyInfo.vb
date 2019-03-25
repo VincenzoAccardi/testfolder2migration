@@ -29,5 +29,5 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below
 
 
-<Assembly: AssemblyVersion("5017.02.36.06")>
-<Assembly: AssemblyFileVersion("5017.02.36.06")>
+<Assembly: AssemblyVersion("5017.02.37.00")>
+<Assembly: AssemblyFileVersion("5017.02.37.00")>
