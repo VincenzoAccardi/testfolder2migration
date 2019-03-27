@@ -95,8 +95,8 @@ Public Class ExternalGiftCardController
             response.FunctionType = InternalArgenteaFunctionTypes.ExternalGiftCardDeActivation
 
 
-            paramArg.Copies = paramArg.ExtGiftCardDeActivationPrintWithinTa
-            paramArg.PrintWithinTA = paramArg.ExtGiftCardDeActivationCancelCopies
+            paramArg.Copies = paramArg.ExtGiftCardDeActivationCancelCopies
+            paramArg.PrintWithinTA = paramArg.ExtGiftCardDeActivationPrintWithinTa
 
 
         Catch ex As Exception

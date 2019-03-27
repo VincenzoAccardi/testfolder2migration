@@ -332,7 +332,7 @@ Public Class Controller
     Private Function GetOperationType(ByVal szExternalID As String) As String
         Dim GetService As String = String.Empty
         Dim funcName As String = "GetService"
-        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia, ElectronicMealVoucherCeliacMedia, PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem}
+        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia, ElectronicMealVoucherCeliacMedia, PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem, "SIGNOFF"}
 
         Try
             ' get & check the current payment service

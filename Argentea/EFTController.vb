@@ -113,6 +113,7 @@ Public Class EFTController
             response.FunctionType = InternalArgenteaFunctionTypes.EFTVoid
 
             paramArg.Copies = paramArg.EftReceiptCashierCopiesVoid
+            paramArg.PrintWithinTA = False
 
         Catch ex As Exception
             Try
@@ -120,9 +121,9 @@ Public Class EFTController
             Catch InnerEx As Exception
                 LOG_ErrorInTry(getLocationString(funcName), InnerEx)
             End Try
+            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
         Finally
             LOG_FuncExit(getLocationString(funcName), "Function returns " & response.ReturnCode.ToString)
-            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
         End Try
         Return response
     End Function
@@ -148,7 +149,7 @@ Public Class EFTController
             response.FunctionType = InternalArgenteaFunctionTypes.EFTClose
 
             paramArg.Copies = paramArg.EftReceiptCashierCopiesClose
-            paramArg.PrintWithinTA = paramArg.EftPaymentReceiptWithinTA
+            paramArg.PrintWithinTA = False
 
         Catch ex As Exception
             Try
@@ -181,7 +182,7 @@ Public Class EFTController
             response.FunctionType = InternalArgenteaFunctionTypes.EFTGetTotals
 
             paramArg.Copies = paramArg.EftReceiptCashierCopiesTotals
-            paramArg.PrintWithinTA = paramArg.EftPaymentReceiptWithinTA
+            paramArg.PrintWithinTA = False
 
         Catch ex As Exception
             Try
