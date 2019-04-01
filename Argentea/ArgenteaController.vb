@@ -234,7 +234,6 @@ Public Class Controller
 
             paramCommon.Copies = paramArg.Copies
             paramCommon.PrintWithinTA = paramArg.PrintWithinTA
-            paramCommon.SuppressLogo = paramArg.SuppressLogo
             paramCommon.SaveExternalTa = paramArg.SaveExternalTa
 
             If response.ReturnCode = ArgenteaFunctionsReturnCode.OK Then
@@ -317,6 +316,7 @@ Public Class Controller
 
         paramArg.LoadParametersByReflection(TheModCntr, "Argentea")
         paramCommon.WaitScreenName = TheModCntr.getParam(PARAMETER_DLL_NAME + ".Argentea." + "PROCESS_NAME").Trim
+        paramCommon.SuppressLogo = IIf(TheModCntr.getParam(PARAMETER_DLL_NAME + ".Argentea." + "PRINT_LOGO_ON_EXTERNAL_RECEIPTS").Trim.ToUpper.Equals("N"), True, False)
         Dim szNameSpace As String = GetType(Controller).Namespace
         If eController = Controller.None Then
             eController = GetController(GetOperationType(ExternalID))
@@ -364,6 +364,8 @@ Public Class Controller
                     HandlerBeforeInvoke = GiftCardFormHandler(eMethod)
                 ElseIf eMethod = Method.GiftCardBalanceInquiry Then
                     HandlerBeforeInvoke = GiftCardFormHandler(eMethod)
+                ElseIf eMethod = Method.RedeemGiftCard Then
+                    HandlerBeforeInvoke = GiftCardFormHandler(eMethod)
                 Else
                     HandlerBeforeInvoke = True
                 End If
@@ -388,12 +390,26 @@ Public Class Controller
             End If
         ElseIf eMethod = Method.GiftCardBalanceInquiry Then
             If MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
-                szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
-                Dim szValue As String = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid.ToString(TheModCntr.getFormatString4Price)
-                szBarcode = CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue)
-                CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
+                If String.IsNullOrEmpty(CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode) Then
+                    szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
+                    Dim szValue As String = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid.ToString(TheModCntr.getFormatString4Price)
+                    szBarcode = CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue)
+                    CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
+                Else
+                    szBarcode = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode
+                End If
             Else
                 szBarcode = CallForm(GetType(FormItemInput), szCaptionDescription)
+            End If
+        ElseIf eMethod = Method.RedeemGiftCard Then
+            If Not String.IsNullOrEmpty(CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode) Then
+                szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
+                Dim szValue As String = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid.ToString(TheModCntr.getFormatString4Price)
+                CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue, CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode)
+                CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
+                szBarcode = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode
+            Else
+                Return True
             End If
         Else
             GiftCardFormHandler = True
@@ -435,7 +451,7 @@ Public Class Controller
         Return ExtGiftCardFormHandler
     End Function
 
-    Private Function CallForm(ByVal type As Type, ByRef szDescription As String, Optional ByRef szValue As String = "") As String
+    Private Function CallForm(ByVal type As Type, ByRef szDescription As String, Optional ByRef szValue As String = "", Optional szfrmBarcode As String = "") As String
         Dim frmItemInput As Object = Nothing
         Dim szBarcode As String = String.Empty
         If type Is GetType(FormItemInput) Then
@@ -443,6 +459,7 @@ Public Class Controller
         ElseIf type Is GetType(FormItemValueInput) Then
             frmItemInput = TheModCntr.GetCustomizedForm(GetType(FormItemValueInput), STRETCH_TO_SMALL_WINDOW)
             frmItemInput.Value = szValue
+            frmItemInput.Barcode = szfrmBarcode
         End If
 
         frmItemInput.ArticleDescription = szDescription
@@ -541,6 +558,7 @@ Public Class Controller
                 .szServiceType = GetOperationType(ExternalID)
                 .lCopies = paramArg.Copies
                 .szStatus = GetStatus(eMethod).ToString()
+                .bSuppressLogo = paramCommon.SuppressLogo
                 .bPrintReceipt = paramArg.PrintWithinTA
                 .setPropertybyName("lAmount", lAmount)
                 .setPropertybyName("szTransactionID", response.TransactionID)
