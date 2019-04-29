@@ -1170,16 +1170,16 @@ Public Class BPEController
         ' Se non ci sono stati movimenti 
         ' ritorno al chiamante non mi serve
         ' nulla.
-        If resultData.totalBPUsed = 0 Then
+        'If resultData.totalBPUsed = 0 Then
 
-            ' Ripristino il pagamento esterno
-            ' nella TA di origine ed esco dato
-            ' che non ho nulla.
-            m_taobj.RemoveWithRefs(m_CurrMedia.theHdr.lTaCreateNmbr)
-            m_taobj.TARefresh(False)
-            Return
+        '    ' Ripristino il pagamento esterno
+        '    ' nella TA di origine ed esco dato
+        '    ' che non ho nulla.
+        '    m_taobj.RemoveWithRefs(m_CurrMedia.theHdr.lTaCreateNmbr)
+        '    m_taobj.TARefresh(False)
+        '    Return
 
-        End If
+        'End If
 
         '
         ' GESTIONE DEL MEDIA SULLA

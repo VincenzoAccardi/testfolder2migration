@@ -440,10 +440,12 @@ Public Class CSVHelper
                         MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
                         MyRefRet.CodeResult = CSV(1)
-                        If MyRefRet.Successfull OrElse MyRefRet.CodeResult = "0300" Then
+                        If MyRefRet.Successfull OrElse MyRefRet.CodeResult = "0202" Then
                             MyRefRet.Description = CSV(2)
                             MyRefRet.TerminalID = CSV(7)
-                            MyRefRet.Amount = CSV(3)
+                            If MyRefRet.CodeResult = "0202" Then
+                                MyRefRet.Amount = CSV(3)
+                            End If
                             MyRefRet.Receipt = ReplaceVbCRLF(CSV(8))
                         End If
                         MyRefRet.Result = CSV(0)

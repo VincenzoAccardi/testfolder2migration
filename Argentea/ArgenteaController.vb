@@ -315,6 +315,8 @@ Public Class Controller
         MyCurrentDetailRec = Parameters("CurrentDetailRecord")
 
         paramArg.LoadParametersByReflection(TheModCntr, "Argentea")
+        paramArg.Copies = paramCommon.Copies
+        paramArg.PrintWithinTA = paramCommon.PrintWithinTA
         paramCommon.WaitScreenName = TheModCntr.getParam(PARAMETER_DLL_NAME + ".Argentea." + "PROCESS_NAME").Trim
         paramCommon.SuppressLogo = IIf(TheModCntr.getParam(PARAMETER_DLL_NAME + ".Argentea." + "PRINT_LOGO_ON_EXTERNAL_RECEIPTS").Trim.ToUpper.Equals("N"), True, False)
         Dim szNameSpace As String = GetType(Controller).Namespace
@@ -486,9 +488,12 @@ Public Class Controller
                                 response.ReturnCode = ArgenteaFunctionsReturnCode.KO
                             End If
                         Else
-                            HandlerAfterInvoke = True
-                            eMethod = Method.Payment
+                            HandlerAfterInvoke = False
+                            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
                         End If
+                    Else
+                        HandlerAfterInvoke = True
+                        eMethod = Method.Payment
                     End If
                 Else
                     HandlerAfterInvoke = True
@@ -659,5 +664,5 @@ Public Class Controller
 End Class
 
 Public Class CodeResult
-    Public Const UnderFunded As String = "0300"
+    Public Const UnderFunded As String = "0202"
 End Class

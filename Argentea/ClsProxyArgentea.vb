@@ -1173,9 +1173,9 @@ Public Class ClsProxyArgentea
 #If DEBUG_SERVICE = 0 Then
 
         retCode = ArgenteaCOMObject.CloseTicketBC(
-            _GetLastProgressive(), 
-            Get_ReceiptNumber, 
-            Get_CodeCashDevice, 
+            _GetLastProgressive(),
+            Get_ReceiptNumber,
+            Get_CodeCashDevice,
             RefTo_MessageOut
         )
 
@@ -1996,24 +1996,21 @@ Public Class ClsProxyArgentea
                     m_ServiceStatus = enProxyStatus.OK
                 Else
                     m_ServiceStatus = enProxyStatus.KO
-
                     ' Se mostrare i Messaggi di Errori Pos o meno
                     If bShowMessageErrorPos Then
-
-                        If m_LastStatus >= 9002 And m_LastStatus <= 9009 Then
-
-                            ' Msg Utente    --> ** (Ultimo Status e ErrorMessage impostato dall'azione precedente)
-                            msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
-
+                        Dim szMessageError As String = getTextFromMessageText(m_TheModcntr.con, "LevelITCommonModArgentea_" + m_LastStatus, "TPDotNet").Trim
+                        If String.IsNullOrEmpty(szMessageError) Then
+                            szMessageError = m_LastErrorMessage
                         End If
-
+                        If m_LastStatus >= 9002 And m_LastStatus <= 9009 Then
+                            ' Msg Utente    --> ** (Ultimo Status e ErrorMessage impostato dall'azione precedente)
+                            'msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
+                            LOG_Error(getLocationString(funcName), szMessageError)
+                        End If
                     Else
-
                         ' Scrive una riga di Log per monitorare....
                         LOG_Info(getLocationString(funcName), m_ServiceStatus)
-
                     End If
-
                 End If
             Else
 
@@ -2559,105 +2556,107 @@ Public Class ClsProxyArgentea
                     ' uno il numero delle il numero delle 
                     ' chiamate interne.
                     Dim _IDSpecifiqueTransaction As String = _DataResponse.GetIDTransactionOfThisBarCode(m_CurrentBarcodeScan)
+                    If String.IsNullOrEmpty(_IDSpecifiqueTransaction.Trim) Then _IDSpecifiqueTransaction = m_LastCrcTransactionID
+
                     Dim _CallReverseMaterializated As StatusCode = Me.CallReverseMaterializated(funcName, _IDSpecifiqueTransaction)
-                    Dim _CallConfirmation As StatusCode = StatusCode.OK
+                        Dim _CallConfirmation As StatusCode = StatusCode.OK
 
-                    If _CallReverseMaterializated = StatusCode.CONFIRMREQUEST Then
+                        If _CallReverseMaterializated = StatusCode.CONFIRMREQUEST Then
 
-                        ' Chiama  per  conferma  l'Annnullamento   
-                        ' di uno già  esistente Dematerializzato  
-                        ' in precedenza  e  incrementa di uno il 
-                        ' numero delle chiamate interne.
-                        _CallConfirmation = Me.CallConfirmOperation(funcName, "reverse")
+                            ' Chiama  per  conferma  l'Annnullamento   
+                            ' di uno già  esistente Dematerializzato  
+                            ' in precedenza  e  incrementa di uno il 
+                            ' numero delle chiamate interne.
+                            _CallConfirmation = Me.CallConfirmOperation(funcName, "reverse")
 
-                        If _CallConfirmation = StatusCode.KO Then
+                            If _CallConfirmation = StatusCode.KO Then
 
-                            ' Log locale (Non confermato in demat per storno)
-                            LOG_Info(funcName, "Transaction Reverse Dematerialize on Argentea ::KO:: ON CONFIRM")
+                                ' Log locale (Non confermato in demat per storno)
+                                LOG_Info(funcName, "Transaction Reverse Dematerialize on Argentea ::KO:: ON CONFIRM")
 
-                        End If
-
-                    End If
-
-                    ' Una Volta richiamata la demateriliazzione 
-                    ' ed eventuale conferma ed hanno dato esito positivo.
-                    If _CallReverseMaterializated <> StatusCode.KO And _CallConfirmation = StatusCode.OK Then
-
-                        ' Argormento Opzione per Opzione 
-                        ' su Flow operatore se non accetta
-                        ' Sulla griglia e il form non deve
-                        ' fare altro dato che non è stato aggiunto.
-                        If m_FlagUndoBPCForExcedeed Then
-                            Return
-                        End If
-
-                        ' Rimuovo dalla collection specifica in uso
-                        ' interno l'elemento Buono da annullare individuandolo
-                        ' in modo univoco rispetto al suo BarCode con cui era 
-                        ' stato registrato all'aggiunta dell'handler di ADD.
-                        For Each itm As PaidEntry In WriterResultDataList
-                            If itm.Barcode = m_CurrentBarcodeScan Then
-                                WriterResultDataList.Remove(itm)
-                                Exit For
                             End If
-                        Next
 
-                        ' 
-                        m_TotalBPUsed_CS -= 1                         ' <-- Conteggio numero di bpc usati in local per ogni ingresso sulla vendita
+                        End If
 
-                        ' Per il Form in azione corrente mi
-                        ' aggiorno il Totale da Pagare rispetto a
-                        ' quelli già in elenco
-                        faceValue = faceValue
-                        paidValue = m_CurrentValueOfBP
-                        m_TotalPayed_CS -= paidValue
+                        ' Una Volta richiamata la demateriliazzione 
+                        ' ed eventuale conferma ed hanno dato esito positivo.
+                        If _CallReverseMaterializated <> StatusCode.KO And _CallConfirmation = StatusCode.OK Then
 
-                        Try
-                            ' Riprendo il sender che p il Form
-                            ' dove voglio aggiungere alla lista
-                            ' l'n elemento appena validato.
-                            formBC = TryCast(sender, FormBuonoChiaro)
-                            If formBC Is Nothing Then
+                            ' Argormento Opzione per Opzione 
+                            ' su Flow operatore se non accetta
+                            ' Sulla griglia e il form non deve
+                            ' fare altro dato che non è stato aggiunto.
+                            If m_FlagUndoBPCForExcedeed Then
+                                Return
+                            End If
+
+                            ' Rimuovo dalla collection specifica in uso
+                            ' interno l'elemento Buono da annullare individuandolo
+                            ' in modo univoco rispetto al suo BarCode con cui era 
+                            ' stato registrato all'aggiunta dell'handler di ADD.
+                            For Each itm As PaidEntry In WriterResultDataList
+                                If itm.Barcode = m_CurrentBarcodeScan Then
+                                    WriterResultDataList.Remove(itm)
+                                    Exit For
+                                End If
+                            Next
+
+                            ' 
+                            m_TotalBPUsed_CS -= 1                         ' <-- Conteggio numero di bpc usati in local per ogni ingresso sulla vendita
+
+                            ' Per il Form in azione corrente mi
+                            ' aggiorno il Totale da Pagare rispetto a
+                            ' quelli già in elenco
+                            faceValue = faceValue
+                            paidValue = m_CurrentValueOfBP
+                            m_TotalPayed_CS -= paidValue
+
+                            Try
+                                ' Riprendo il sender che p il Form
+                                ' dove voglio aggiungere alla lista
+                                ' l'n elemento appena validato.
+                                formBC = TryCast(sender, FormBuonoChiaro)
+                                If formBC Is Nothing Then
+
+                                    ' Sollevo l'eccezione
+                                    Throw New ExceptionProxyArgentea(funcName, ExceptionProxyArgentea.LOC_ERROR_FORM_CAST, "Errore nell'istanziare il form come Form compatibile per l'evento -- Contattare Assistenza --")
+
+                                End If
+
+                                ' Sul Form rimuovo dalla griglia l'elemento
+                                formBC.PaidEntryBindingSource.RemoveCurrent()
+
+                                ' Ed aggiorno anche il campo sul form per  il totale che rimane.
+                                formBC.Paid = m_TotalPayed_CS.ToString("###,##0.00")
+
+                            Catch ex As Exception
 
                                 ' Sollevo l'eccezione
-                                Throw New ExceptionProxyArgentea(funcName, ExceptionProxyArgentea.LOC_ERROR_FORM_CAST, "Errore nell'istanziare il form come Form compatibile per l'evento -- Contattare Assistenza --")
+                                Throw New ExceptionProxyArgentea(funcName, ExceptionProxyArgentea.LOC_ERROR_FORM_CAST, "Errore nell'istanziare il form come Form compatibile per l'evento -- Contattare Assistenza --", ex)
 
-                            End If
+                            End Try
 
-                            ' Sul Form rimuovo dalla griglia l'elemento
-                            formBC.PaidEntryBindingSource.RemoveCurrent()
+                        Else
 
-                            ' Ed aggiorno anche il campo sul form per  il totale che rimane.
-                            formBC.Paid = m_TotalPayed_CS.ToString("###,##0.00")
+                            ' Errata Reverse per Dematerializzione o Reverse Confirm su Dematerializzazione
+                            ' data dalla risposta argentea quindi su segnalazione remota.
+                            FormHelper.ShowWaitScreen(m_TheModcntr, True, sender)
 
-                        Catch ex As Exception
+                            ' Log locale
+                            LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + " - " + "Transaction Reverse Demat Argentea ::KO:: Local")
 
-                            ' Sollevo l'eccezione
-                            Throw New ExceptionProxyArgentea(funcName, ExceptionProxyArgentea.LOC_ERROR_FORM_CAST, "Errore nell'istanziare il form come Form compatibile per l'evento -- Contattare Assistenza --", ex)
+                            ' Msg Utente  ( Ultimo Status e ErrorMessage impotato da Void o Confirm )
+                            msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
 
-                        End Try
+                            Return
+
+                        End If
 
                     Else
 
-                        ' Errata Reverse per Dematerializzione o Reverse Confirm su Dematerializzazione
-                        ' data dalla risposta argentea quindi su segnalazione remota.
+                        ' Tutti i messaggi di errata inizializzazione sono
+                        ' stati già dati loggo comunque questa informazione.
                         FormHelper.ShowWaitScreen(m_TheModcntr, True, sender)
-
-                        ' Log locale
-                        LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + " - " + "Transaction Reverse Demat Argentea ::KO:: Local")
-
-                        ' Msg Utente  ( Ultimo Status e ErrorMessage impotato da Void o Confirm )
-                        msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
-
-                        Return
-
-                    End If
-
-                Else
-
-                    ' Tutti i messaggi di errata inizializzazione sono
-                    ' stati già dati loggo comunque questa informazione.
-                    FormHelper.ShowWaitScreen(m_TheModcntr, True, sender)
 
                     ' Log locale
                     LOG_Error(funcName, m_LastStatus + " - " + m_LastErrorMessage + " - " + "Transaction Reverse Demat Argentea ::KO:: Not Intializated")
@@ -3349,7 +3348,7 @@ Public Class ClsProxyArgentea
 
         ' Active to first Argentea COM communication                                **** ANNULLO BUONO GIA' MATERIALIZZATO
         retCode = ArgenteaCOMObject.ReverseTransactionDBP(
-                    GetCodifiqueReceipt(TypeCodifiqueProtocol.Reverse,IdTransactionToReverse),
+                    GetCodifiqueReceipt(TypeCodifiqueProtocol.Reverse, IdTransactionToReverse),
                     RefTo_MessageOut
                 )
 #Else
@@ -4169,7 +4168,7 @@ Public Class ClsProxyArgentea
                     Return itm.IDTransactionCrc
                 End If
             Next
-            Return False
+            Return String.Empty
         End Function
 
 

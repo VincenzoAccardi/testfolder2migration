@@ -196,13 +196,13 @@ Public Class TPTAHelperArgentea
                     Exit Select
 
 
-                Case InternalArgenteaFunctionTypes.BPCeliacPayment
+                    'Case InternalArgenteaFunctionTypes.BPCeliacPayment
 
-                    With HandlingParamter
-                        .NoOfAdditionalTaCopy = parameters.BPCeliacCopies
-                        .PrintWithinTa = parameters.BPCeliacPrintWithinTa
-                    End With
-                    Exit Select
+                    '    With HandlingParamter
+                    '        .NoOfAdditionalTaCopy = parameters.BPCeliacCopies
+                    '        .PrintWithinTa = parameters.BPCeliacPrintWithinTa
+                    '    End With
+                    '    Exit Select
 
                 Case Else
                     LoadHandlingParamterByArgenteaFuntion = Nothing

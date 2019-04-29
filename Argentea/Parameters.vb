@@ -571,28 +571,6 @@ Public Class ArgenteaParameters
 #End Region
 
 #Region "BPCeliac"
-    Private _BPCeliacCopies As Integer
-    <TPParametersAttribute("BPCELIAC_COPIES", 1)>
-    Public Property BPCeliacCopies() As Integer
-        Get
-            Return _BPCeliacCopies
-        End Get
-        Set(ByVal value As Integer)
-            _BPCeliacCopies = value
-        End Set
-    End Property
-
-
-    Private _BPCeliacPrintWithinTa As Boolean
-    <TPParametersAttribute("BPCELIAC_PRINT_WITHIN_TA", True)>
-    Public Property BPCeliacPrintWithinTa() As Boolean
-        Get
-            Return _BPCeliacPrintWithinTa
-        End Get
-        Set(ByVal value As Boolean)
-            _BPCeliacPrintWithinTa = value
-        End Set
-    End Property
 
 #End Region
 
