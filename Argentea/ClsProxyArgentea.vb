@@ -449,7 +449,7 @@ Public Class ClsProxyArgentea
     ' Interni per gestione
     '
     Protected m_TheModcntr As ModCntr                       ' <-- Il controller principale applicativo che non deve mancare mai
-    Protected m_taobj As TA                                 ' <-- la TA in corso da cui ricavare informazioni
+    Protected m_taobj As TPDotnet.Pos.TA                                 ' <-- la TA in corso da cui ricavare informazioni
 
     '
     '   Variabili private per la gestione interna
@@ -671,7 +671,7 @@ Public Class ClsProxyArgentea
     ''' <param name="CurrentPaymentsTotal">Il Totale pagato fino adesso prima di effettuare l'eggiornamento dai dati del proxy corrente.</param>
     Protected Friend Sub New(
                              ByRef theModCntr As ModCntr,
-                             ByRef taobj As TA,
+                             ByRef taobj As TPDotnet.Pos.TA,
                              TypeBehavior As enTypeProxy,
                              ByVal CurrentTransactionID As String,
                              ByVal CurrentPaymentsTotal As Decimal

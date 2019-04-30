@@ -95,7 +95,7 @@ Public Class BPEController
     ' Interni per gestione
     '
     Protected m_TheModcntr As ModCntr                   ' <-- Il Controller di riferimento dell'applicazione
-    Protected m_taobj As TA                             ' <-- La TA in corso di sessione della transazione corrente
+    Protected m_taobj As TPDotnet.Pos.TA                             ' <-- La TA in corso di sessione della transazione corrente
     Protected m_CurrMedia As TaMediaRec                 ' <-- La TA di pagamento per il quale ci stiamo muovendo
 
 #End Region
@@ -107,7 +107,7 @@ Public Class BPEController
     ''' </summary>
     ''' <param name="theModCntr">controller -> Il Controller per riferimento dal chiamante</param>
     ''' <param name="taobj">transaction -> La TA per riferimento dal chiamante</param>
-    'Public Sub New(ByRef theModCntr As ModCntr, ByRef taobj As TA)
+    'Public Sub New(ByRef theModCntr As ModCntr, ByRef taobj As TPDotnet.Pos.TA)
     'Public Sub New()
 
     'm_taobj = Nothing
@@ -1653,7 +1653,7 @@ Public Class BPEController
     ''' <param name="IdSessionReferement">Ad ogni elmento sarà apposta l'etichetta di id di riferimento della sessione che ha creato la serie</param>
     ''' <param name="TotalsCountInSession">Il Numero di Titoli coinvolti nella sessione che si stanno impilando nella TA</param>
     ''' <returns>Se nel riepilogare i bp ci accorgiamo che è stato superato per eccesso l'importo in pagamento restituiamo in un nuovo Media il resto eventuale da gestire</returns>
-    Private Function AddMediaRecsForBpElaborated(ByRef RootTa As TA, ByRef resultData As ClsProxyArgentea.DataResponse, IdSessionReferement As String, TotalsCountInSession As Integer) As TaMediaRec
+    Private Function AddMediaRecsForBpElaborated(ByRef RootTa As TPDotnet.Pos.TA, ByRef resultData As ClsProxyArgentea.DataResponse, IdSessionReferement As String, TotalsCountInSession As Integer) As TaMediaRec
         Dim NewTaMediaRec As TaMediaRec
 
         ' Durante l'aggiunta  delle TA Media per
