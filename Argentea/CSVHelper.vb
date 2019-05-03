@@ -170,7 +170,7 @@ Public Class CSVHelper
                         ' da codificare.
                         For J = 0 To argenteaFunctionReturnObject.GetUpperBound(0)
                             If J <> 0 Then argenteaFunctionReturnObject(J) = New ArgenteaFunctionReturnObject
-                            StepNum = 6 * J
+                            StepNum = 7 * J
                             argenteaFunctionReturnObject(J).TerminalID = CSV(StepNum + 1)
                             argenteaFunctionReturnObject(J).Abi = CSV(StepNum + 2)
                             argenteaFunctionReturnObject(J).Amount = CSV(StepNum + 3)
