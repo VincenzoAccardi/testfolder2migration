@@ -448,6 +448,8 @@ Public Class Controller
                 ExtGiftCardFormHandler = True
             End If
         Else
+            If Not MyCurrentRecord.ExistField("szITExtGiftCardEAN") Then MyCurrentRecord.AddField("szITExtGiftCardEAN", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            MyCurrentRecord.setPropertybyName("szITExtGiftCardEAN", szBarcode.ToString)
             ExtGiftCardFormHandler = True
         End If
         Return ExtGiftCardFormHandler
