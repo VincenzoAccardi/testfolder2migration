@@ -38,7 +38,8 @@ Public Class CSVHelper
                                              ByVal argenteaFunction As InternalArgenteaFunctionTypes,
                                              ByRef argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject,
                                              Optional ByVal szCharSeparator As String = ";",
-                                             Optional ByVal iFractParser As Integer = 1) As Boolean
+                                             Optional ByVal iFractParser As Integer = 1,
+                                             Optional ByVal lChiusuraLegacy As Integer = 0) As Boolean
         ParseReturnString = False
         Dim I, J As Integer
         Dim funcName As String = "ParseReturnString"
@@ -170,7 +171,11 @@ Public Class CSVHelper
                         ' da codificare.
                         For J = 0 To argenteaFunctionReturnObject.GetUpperBound(0)
                             If J <> 0 Then argenteaFunctionReturnObject(J) = New ArgenteaFunctionReturnObject
-                            StepNum = 7 * J
+                            If lChiusuraLegacy = 1 Then
+                                StepNum = 7 * J
+                            Else
+                                StepNum = 6 * J
+                            End If
                             argenteaFunctionReturnObject(J).TerminalID = CSV(StepNum + 1)
                             argenteaFunctionReturnObject(J).Abi = CSV(StepNum + 2)
                             argenteaFunctionReturnObject(J).Amount = CSV(StepNum + 3)

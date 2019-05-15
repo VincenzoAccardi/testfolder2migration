@@ -82,6 +82,17 @@ Public Class ArgenteaParameters
         End Set
     End Property
 
+    Private _EftChiusuraLegacy As Integer
+    <TPParametersAttribute("EFT_CHIUSURA_LEGACY", 0)>
+    Public Property EftChiusuraLegacy() As Integer
+        Get
+            Return _EftChiusuraLegacy
+        End Get
+        Set(ByVal value As Integer)
+            _EftChiusuraLegacy = value
+        End Set
+    End Property
+
 #End Region
 
 #Region "GiftCard"
