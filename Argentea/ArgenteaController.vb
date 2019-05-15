@@ -238,7 +238,7 @@ Public Class Controller
 
             If response.ReturnCode = ArgenteaFunctionsReturnCode.OK Then
                 argenteaFunctionReturnObject(0) = New ArgenteaFunctionReturnObject
-                If (Not CSVHelper.ParseReturnString(response.MessageOut, response.FunctionType, argenteaFunctionReturnObject, response.CharSeparator)) Then
+                If (Not CSVHelper.ParseReturnString(response.MessageOut, response.FunctionType, argenteaFunctionReturnObject, response.CharSeparator, paramArg.EftChiusuraLegacy)) Then
                     Execute = 1
                     Return Execute
                 End If
@@ -405,13 +405,15 @@ Public Class Controller
             End If
         ElseIf eMethod = Method.RedeemGiftCard Then
             If Not String.IsNullOrEmpty(CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode) Then
-                szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
-                Dim szValue As String = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid.ToString(TheModCntr.getFormatString4Price)
-                CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue, CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode)
-                CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
+                If TheModCntr.bExternalDialog = False AndAlso TheModCntr.bCalledFromWebService = False Then
+                    szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
+                    Dim szValue As String = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid.ToString(TheModCntr.getFormatString4Price)
+                    CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue, CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode)
+                    CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
+                End If
                 szBarcode = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode
-            Else
-                Return True
+                Else
+                    Return True
             End If
         Else
             GiftCardFormHandler = True
