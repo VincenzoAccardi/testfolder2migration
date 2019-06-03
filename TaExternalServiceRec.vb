@@ -190,6 +190,24 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
         End Set
     End Property
 
+    Public Property bShowErrorMessage As Integer
+        Get
+            bShowErrorMessage = m.Fields_Value("bShowErrorMessage")
+        End Get
+        Set(value As Integer)
+            m.Fields_Value("bShowErrorMessage") = value
+        End Set
+    End Property
+
+    Public Property szErrorMessage As String
+        Get
+            szErrorMessage = m.Fields_Value("szErrorMessage")
+        End Get
+        Set(value As String)
+            m.Fields_Value("szErrorMessage") = value
+        End Set
+    End Property
+
 #End Region
 
 #Region "New/Finalize"
@@ -214,6 +232,8 @@ Public Class TaExternalServiceRec : Inherits TPDotnet.Pos.TaBaseRec
             m.Append("bPrintReceipt", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("lCopies", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             m.Append("bSuppressLogo", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("bShowErrorMessage", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            m.Append("szErrorMessage", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
             m.Append("szServiceType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szStatus", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
