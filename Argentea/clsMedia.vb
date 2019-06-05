@@ -11,6 +11,8 @@ Imports TPDotnet.Pos
 Imports TPDotnet.IT.Common.Pos
 Imports System.Collections.Generic
 Imports TPDotnet.Services.Rounding
+Imports System.Xml.XPath
+Imports System.Linq
 
 Namespace Argentea
 
@@ -464,6 +466,20 @@ Namespace Argentea
                 '   -> In questo caso gestiamo.:
                 '       BPC ->  Buono Pasto Cartaceo (Tasto su pagamenti in Tab dedicata con Cartaceo)
                 '       BPE ->  Buono Pasto Elettronico (Tasto su pagamenti in Tab dedicata con Elettronico)
+
+                Dim isVoidRecepit As Boolean = IIf(taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/VOID_RECEIPT").ToList().Count() > 0, True, False)
+
+
+                If MyTaMediaRec.dTaPaidTotal < 0 AndAlso isVoidRecepit Then
+                    If MyTaMediaRec.PAYMENTinMedia.szSpecialUsageVoidReceipt = MM_VOIDRECEIPT_SHOULD_BE_VOIDED Then
+
+                        LOG_Debug(getLocationString(funcName), "Don't call the Void because the media is configured as should be voided.")
+                        Return True
+                        Exit Function
+
+                    End If
+                End If
+
                 Dim _DoSpecialHandling4Vouchers2 As IBPReturnCode = IBPReturnCode.KO
                 Select Case MyTaMediaRec.PAYMENTinMedia.szExternalID.Trim.ToUpper
                     Case "BPC"

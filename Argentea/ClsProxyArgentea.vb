@@ -2069,7 +2069,7 @@ Public Class ClsProxyArgentea
                     End If
 
                     ' Msg Utente    --> ** (Ultimo Status e ErrorMessage impostato dall'azione precedente)
-                    msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
+                    'msgUtil.ShowMessage(m_TheModcntr, m_LastErrorMessage, "LevelITCommonModArgentea_" + m_LastStatus, PosDef.TARMessageTypes.TPERROR)
 
                 End If
 

@@ -244,7 +244,6 @@ Public Class Controller
                 End If
             Else
                 Execute = 1
-                Return Execute
             End If
 
             If Not HandlerAfterInvoke(eMethod, eController, argenteaFunctionReturnObject, response) Then
@@ -252,10 +251,15 @@ Public Class Controller
                 Return Execute
             End If
 
+            If Not argenteaFunctionReturnObject(0).Successfull Then
+                Execute = 1
+            Else
+                Execute = 0
+            End If
+
             FillExternalServiceRecord(argenteaFunctionReturnObject, response, eMethod)
 
-            Execute = 0
-
+            Return Execute
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex)
         Finally
@@ -518,11 +522,7 @@ Public Class Controller
                     HandlerAfterInvoke = True
                 End If
             Case Else
-                If Not argenteaFunctionReturnObject(0).Successfull Then
-                    HandlerAfterInvoke = False
-                Else
-                    HandlerAfterInvoke = True
-                End If
+                HandlerAfterInvoke = True
         End Select
         Return HandlerAfterInvoke
     End Function
