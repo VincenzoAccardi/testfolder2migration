@@ -354,6 +354,9 @@ Public Class GiftCardController
             Dim szMessageOut As String = String.Empty
             Dim szErrorMessage As String = String.Empty
             response.ReturnCode = ArgenteaCOMObject.GiftCardRedeem(lValue, 0, szBarcode, response.TransactionID, szErrorMessage, szMessageOut)
+
+            szBarcode = MyCurrentRecord.GetPropertybyName("szITGiftCardEAN")
+
             LOG_Debug(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". Giftcard: " & szBarcode & ". Error: " & szErrorMessage & ". Output: " & szMessageOut)
             If response.ReturnCode <> ArgenteaFunctionsReturnCode.OK OrElse String.IsNullOrEmpty(szMessageOut) Then
                 response.MessageOut = "KO" & ";" & szMessageOut & ";" & szErrorMessage
