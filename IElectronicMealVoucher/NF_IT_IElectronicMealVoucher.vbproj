@@ -64,7 +64,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enumerations.vb" />
+    <Compile Include="IElectronicMealVoucherBalance.vb" />
+    <Compile Include="IElectronicMealVoucherClosure.vb" />
     <Compile Include="IElectronicMealVoucherPay.vb" />
+    <Compile Include="IElectronicMealVoucherTotals.vb" />
     <Compile Include="IElectronicMealVoucherVoid.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
