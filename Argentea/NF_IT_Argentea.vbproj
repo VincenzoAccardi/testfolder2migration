@@ -313,7 +313,6 @@
     <Compile Include="AssemblyInfo.vb" />
     <Compile Include="BPCeliacController.vb" />
     <Compile Include="BPEController.vb" />
-    <Compile Include="_BPEController.vb" />
     <Compile Include="BPCController.vb" />
     <Compile Include="ClsProxyArgentea.vb" />
     <Compile Include="DTPController.vb" />
