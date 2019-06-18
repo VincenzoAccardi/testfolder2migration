@@ -74,6 +74,13 @@ Public Enum InternalArgenteaFunctionTypes
     ''' </summary>
     Close_AG
 
+
+    BPEPayment
+    BPEVoid
+    BPEBalance
+    BPETotals
+    BPEClosure
+
     BPCeliacPayment
     BPCeliacVoid
 

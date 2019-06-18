@@ -24,7 +24,9 @@ Public Class Controller
     Implements IGiftCardBalanceInquiry
     Implements IGiftCardRedeem
     Implements IGiftCardCancellationPayment
-
+    Implements IElectronicMealVoucherBalance
+    Implements IElectronicMealVoucherClosure
+    Implements IElectronicMealVoucherTotals
 #Region "Enum"
     Protected Enum MethodParameter
         ArgenteaCOMObject
@@ -62,6 +64,7 @@ Public Class Controller
         GiftCardBalanceInquiry
         RedeemGiftCard
         GiftCardCancellation
+        Balance
     End Enum
 
 #End Region
@@ -78,7 +81,8 @@ Public Class Controller
         {"GIFTCARD", Controller.GiftCardController},
         {"EXTERNALGIFTCARD", Controller.ExternalGiftCardController},
         {"PHONERECHARGE", Controller.PhoneRechargeController},
-        {"SIGNOFF", Controller.EFTController}
+        {"SIGNOFF", Controller.EFTController},
+        {"EMEAL", Controller.BPEController}
     }
 
     Protected GetStatus As New Dictionary(Of Method, TaExternalServiceRec.ExternalServiceStatus) From {
@@ -96,7 +100,8 @@ Public Class Controller
         {Method.ActivateGiftCard, TaExternalServiceRec.ExternalServiceStatus.Activated},
         {Method.GiftCardBalanceInquiry, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
         {Method.RedeemGiftCard, TaExternalServiceRec.ExternalServiceStatus.Activated},
-        {Method.GiftCardCancellation, TaExternalServiceRec.ExternalServiceStatus.Deleted}
+        {Method.GiftCardCancellation, TaExternalServiceRec.ExternalServiceStatus.Deleted},
+        {Method.Balance, TaExternalServiceRec.ExternalServiceStatus.PreChecked}
     }
 
     Protected OperationParameters As New Dictionary(Of Method, MethodParameter()) From {
@@ -114,7 +119,8 @@ Public Class Controller
         {Method.ActivateGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
         {Method.GiftCardBalanceInquiry, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
         {Method.RedeemGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
-        {Method.GiftCardCancellation, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.MyCurrentDetailRec, MethodParameter.paramArg}}
+        {Method.GiftCardCancellation, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.MyCurrentDetailRec, MethodParameter.paramArg}},
+        {Method.Balance, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}}
     }
 #End Region
 
@@ -236,30 +242,36 @@ Public Class Controller
             paramCommon.PrintWithinTA = paramArg.PrintWithinTA
             paramCommon.SaveExternalTa = paramArg.SaveExternalTa
 
-            If response.ReturnCode = ArgenteaFunctionsReturnCode.OK Then
-                argenteaFunctionReturnObject(0) = New ArgenteaFunctionReturnObject
-                If (Not CSVHelper.ParseReturnString(response.MessageOut, response.FunctionType, argenteaFunctionReturnObject, response.CharSeparator, paramArg.EftChiusuraLegacy)) Then
-                    Execute = 1
-                    Return Execute
-                End If
-            Else
+            'If response.ReturnCode = ArgenteaFunctionsReturnCode.OK Then
+            argenteaFunctionReturnObject(0) = New ArgenteaFunctionReturnObject
+            If (Not CSVHelper.ParseReturnString(response.MessageOut, response.FunctionType, argenteaFunctionReturnObject, response.CharSeparator, 1, paramArg.EftChiusuraLegacy)) Then
                 Execute = 1
+                Return Execute
             End If
+            'Else
+            '    Execute = 1
+            '    Return Execute
+            'End If
 
             If Not HandlerAfterInvoke(eMethod, eController, argenteaFunctionReturnObject, response) Then
                 Execute = 1
                 Return Execute
             End If
 
-            If Not argenteaFunctionReturnObject(0).Successfull Then
-                Execute = 1
-            Else
-                Execute = 0
-            End If
 
             FillExternalServiceRecord(argenteaFunctionReturnObject, response, eMethod)
 
-            Return Execute
+            If response.ReturnCode <> ArgenteaFunctionsReturnCode.OK Then
+                Execute = 1
+            Else
+                If argenteaFunctionReturnObject(0).Successfull Then
+                    Execute = 0
+                Else
+                    Execute = 1
+                End If
+            End If
+
+
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex)
         Finally
@@ -338,7 +350,9 @@ Public Class Controller
     Private Function GetOperationType(ByVal szExternalID As String) As String
         Dim GetService As String = String.Empty
         Dim funcName As String = "GetService"
-        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia, ElectronicMealVoucherCeliacMedia, PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem, "SIGNOFF"}
+        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia,
+            ElectronicMealVoucherCeliacMedia, ElectronicMealVoucherMedia,
+            PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem, "SIGNOFF"}
 
         Try
             ' get & check the current payment service
@@ -416,8 +430,8 @@ Public Class Controller
                     CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
                 End If
                 szBarcode = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode
-                Else
-                    Return True
+            Else
+                Return True
             End If
         Else
             GiftCardFormHandler = True
@@ -490,13 +504,14 @@ Public Class Controller
                         If argenteaFunctionReturnObject(0).CodeResult = CodeResult.UnderFunded Then
                             TPDotnet.IT.Common.Pos.Common.ShowScreen(TheModCntr, False, paramCommon.WaitScreenName)
                             If MsgBoxResult.Ok = cmd.ShowQuestion(TheModCntr, "LevelITCommonArgenteaUnderFunded", CDec((CInt(argenteaFunctionReturnObject(0).Amount) / 100)).ToString) Then
-                                HandlerAfterInvoke = True
+                                HandlerAfterInvoke = False
+                                response.ReturnCode = ArgenteaFunctionsReturnCode.KO
                             Else
                                 HandlerAfterInvoke = False
                                 response.ReturnCode = ArgenteaFunctionsReturnCode.KO
                             End If
                         Else
-                            HandlerAfterInvoke = False
+                            HandlerAfterInvoke = True
                             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
                         End If
                     Else
@@ -521,8 +536,38 @@ Public Class Controller
                 Else
                     HandlerAfterInvoke = True
                 End If
-            Case Else
+            Case Controller.BPEController
+                If eMethod = Method.Payment Then
+                    If argenteaFunctionReturnObject(0).Successfull Then
+                        Dim mediaRec As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
+                        Dim list = From x In argenteaFunctionReturnObject(0).ListBPsEvaluated
+                                   Group By value = x.Value / 100
+                                   Into gp = Group, sum = Sum(x.Value / 100), count = Count(x.Value)
+                                   Select New With {.v = value, .a = sum, .q = count}
+
+                        Dim index As Integer = 1
+                        For Each bp As Object In list
+                            Dim qty As String = "lBP_QUANTITY_" + index.ToString
+                            Dim amount As String = "lBP_AMOUNT_" + index.ToString
+                            Dim value As String = "lBP_VALUE_" + index.ToString
+                            If Not mediaRec.ExistField(qty) Then mediaRec.AddField(qty, DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                            If Not mediaRec.ExistField(amount) Then mediaRec.AddField(amount, DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+                            If Not mediaRec.ExistField(value) Then mediaRec.AddField(value, DataField.FIELD_TYPES.FIELD_TYPE_DECIMAL)
+
+                            mediaRec.setPropertybyName(qty, bp.q)
+                            mediaRec.setPropertybyName(amount, bp.a)
+                            mediaRec.setPropertybyName(value, bp.v)
+                            index = index + 1
+                        Next
+                    End If
+                End If
                 HandlerAfterInvoke = True
+            Case Else
+                'If Not argenteaFunctionReturnObject(0).Successfull Then
+                '    HandlerAfterInvoke = False
+                'Else
+                HandlerAfterInvoke = True
+                'End If
         End Select
         Return HandlerAfterInvoke
     End Function
@@ -543,7 +588,9 @@ Public Class Controller
 
             Dim szReceipt As String = String.Empty
             If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).Receipt) Then
-                szReceipt = argenteaFunctionReturnObject(i).Receipt
+                If response.ReturnCode <> ArgenteaFunctionsReturnCode.KO Then
+                    szReceipt = argenteaFunctionReturnObject(i).Receipt
+                End If
             End If
 
             Dim TaExternalServiceRec As TaExternalServiceRec = taobj.CreateTaObject(Of TaExternalServiceRec)(Italy_PosDef.TARecTypes.iTA_EXTERNAL_SERVICE)
@@ -643,6 +690,19 @@ Public Class Controller
         Return Execute(Method.GiftCardCancellation, Parameters)
     End Function
 
+    Public Function Balance(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherBalance.Balance
+        eController = Controller.BPEController
+        Return Execute(Method.Balance, Parameters)
+    End Function
+
+    Public Function IElectronicMealVoucherClosure_Closure(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherClosure.Closure
+        Return Execute(Method.Closure, Parameters)
+    End Function
+    Public Function IElectronicMealVoucherTotals_Totals(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherTotals.Totals
+        Return Execute(Method.Totals, Parameters)
+    End Function
+
+
 #Region "Check"
     Public Function ElectronicFundsTransferPay_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicFundsTransferReturnCode Implements IElectronicFundsTransferPay.Check
         Return IElectronicFundsTransferReturnCode.OK
@@ -660,8 +720,19 @@ Public Class Controller
         Return Execute(Method.Check, Parameters)
     End Function
     Private Function IElectronicMealVoucherVoid_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherVoid.Check
-        Return IElectronicFundsTransferReturnCode.OK
+        Return IElectronicMealVoucherReturnCode.OK
     End Function
+    Public Function IElectronicMealVoucherBalance_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherBalance.Check
+        Return IElectronicMealVoucherReturnCode.OK
+    End Function
+    Public Function IElectronicMealVoucherClosure_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherClosure.Check
+        Return IElectronicMealVoucherReturnCode.OK
+
+    End Function
+    Private Function IElectronicMealVoucherTotals_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherTotals.Check
+        Return IElectronicMealVoucherReturnCode.OK
+    End Function
+
 #End Region
 #End Region
 

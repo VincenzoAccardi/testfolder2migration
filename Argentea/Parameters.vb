@@ -579,6 +579,28 @@ Public Class ArgenteaParameters
         End Set
     End Property
 
+    Private _BPEClosureCopies As Integer
+    <TPParametersAttribute("BPE_CLOSURE_COPIES", 1)>
+    Public Property BPEClosureCopies() As Integer
+        Get
+            Return _BPEClosureCopies
+        End Get
+        Set(ByVal value As Integer)
+            _BPEClosureCopies = value
+        End Set
+    End Property
+
+    Private _BPETotalsCopies As Integer
+    <TPParametersAttribute("BPE_TOTALS_COPIES", 1)>
+    Public Property BPETotalsCopies() As Integer
+        Get
+            Return _BPETotalsCopies
+        End Get
+        Set(ByVal value As Integer)
+            _BPETotalsCopies = value
+        End Set
+    End Property
+
 #End Region
 
 #Region "BPCeliac"

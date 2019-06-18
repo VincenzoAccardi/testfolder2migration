@@ -109,12 +109,14 @@ Public Class CSVHelper
                 Itms = CSV(2).Split("|")
                 ' il 3 è il numero di BP evasi in Tagli
                 _NumB = 0
-                For X As Integer = 1 To (CInt(SetNumeric(Itms(0))) + 1) Step 2
-                    For Y As Integer = 0 To CInt(SetNumeric(Itms(X)) - 1)
-                        _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(X + 1)) / iFractParser))
-                        _Partial += CDec(SetNumeric(Itms(X + 1)))
+                Dim index As Integer = 1
+                For X As Integer = 1 To (CInt(SetNumeric(Itms(0))))
+                    For Y As Integer = 1 To CInt(SetNumeric(Itms(index)))
+                        _DictBPs.Add("terminal_bp_" + CStr(_NumB + 1), CDec(SetNumeric(Itms(index + 1)) / iFractParser))
+                        _Partial += CDec(SetNumeric(Itms(index + 1)))
                         _NumB += 1
                     Next
+                    index = index + 2
                     '_Partial = _Partial + (CInt(Itms(X)) * CInt(Itms(X + 1)))
                 Next
                 Return Tuple.Create(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal))(
@@ -440,7 +442,49 @@ Public Class CSVHelper
                         Exit For
                         Exit Select
 
-
+                    Case InternalArgenteaFunctionTypes.BPEPayment, InternalArgenteaFunctionTypes.BPEBalance
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.Description = CSV(1)
+                            MyRefRet.CodeIssuer = CSV(3)
+                            MyRefRet.NameIssuer = CSV(4)
+                            Dim Collect As Tuple(Of Decimal, Integer, Collections.Generic.Dictionary(Of String, Decimal)) = GetResultAndDictBPs("Res")
+                            MyRefRet.ListBPsEvaluated = Collect.Item3
+                            MyRefRet.NumBPEvalutated = Collect.Item2
+                            MyRefRet.Amount = Collect.Item1
+                        End If
+                        MyRefRet.Result = CSV(0)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+                    Case InternalArgenteaFunctionTypes.BPEVoid
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.Description = CSV(1)
+                            MyRefRet.Amount = CSV(2)
+                            MyRefRet.CodeIssuer = CSV(3)
+                            MyRefRet.NameIssuer = CSV(4)
+                        End If
+                        MyRefRet.Result = CSV(0)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(5))
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+                    Case InternalArgenteaFunctionTypes.BPEClosure, InternalArgenteaFunctionTypes.BPETotals
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        If MyRefRet.Successfull Then
+                            MyRefRet.Description = CSV(1)
+                            MyRefRet.Amount = CSV(2)
+                        End If
+                        MyRefRet.Result = CSV(0)
+                        MyRefRet.Receipt = ReplaceVbCRLF(CSV(3))
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
                     Case InternalArgenteaFunctionTypes.BPCeliacPayment
                         MyRefRet.ArgenteaFunction = argenteaFunction
                         MyRefRet.Successfull = SetSuccessufully(CSV(0))
