@@ -696,6 +696,7 @@ Public Class Controller
     End Function
 
     Public Function IElectronicMealVoucherClosure_Closure(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherClosure.Closure
+        eController = Controller.BPEController
         Return Execute(Method.Closure, Parameters)
     End Function
     Public Function IElectronicMealVoucherTotals_Totals(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherTotals.Totals
