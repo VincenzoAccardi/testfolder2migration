@@ -484,6 +484,8 @@ Public Class GiftCardController
                 response.MessageOut = "OK" & ";" & szMessageOut & ";" & szErrorMessage
             End If
 
+            response.SetProperty("szBarcode", szBarcode)
+            response.SetProperty("lAmount", Decimal.Negate(lAmount))
             response.CharSeparator = CharSeparator.Semicolon
             response.FunctionType = InternalArgenteaFunctionTypes.GiftCardRedeemCancel
 
