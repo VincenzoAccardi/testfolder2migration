@@ -426,7 +426,9 @@ Public Class Controller
                 If TheModCntr.bExternalDialog = False AndAlso TheModCntr.bCalledFromWebService = False Then
                     szCaptionDescription = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).PAYMENTinMedia.szDesc
                     Dim szValue As String = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid.ToString(TheModCntr.getFormatString4Price)
-                    CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue, CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode)
+                    If String.IsNullOrEmpty(CallForm(GetType(FormItemValueInput), szCaptionDescription, szValue, CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode)) Then
+                        Return False
+                    End If
                     CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).dTaPaid = szValue
                 End If
                 szBarcode = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec).szBarcode
