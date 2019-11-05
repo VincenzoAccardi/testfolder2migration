@@ -25,8 +25,8 @@ Public Class BPEController
                 szTotal = String.Empty
             End If
 
-            Dim dTotal As Decimal = CInt(MyTaMediaRec.dTaPaidTotal * 100)
-            If Not String.IsNullOrEmpty(szTotal) Then dTotal = CInt(szTotal * 100)
+            Dim dTotal As Integer = CInt(MyTaMediaRec.dTaPaidTotal * 100)
+            If Not String.IsNullOrEmpty(szTotal) Then dTotal = CInt(szTotal.Replace(".", ",") * 100)
 
             response.ReturnCode = ArgenteaCOMObject.PaymentBPE(dTotal, response.TransactionID, returnString)
 
