@@ -153,11 +153,11 @@
     <Reference Include="System.XML" />
     <Reference Include="TPDotnet.Pos.Constants">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Bin\TPDotnet.Pos.Constants.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Constants.dll</HintPath>
     </Reference>
     <Reference Include="TPDotnet.Pos.Shared">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Bin\TPDotnet.Pos.Shared.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Shared.dll</HintPath>
     </Reference>
     <Reference Include="TPDotnet.Services.TPWSStatusService">
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Services.TPWSStatusService.dll</HintPath>
