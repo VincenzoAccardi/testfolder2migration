@@ -124,56 +124,6 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.clsMedia, Version=50.17.2.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.clsMedia.dll</HintPath>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.Constants, Version=50.17.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.Constants.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IBuoniPasto, Version=50.17.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IBuoniPasto.dll</HintPath>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IDataObjects, Version=50.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IElectronicFundsTransfer, Version=5017.2.36.3, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IElectronicFundsTransfer.dll</HintPath>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IElectronicMealVoucher, Version=5017.2.36.3, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IElectronicMealVoucher.dll</HintPath>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IExternalGiftCard, Version=50.17.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IExternalGiftCard.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IGiftCard, Version=50.17.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IGiftCard.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IPhoneRecharge, Version=50.17.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.IPhoneRecharge.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.usr_taproj, Version=50.17.0.1, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.usr_taproj.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.Pos.ADODB">
-      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ADODB.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="TPDotnet.Pos.BarcodeDefinitions, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.BarcodeDefinitions.dll</HintPath>
@@ -230,11 +180,6 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.ModCntr">
-      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModCntr.dll</HintPath>
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="TPDotnet.Pos.ModPrintFloat, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModPrintFloat.dll</HintPath>
@@ -277,11 +222,6 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.Pos.UposPrinterBase, Version=3.5.2.3, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.Pos.Utilities">
-      <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Utilities.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
@@ -403,9 +343,75 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Base\ADODB\NF_FIX_ADODB.vbproj">
+      <Project>{a7c1b17a-cf6b-41de-9878-cd3c2d119d33}</Project>
+      <Name>NF_FIX_ADODB</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Base\Constants\NF_IT_Constants.vbproj">
+      <Project>{4a9fad32-a950-4dfb-bb81-d355417bf380}</Project>
+      <Name>NF_IT_Constants</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Base\ModCntr\NF_IT_ModCntr.vbproj">
+      <Project>{9e89a562-2c41-4584-a619-46ea160c36fb}</Project>
+      <Name>NF_IT_ModCntr</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Base\Utilities\NF_FIX_Utilities.vbproj">
+      <Project>{38716728-0e38-4f39-a456-9b9e3b6dfefc}</Project>
+      <Name>NF_FIX_Utilities</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\DataObjects\NF_IT_taproj.vbproj">
+      <Project>{de77903c-4694-41ad-9b65-ff7fc8593cf3}</Project>
+      <Name>NF_IT_taproj</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IBuoniPasto\NF_IT_IBuoniPasto.vbproj">
+      <Project>{3fac1c83-030e-4914-ae6b-cc27510ebfc9}</Project>
+      <Name>NF_IT_IBuoniPasto</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IDataObjects\NF_IT_IDataObjects.vbproj">
+      <Project>{707a6710-9091-4dd1-9506-37d3e62d8e9e}</Project>
+      <Name>NF_IT_IDataObjects</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IEFT\NF_IT_IElectronicFundsTransfer.vbproj">
+      <Project>{604cd3e2-0c9d-4623-9833-c1b7d18205fb}</Project>
+      <Name>NF_IT_IElectronicFundsTransfer</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IElectronicMealVoucher\NF_IT_IElectronicMealVoucher.vbproj">
+      <Project>{59abe647-e3c3-438a-988f-df7bf534c452}</Project>
+      <Name>NF_IT_IElectronicMealVoucher</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IExternalGiftCard\NF_IT_IExternalGiftCard.vbproj">
+      <Project>{39bdf3de-6ff4-4588-8ca8-57b326da4728}</Project>
+      <Name>NF_IT_IExternalGiftCard</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IGiftCard\NF_IT_IGiftCard.vbproj">
+      <Project>{fe35d9b2-3a38-4eca-a6a3-19cedec3ede5}</Project>
+      <Name>NF_IT_IGiftCard</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IPhoneRecharge\NF_IT_IPhoneRecharge.vbproj">
+      <Project>{9d16ff10-1bbc-4082-9a44-b19004e0df17}</Project>
+      <Name>NF_IT_IPhoneRecharge</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SubModules\Media\NF_IT_Media.vbproj">
+      <Project>{3f5a58fd-868b-4859-884e-244d6d9faf43}</Project>
+      <Name>NF_IT_Media</Name>
+      <Private>False</Private>
+    </ProjectReference>
     <ProjectReference Include="..\..\SubModules\Shared\NF_IT_Common_Shared.vbproj">
       <Project>{1cd58943-c4a7-49e6-bb92-411098266cdc}</Project>
       <Name>NF_IT_Common_Shared</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
