@@ -200,22 +200,6 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="TPDotnet.IT.Common.Pos.Constants, Version=3.7.1.7, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.IDataObjects, Version=40.26.0.5, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.IT.Common.Pos.TransactionRecordPlugIn, Version=50.17.2.11, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\TPDotnet.IT.Common.Pos.TransactionRecordPlugIn.dll</HintPath>
-    </Reference>
-    <Reference Include="TPDotnet.Pos.ADODB, Version=3.7.1.7, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="TPDotnet.Pos.Constants, Version=3.5.2.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
@@ -226,10 +210,6 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.Pos.taproj, Version=3.5.2.3, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="TPDotnet.Pos.Utilities, Version=3.7.1.7, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
@@ -296,6 +276,33 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Base\ADODB\NF_FIX_ADODB.vbproj">
+      <Project>{a7c1b17a-cf6b-41de-9878-cd3c2d119d33}</Project>
+      <Name>NF_FIX_ADODB</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Base\Constants\NF_IT_Constants.vbproj">
+      <Project>{4a9fad32-a950-4dfb-bb81-d355417bf380}</Project>
+      <Name>NF_IT_Constants</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Base\Utilities\NF_FIX_Utilities.vbproj">
+      <Project>{38716728-0e38-4f39-a456-9b9e3b6dfefc}</Project>
+      <Name>NF_FIX_Utilities</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\Interfaces\IDataObjects\NF_IT_IDataObjects.vbproj">
+      <Project>{707a6710-9091-4dd1-9506-37d3e62d8e9e}</Project>
+      <Name>NF_IT_IDataObjects</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\SubModules\TransactionRecordPlugIn\NF_IT_TransactionRecordPlugIn.vbproj">
+      <Project>{55fa9c0a-9bfd-4b70-b8ca-9e8dd82db581}</Project>
+      <Name>NF_IT_TransactionRecordPlugIn</Name>
+      <Private>False</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
