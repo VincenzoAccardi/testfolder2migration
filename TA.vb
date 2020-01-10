@@ -60,6 +60,9 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
 #Region "Overrides"
 
+    Public Overridable Sub TaReorgLine(ByRef deleteLine As Short, ByRef InsertAfterLine As Short)
+        MyBase.TaFromLineafterLine(deleteLine, InsertAfterLine)
+    End Sub
     Public Overrides Sub AddObject(ByRef obj As TPDotnet.Pos.TaBaseRec, iPos As Short)
         Dim funcName As String = "AddObject"
         Dim parameters As Dictionary(Of String, Object)
