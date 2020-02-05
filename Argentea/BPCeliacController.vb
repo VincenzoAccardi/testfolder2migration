@@ -41,8 +41,18 @@ Public Class BPCeliacController
 
             End If
             Dim xDoc As XDocument = taobj.TAtoXDocument(False, 0, False)
-            Dim xel As List(Of XElement) = xDoc.XPathSelectElements("//ART_SALE[Hdr/bTaValid='1']/ARTICLE[szITSpecialItemType='CELIAC']/../dTaTotal").ToList()
-            Dim lAmount As Integer = CInt((xel.Sum(Function(item) CDec(item.Value.ToString().Replace(".", ",")))) * 100)
+            Dim xeldTaTotal As List(Of XElement) = xDoc.XPathSelectElements("//ART_SALE[Hdr/bTaValid='1']/ARTICLE[szITSpecialItemType='CELIAC']/../dTaTotal").ToList()
+            Dim xelArticle As List(Of XElement) = xDoc.XPathSelectElements("//ART_SALE[Hdr/bTaValid='1']/ARTICLE[szITSpecialItemType='CELIAC']/..").ToList()
+            Dim lDiscount As Integer = 0
+            For Each xEl As XElement In xelArticle
+                If xEl.Element("dTaDiscount") IsNot Nothing Then
+                    Dim dTaDiscount As Decimal = CDec(xEl.Element("dTaDiscount").Value.Replace(".", ","))
+                    Dim dTaQty As Decimal = CDec(xEl.Element("dTaQty").Value.Replace(".", ","))
+                    lDiscount += CInt((dTaDiscount * dTaQty) * 100)
+                End If
+            Next
+
+            Dim lAmount As Integer = CInt((xeldTaTotal.Sum(Function(item) CDec(item.Value.ToString().Replace(".", ",")))) * 100) + lDiscount
 
             Dim xelMedia As List(Of XElement) = xDoc.XPathSelectElements("//MEDIA[Hdr/bTaValid='1']/PAYMENT[szExternalID='" + TPDotnet.IT.Common.Pos.ElectronicMealVoucherCeliacMedia + "ARGENTEA']/../dTaPaid").ToList()
             Dim lAmountMediaPayed As Integer = CInt((xelMedia.Sum(Function(item) CDec(item.Value.ToString().Replace(".", ",")))) * 100)
