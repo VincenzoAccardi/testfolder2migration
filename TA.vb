@@ -9,6 +9,7 @@ Imports System.Xml.XPath
 Imports System.Linq
 Imports System.Windows.Forms
 Imports TPDotnet.IT.Common.Pos
+Imports System.Collections
 
 Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA, IPluggableTransaction
 
@@ -1488,7 +1489,14 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         End Try
 
     End Function
+    '[CO 20200407]
+    Protected Overrides Function StoreTaxArtinHashTable(ByRef myTaxArtRec As TaTaxArtRec, ByRef myTaxAllIncluded As Hashtable, ByRef myTaxAllExcluded As Hashtable) As Boolean
 
+        If (myTaxArtRec.theHdr.bTaValid = 1) Then
+            Return MyBase.StoreTaxArtinHashTable(myTaxArtRec, myTaxAllIncluded, myTaxAllExcluded)
+        End If
+
+    End Function
 #End Region
 
 End Class
