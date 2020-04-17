@@ -72,6 +72,33 @@ Public Class TaServerRT
         End Set
 
     End Property
+    Public Overridable Property szLotteryStoreCode() As String
+        Get
+            Return m.Fields_Value("szLotteryStoreCode")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szLotteryStoreCode") = value
+        End Set
+
+    End Property
+    Public Overridable Property szLotteryCustomerCode() As String
+        Get
+            Return m.Fields_Value("szLotteryCustomerCode")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szLotteryCustomerCode") = value
+        End Set
+
+    End Property
+    Public Overridable Property szLotteryServerRTCode() As String
+        Get
+            Return m.Fields_Value("szLotteryServerRTCode")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szLotteryServerRTCode") = value
+        End Set
+
+    End Property
     Public Overridable Property lNumeroAzzeramento() As String
         Get
             Return m.Fields_Value("lNumeroAzzeramento")
@@ -145,6 +172,9 @@ Public Class TaServerRT
             '' ---------------
             m.Append("szServerRTName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szFiscalCodeOrVatNumber", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szLotteryCustomerCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szLotteryStoreCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szLotteryServerRTCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("lNumeroAzzeramento", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("lNumeroDocumento", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szCCDC", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
