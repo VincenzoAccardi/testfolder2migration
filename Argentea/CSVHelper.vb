@@ -514,7 +514,28 @@ Public Class CSVHelper
                         ParseReturnString = True
                         Exit For
                         Exit Select
-
+                    Case InternalArgenteaFunctionTypes.ValidationValassis
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.CodeResult = CSV(1)
+                        MyRefRet.Description = CSV(2)
+                        MyRefRet.TerminalID = CSV(4)
+                        MyRefRet.NodeXML = CSV(5)
+                        MyRefRet.ClientCode = CSV(6)
+                        MyRefRet.Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
+                    Case InternalArgenteaFunctionTypes.NotificationValassis
+                        MyRefRet.ArgenteaFunction = argenteaFunction
+                        MyRefRet.Successfull = SetSuccessufully(CSV(0))
+                        MyRefRet.CodeResult = CSV(1)
+                        MyRefRet.Description = CSV(2)
+                        MyRefRet.NodeXML = CSV(3)
+                        MyRefRet.Result = CSV(0)
+                        ParseReturnString = True
+                        Exit For
+                        Exit Select
                     Case Else
 
                         ' AZIONDE DEL CASO: Azione non prevista esco con errore Parsing di protocollo

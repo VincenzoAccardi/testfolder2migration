@@ -274,6 +274,15 @@ Public Class ArgenteaFunctionReturnObject
     ''' </summary>
     Public ListBPsEvaluated As System.Collections.Generic.Dictionary(Of String, Decimal)
 
+    Public NodeXML As String = ""
+
+    Public CouponCode As String = ""
+    Public CouponCancelReason As String = ""
+    Public CouponTransID As String = ""
+    Public SkuSold As String = ""
+    Public SkuList As String = ""
+    Public SkuSaleNum As String = ""
+    Public ClientCode As String = ""
 #End Region
 
 End Class

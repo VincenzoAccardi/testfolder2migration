@@ -124,11 +124,6 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.ADODB, Version=5017.2.39.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ADODB.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="TPDotnet.Pos.BarcodeDefinitions, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.BarcodeDefinitions.dll</HintPath>
@@ -298,6 +293,7 @@
     <Compile Include="RegistryHelper.vb" />
     <Compile Include="TPTAHelper.vb" />
     <Compile Include="ITPTAMediaSwapHelper.vb" />
+    <Compile Include="ValassisCouponController.vb" />
     <EmbeddedResource Include="FormArgenteaItemInput.resx">
       <DependentUpon>FormArgenteaItemInput.vb</DependentUpon>
     </EmbeddedResource>
@@ -406,6 +402,11 @@
     <ProjectReference Include="..\..\Interfaces\IPhoneRecharge\NF_IT_IPhoneRecharge.vbproj">
       <Project>{9d16ff10-1bbc-4082-9a44-b19004e0df17}</Project>
       <Name>NF_IT_IPhoneRecharge</Name>
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Interfaces\IValassisCoupon\NF_IT_IValassisCoupon.vbproj">
+      <Project>{c0aca918-5db1-44ef-b2e7-29a68c73c78e}</Project>
+      <Name>NF_IT_IValassisCoupon</Name>
       <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\..\SubModules\Media\NF_IT_Media.vbproj">

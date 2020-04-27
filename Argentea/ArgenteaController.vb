@@ -6,6 +6,8 @@ Imports System.Reflection
 Imports ARGLIB = PAGAMENTOLib
 Imports System.Linq
 Imports TPDotnet.Pos
+Imports System.Xml.Linq
+Imports System.Xml.XPath
 
 Public Class Controller
     Implements IElectronicFundsTransferPay
@@ -27,6 +29,9 @@ Public Class Controller
     Implements IElectronicMealVoucherBalance
     Implements IElectronicMealVoucherClosure
     Implements IElectronicMealVoucherTotals
+    Implements IValassisCouponValidation
+    Implements IValassisCouponNotification
+
 #Region "Enum"
     Protected Enum MethodParameter
         ArgenteaCOMObject
@@ -47,6 +52,7 @@ Public Class Controller
         GiftCardController
         ExternalGiftCardController
         PhoneRechargeController
+        ValassisCouponController
     End Enum
     Protected Enum Method
         Payment
@@ -65,6 +71,8 @@ Public Class Controller
         RedeemGiftCard
         GiftCardCancellation
         Balance
+        ValidationValassis
+        NotificationValassis
     End Enum
 
 #End Region
@@ -101,7 +109,9 @@ Public Class Controller
         {Method.GiftCardBalanceInquiry, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
         {Method.RedeemGiftCard, TaExternalServiceRec.ExternalServiceStatus.Activated},
         {Method.GiftCardCancellation, TaExternalServiceRec.ExternalServiceStatus.Deleted},
-        {Method.Balance, TaExternalServiceRec.ExternalServiceStatus.PreChecked}
+        {Method.Balance, TaExternalServiceRec.ExternalServiceStatus.PreChecked},
+        {Method.ValidationValassis, TaExternalServiceRec.ExternalServiceStatus.Activated},
+        {Method.NotificationValassis, TaExternalServiceRec.ExternalServiceStatus.Activated}
     }
 
     Protected OperationParameters As New Dictionary(Of Method, MethodParameter()) From {
@@ -120,7 +130,9 @@ Public Class Controller
         {Method.GiftCardBalanceInquiry, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
         {Method.RedeemGiftCard, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
         {Method.GiftCardCancellation, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.MyCurrentDetailRec, MethodParameter.paramArg}},
-        {Method.Balance, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}}
+        {Method.Balance, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
+        {Method.ValidationValassis, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}},
+        {Method.NotificationValassis, {MethodParameter.ArgenteaCOMObject, MethodParameter.taobj, MethodParameter.TheModCntr, MethodParameter.MyCurrentRecord, MethodParameter.paramArg}}
     }
 #End Region
 
@@ -176,6 +188,8 @@ Public Class Controller
                     Return CType(CType(MyCurrentRecord, TPDotnet.IT.Common.Pos.TaArtReturnRec).ARTinArtReturn, TPDotnet.IT.Common.Pos.ART).szITSpecialItemType
                 Case TPDotnet.Pos.TARecTypes.iTA_SIGN_OFF
                     Return "SIGNOFF"
+                Case TPDotnet.Pos.TARecTypes.iTA_CUSTOMER
+                    Return IIf(MyCurrentRecord.ExistField("szServiceType"), MyCurrentRecord.GetPropertybyName("szServiceType"), String.Empty)
                 Case TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE
                     Return CType(MyCurrentRecord, TPDotnet.IT.Common.Pos.TaExternalServiceRec).szServiceType
                 Case Else
@@ -352,7 +366,7 @@ Public Class Controller
         Dim funcName As String = "GetService"
         Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia,
             ElectronicMealVoucherCeliacMedia, ElectronicMealVoucherMedia,
-            PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem, "SIGNOFF"}
+            PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem, "SIGNOFF", ValassisCoupon, ValassisCouponMedia}
 
         Try
             ' get & check the current payment service
@@ -564,6 +578,120 @@ Public Class Controller
                     End If
                 End If
                 HandlerAfterInvoke = True
+
+            Case Controller.ValassisCouponController
+
+                If eMethod = Method.ValidationValassis Then
+
+                    If response.ReturnCode = ArgenteaFunctionsReturnCode.KO AndAlso
+                        String.IsNullOrEmpty(argenteaFunctionReturnObject(0).CodeResult.ToString) AndAlso
+                        MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
+                        showValassisErrorMessage(argenteaFunctionReturnObject(0), cmd)
+                        Return False
+                    End If
+                    Dim szXMLNode As String = argenteaFunctionReturnObject(0).NodeXML.ToString()
+                    If String.IsNullOrEmpty(szXMLNode) Then Return True
+
+                    Dim szTerminalID As String = argenteaFunctionReturnObject(0).TerminalID
+                    Dim szClientCode As String = argenteaFunctionReturnObject(0).ClientCode
+                    Dim xdoc As XDocument = XDocument.Parse(szXMLNode, LoadOptions.None)
+
+                    If xdoc.Elements.Descendants("COUPON").Count > 1 Then ReDim Preserve argenteaFunctionReturnObject(xdoc.Elements.Descendants("COUPON").Count - 1)
+                    Dim dTaTotal As Decimal = taobj.GetTotal
+                    For Each xEl As XElement In xdoc.Elements.Descendants("COUPON").ToList()
+                        Dim index As Integer = xdoc.Elements.Descendants("COUPON").ToList().IndexOf(xEl)
+                        If index <> 0 Then argenteaFunctionReturnObject(index) = New ArgenteaFunctionReturnObject
+
+                        'Common properties
+                        argenteaFunctionReturnObject(index).ArgenteaFunction = InternalArgenteaFunctionTypes.ValidationValassis
+                        argenteaFunctionReturnObject(index).TerminalID = szTerminalID
+                        argenteaFunctionReturnObject(index).ClientCode = szClientCode
+
+                        argenteaFunctionReturnObject(index).CouponCode = xEl.Element("COUPON_CODE").Value.ToString()
+                        argenteaFunctionReturnObject(index).CodeResult = xEl.Element("RESULT_CODE").Value.ToString()
+                        argenteaFunctionReturnObject(index).Amount = xEl.Element("VALUE").Value.ToString()
+                        argenteaFunctionReturnObject(index).CouponTransID = xEl.Element("TRANS_ID").Value.ToString()
+                        argenteaFunctionReturnObject(index).CouponCancelReason = String.Empty
+                        argenteaFunctionReturnObject(index).SkuSaleNum = xEl.Element("SKU_SALE_NUM").Value.ToString()
+                        Dim szSkuList As String = xEl.Element("SKU_LIST").Value.ToString()
+                        Dim lMinRecpAmt As Integer = CInt(xEl.Element("MIN_RECP_AMT").Value.ToString())
+                        Dim lSkuSaleNum As Integer = CInt(xEl.Element("SKU_SALE_NUM").Value.ToString())
+                        Dim lSkuSaleMode As Integer = CInt(xEl.Element("SKU_SALE_MODE").Value.ToString())
+                        Dim lCouponType As Integer = CInt(xEl.Element("COUPON_TYPE").Value.ToString())
+                        If argenteaFunctionReturnObject(index).CodeResult = IValassisValudatioCouponResultCode.OK Then
+                            CheckConditionValassis(lMinRecpAmt, lCouponType, dTaTotal, szSkuList, lSkuSaleNum, lSkuSaleMode, taobj.TAtoXDocument(False, 0, False), argenteaFunctionReturnObject(index), response)
+                        End If
+
+                        If MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
+                            If Not showValassisErrorMessage(argenteaFunctionReturnObject(index), cmd) Then Return False
+                        End If
+                    Next
+                End If
+                If eMethod = Method.NotificationValassis Then
+                    If MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
+                        Dim myRecMedia As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
+                        If myRecMedia.dTaPaidTotal < 0 Then
+                            For Each base As TPDotnet.Pos.TaBaseRec In taobj.taCollection
+                                If base.sid = TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_EXTERNAL_SERVICE AndAlso
+                                base.theHdr.lTaRefToCreateNmbr = MyCurrentRecord.theHdr.lTaCreateNmbr AndAlso
+                                   (base.ExistField("szCouponCancelReason") AndAlso
+                                   base.GetPropertybyName("szCouponCancelReason") = CInt(IValassisNotificationCancelReasonCode.TRXSUSPEND).ToString) Then
+                                    If argenteaFunctionReturnObject(0).Successfull Then
+                                        Dim myBaseExtRec As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(base, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
+                                        myBaseExtRec.szStatus = TaExternalServiceRec.ExternalServiceStatus.Deleted.ToString
+                                        Dim szSkuSold As String = base.GetPropertybyName("szSkuSold")
+                                        Dim lSkuSaleNum As Integer = CInt(base.GetPropertybyName("szSkuSaleNum"))
+                                        Dim lArtCount As Integer = 0
+                                        For Each szSku As String In szSkuSold.Split(",")
+                                            Dim xElList As List(Of XElement) = New List(Of XElement)
+                                            If szSku.EndsWith("*") Then
+                                                xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode[starts-with(.," + szSku.ToString.Replace("*", "") + ")]) and (bIsInValassisSkuSold=1 or lValassisSkuSoldCount>0)] ").ToList
+                                            Else
+                                                xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode=" + szSku.ToString + ") and (bIsInValassisSkuSold=1 or lValassisSkuSoldCount>0)]").ToList
+                                            End If
+
+                                            For Each xEl As XElement In xElList
+                                                If lArtCount = lSkuSaleNum Then
+                                                    Exit For
+                                                End If
+                                                Dim lSkuSoldCount As Integer = 0
+                                                Dim lSkuSold As Integer = 0
+                                                Dim lTaCreateNmbr As Integer = CInt(xEl.XPathSelectElement("Hdr/lTaCreateNmbr").Value)
+                                                Dim myBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.GetPositionFromCreationNmbr(lTaCreateNmbr))
+                                                If Not myBaseRec.ExistField("bIsInValassisSkuSold") Then myBaseRec.AddField("bIsInValassisSkuSold", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                                                If Not myBaseRec.ExistField("lValassisSkuSoldCount") Then myBaseRec.AddField("lValassisSkuSoldCount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                                                Integer.TryParse(myBaseRec.GetPropertybyName("lValassisSkuSoldCount"), lSkuSoldCount)
+                                                lSkuSold = Math.Min(lSkuSaleNum, lSkuSoldCount)
+                                                Dim skuConditionSold As Integer = (lSkuSoldCount - lSkuSold)
+                                                myBaseRec.setPropertybyName("lValassisSkuSoldCount", skuConditionSold.ToString)
+                                                myBaseRec.setPropertybyName("bIsInValassisSkuSold", False)
+
+                                                lArtCount += lSkuSold
+                                            Next
+
+                                            'Dim xEl As XElement = xElList.FirstOrDefault()
+                                            'Dim lTaCreateNmbr As Integer = CInt(xEl.XPathSelectElement("Hdr/lTaCreateNmbr").Value)
+                                            'Dim myBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.GetPositionFromCreationNmbr(lTaCreateNmbr))
+                                            'If Not myBaseRec.ExistField("bIsInSkuSold") Then myBaseRec.AddField("bIsInSkuSold", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                                            'myBaseRec.setPropertybyName("bIsInSkuSold", False)
+                                        Next
+
+
+
+                                        HandlerAfterInvoke = True
+                                    Else
+                                        base.setPropertybyName("szCouponCancelReason", String.Empty)
+                                        HandlerAfterInvoke = False
+                                    End If
+                                End If
+
+                            Next
+                        End If
+                        Return HandlerAfterInvoke
+                    End If
+                End If
+                HandlerAfterInvoke = True
+
             Case Else
                 'If Not argenteaFunctionReturnObject(0).Successfull Then
                 '    HandlerAfterInvoke = False
@@ -574,6 +702,162 @@ Public Class Controller
         Return HandlerAfterInvoke
     End Function
 
+#Region "Valassis Handler"
+    Private Function showValassisErrorMessage(argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, cmd As TPDotnet.IT.Common.Pos.Common) As Boolean
+        Select Case argenteaFunctionReturnObject.CodeResult
+            Case IValassisValudatioCouponResultCode.OK
+                If Not String.IsNullOrEmpty(argenteaFunctionReturnObject.CouponCancelReason) Then
+                    Dim defaultError As String = CType([Enum].Parse(GetType(IValassisNotificationCancelReasonCode), argenteaFunctionReturnObject.CouponCancelReason), IValassisNotificationCancelReasonCode).ToString()
+                    cmd.ShowError(TheModCntr, defaultError, "LevelITCommonArgenteaCouponValassisCancelError_" + CInt(argenteaFunctionReturnObject.CouponCancelReason).ToString)
+                    Return True
+                End If
+            Case ""
+                cmd.ShowError(TheModCntr, argenteaFunctionReturnObject.Description, "LevelITCommonArgenteaValassisError")
+                Return False
+            Case Else
+                Dim defaultError As String = CType([Enum].Parse(GetType(IValassisValudatioCouponResultCode), argenteaFunctionReturnObject.CodeResult), IValassisValudatioCouponResultCode).ToString()
+                cmd.ShowError(TheModCntr, defaultError, "LevelITCommonArgenteaValassisError_" + argenteaFunctionReturnObject.CodeResult)
+                Return False
+        End Select
+        Return True
+    End Function
+    Private Sub CheckConditionValassis(lMinRecpAmt As Integer, lCouponType As Integer, ByRef dTaTotal As Decimal, szSkuList As String, lSkuSaleNum As Integer, lSkuSaleMode As Integer, xDocument As XDocument, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse)
+
+        If Not CheckConditionCouponTypeValassis(lCouponType, argenteaFunctionReturnObject, response) Then
+            Exit Sub
+        End If
+
+        If Not CheckConditionTypeValassis(lMinRecpAmt, argenteaFunctionReturnObject, response) Then
+            Exit Sub
+        End If
+
+        If Not CheckConditionSkuValassis(szSkuList, lSkuSaleNum, lSkuSaleMode, taobj.TAtoXDocument(False, 0, False), argenteaFunctionReturnObject, response) Then
+            Exit Sub
+        End If
+
+        If Not CheckConditionAmountValassis(dTaTotal, argenteaFunctionReturnObject, response) Then
+            Exit Sub
+        End If
+    End Sub
+    Private Function CheckConditionCouponTypeValassis(lCouponType As Integer, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
+        CheckConditionCouponTypeValassis = True
+        If lCouponType <> 1 Then
+            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+            CheckConditionCouponTypeValassis = False
+        End If
+    End Function
+    Private Function CheckConditionTypeValassis(lMinRecpAmt As Integer, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
+        CheckConditionTypeValassis = True
+        If lMinRecpAmt > 0 Then
+            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+            CheckConditionTypeValassis = False
+        End If
+    End Function
+    Private Function CheckConditionSkuValassis(szSkuList As String, lSkuSaleNum As Integer, lSkuSaleMode As Integer, xDocument As XDocument, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
+        CheckConditionSkuValassis = True
+        Dim lArtCount As Integer = 0
+        Dim lArtInList As Integer = 0
+        Dim szSkuSold As String = String.Empty
+        Dim szSkuNotSold As String = String.Empty
+        Dim lSkuSoldCount As Integer = 0
+        Dim ListArt As New Dictionary(Of Integer, Integer)
+        For Each szSku As String In szSkuList.Split(",")
+
+            If (lArtCount >= lSkuSaleNum) Then
+                szSkuNotSold = szSkuNotSold + szSku + ","
+                Continue For
+            End If
+            Dim xElList As List(Of XElement) = New List(Of XElement)
+            If szSku.EndsWith("*") Then
+                xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode[starts-with(.," + szSku.ToString.Replace("*", "") + ")]) and (not(bIsInValassisSkuSold))] ").ToList
+                'lArtCount = xElList.Count
+            Else
+                xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode=" + szSku.ToString + ") and (not(bIsInValassisSkuSold))]").ToList
+                'lArtCount = xElList.Count
+            End If
+            If xElList.Count > 0 Then
+
+                'Dim xEl As XElement = xElList.FirstOrDefault()
+                For Each xEl As XElement In xElList
+                    If lArtCount = lSkuSaleNum Then
+                        Exit For
+                    End If
+                    Dim lTaCreateNmbr As Integer = CInt(xEl.XPathSelectElement("Hdr/lTaCreateNmbr").Value)
+                    Dim myBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.GetPositionFromCreationNmbr(lTaCreateNmbr))
+                    If Not myBaseRec.ExistField("bIsInValassisSkuSold") Then myBaseRec.AddField("bIsInValassisSkuSold", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                    If Not myBaseRec.ExistField("lValassisSkuSoldCount") Then myBaseRec.AddField("lValassisSkuSoldCount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                    Integer.TryParse(myBaseRec.GetPropertybyName("lValassisSkuSoldCount"), lSkuSoldCount)
+                    ListArt.Add(lTaCreateNmbr, lSkuSoldCount)
+                    Dim skuConditionSold As Integer = Math.Min((CInt(myBaseRec.GetPropertybyName("dQuantityEntry")) - lSkuSoldCount), (lSkuSaleNum - lArtCount))
+                    lSkuSoldCount = lSkuSoldCount + skuConditionSold
+                    myBaseRec.setPropertybyName("lValassisSkuSoldCount", lSkuSoldCount.ToString)
+                    If lSkuSoldCount = CInt(myBaseRec.GetPropertybyName("dQuantityEntry")) Then
+                        myBaseRec.setPropertybyName("bIsInValassisSkuSold", True)
+                    Else
+
+                    End If
+                    lArtCount += skuConditionSold
+                Next
+
+                szSkuSold = szSkuSold + szSku + ","
+                If lSkuSaleMode = 1 Then
+                    lArtInList = lArtInList + 1
+                Else
+                    lArtInList = lArtCount
+                End If
+            Else
+                szSkuNotSold = szSkuNotSold + szSku + ","
+            End If
+
+        Next
+
+        If (lArtCount < lSkuSaleNum) Then
+            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.SKUNOTSOLD).ToString
+            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+            For Each lTaCreateNmbr As Integer In ListArt.Keys
+                Dim myBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.GetPositionFromCreationNmbr(lTaCreateNmbr))
+                If Not myBaseRec.ExistField("bIsInValassisSkuSold") Then myBaseRec.AddField("bIsInValassisSkuSold", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                If Not myBaseRec.ExistField("lValassisSkuSoldCount") Then myBaseRec.AddField("lValassisSkuSoldCount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                myBaseRec.setPropertybyName("lValassisSkuSoldCount", ListArt(lTaCreateNmbr).ToString)
+                If ListArt(lTaCreateNmbr) <> CInt(myBaseRec.GetPropertybyName("dQuantityEntry")) Then
+                    myBaseRec.setPropertybyName("bIsInValassisSkuSold", False)
+                End If
+            Next
+            CheckConditionSkuValassis = False
+        Else
+            If Not String.IsNullOrEmpty(szSkuSold) Then szSkuSold = szSkuSold.Substring(0, szSkuSold.Length - 1)
+            If Not String.IsNullOrEmpty(szSkuNotSold) Then szSkuNotSold = szSkuNotSold.Substring(0, szSkuNotSold.Length - 1)
+            argenteaFunctionReturnObject.SkuSold = szSkuSold
+            argenteaFunctionReturnObject.SkuList = szSkuNotSold
+        End If
+
+    End Function
+    Private Function CheckConditionAmountValassis(ByRef dTaTotal As Decimal, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
+        Dim bisPayable As Boolean = True
+        If MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
+            Dim myMedia As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
+            If myMedia.dTaPaid < CDec(argenteaFunctionReturnObject.Amount / 100) Then
+                bisPayable = False
+            End If
+        Else
+            If dTaTotal < CDec(argenteaFunctionReturnObject.Amount / 100) Then
+                bisPayable = False
+            Else
+                dTaTotal = dTaTotal - CDec(argenteaFunctionReturnObject.Amount / 100)
+            End If
+        End If
+        If Not bisPayable Then
+            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONGREATHERTHENTOTAMOUNT).ToString
+            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+        End If
+    End Function
+#End Region
     Private Sub FillExternalServiceRecord(argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, response As ArgenteaResponse, eMethod As Method)
         For i As Integer = 0 To argenteaFunctionReturnObject.GetUpperBound(0)
             If String.IsNullOrEmpty(response.TransactionID) Then
@@ -595,6 +879,14 @@ Public Class Controller
                 End If
             End If
 
+
+            Dim szBarcode As String = String.Empty
+            If response.ExistProperty("szBarcode") Then
+                szBarcode = response.GetProperty("szBarcode")
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).CouponCode) Then
+                szBarcode = argenteaFunctionReturnObject(i).CouponCode.ToString
+            End If
             Dim TaExternalServiceRec As TaExternalServiceRec = taobj.CreateTaObject(Of TaExternalServiceRec)(Italy_PosDef.TARecTypes.iTA_EXTERNAL_SERVICE)
             If Not TaExternalServiceRec.ExistField("szCardType") Then TaExternalServiceRec.AddField("szCardType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             If Not TaExternalServiceRec.ExistField("szOperationResult") Then TaExternalServiceRec.AddField("szOperationResult", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
@@ -605,21 +897,52 @@ Public Class Controller
                 If Not TaExternalServiceRec.ExistField("lPinCounter") Then TaExternalServiceRec.AddField("lPinCounter", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
                 TaExternalServiceRec.setPropertybyName("lPinCounter", response.GetProperty("lPinCounter"))
             End If
-            If response.ExistProperty("szBarcode") Then
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).CodeResult) Then
+                If Not TaExternalServiceRec.ExistField("szResultCode") Then TaExternalServiceRec.AddField("szResultCode", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                TaExternalServiceRec.setPropertybyName("szResultCode", argenteaFunctionReturnObject(i).CodeResult.ToString)
+            End If
+            If Not String.IsNullOrEmpty(szBarcode) Then
                 If Not TaExternalServiceRec.ExistField("szBarcode") Then TaExternalServiceRec.AddField("szBarcode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-                TaExternalServiceRec.setPropertybyName("szBarcode", response.GetProperty("szBarcode"))
+                TaExternalServiceRec.setPropertybyName("szBarcode", szBarcode.ToString)
+            End If
+
+            'Ony for Coupon Valassis
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).CouponCancelReason) Then
+                If Not TaExternalServiceRec.ExistField("szCouponCancelReason") Then TaExternalServiceRec.AddField("szCouponCancelReason", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                TaExternalServiceRec.setPropertybyName("szCouponCancelReason", argenteaFunctionReturnObject(i).CouponCancelReason.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).CouponTransID) Then
+                If Not TaExternalServiceRec.ExistField("szCouponTransID") Then TaExternalServiceRec.AddField("szCouponTransID", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+                TaExternalServiceRec.setPropertybyName("szCouponTransID", argenteaFunctionReturnObject(i).CouponTransID.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).SkuSold) Then
+                If Not TaExternalServiceRec.ExistField("szSkuSold") Then TaExternalServiceRec.AddField("szSkuSold", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szSkuSold", argenteaFunctionReturnObject(i).SkuSold.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).SkuList) Then
+                If Not TaExternalServiceRec.ExistField("szSkuList") Then TaExternalServiceRec.AddField("szSkuList", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szSkuList", argenteaFunctionReturnObject(i).SkuList.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).SkuSaleNum) Then
+                If Not TaExternalServiceRec.ExistField("szSkuSaleNum") Then TaExternalServiceRec.AddField("szSkuSaleNum", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szSkuSaleNum", argenteaFunctionReturnObject(i).SkuSaleNum.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).ClientCode) Then
+                If Not TaExternalServiceRec.ExistField("szClientCode") Then TaExternalServiceRec.AddField("szClientCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szClientCode", argenteaFunctionReturnObject(i).ClientCode.ToString)
             End If
 
             With TaExternalServiceRec
-                .theHdr.lTaRefToCreateNmbr = MyCurrentRecord.theHdr.lTaCreateNmbr
+                ' only for coupon valassis. I need to stored the external service even if the coupon is not used
+                If String.IsNullOrEmpty(argenteaFunctionReturnObject(i).CouponCancelReason) Then .theHdr.lTaRefToCreateNmbr = MyCurrentRecord.theHdr.lTaCreateNmbr
                 If Not String.IsNullOrEmpty(szReceipt) Then .szReceipt = szReceipt
                 .szServiceType = GetOperationType(ExternalID)
                 .lCopies = paramArg.Copies
                 .szStatus = GetStatus(eMethod).ToString()
                 .bSuppressLogo = paramCommon.SuppressLogo
                 .bPrintReceipt = paramArg.PrintWithinTA
-                .setPropertybyName("lAmount", lAmount)
-                .setPropertybyName("szTransactionID", response.TransactionID)
+                .setPropertybyName("lAmount", lAmount.ToString())
+                .setPropertybyName("szTransactionID", response.TransactionID.ToString())
                 .setPropertybyName("szCardType", argenteaFunctionReturnObject(i).Acquirer.ToString())
                 .setPropertybyName("szOperationResult", response.ReturnCode.ToString())
             End With
@@ -691,12 +1014,10 @@ Public Class Controller
     Public Function GiftCardCancellation(ByRef Parameters As Dictionary(Of String, Object)) As IGiftCardReturnCode Implements IGiftCardCancellationPayment.GiftCardCancellation
         Return Execute(Method.GiftCardCancellation, Parameters)
     End Function
-
     Public Function Balance(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherBalance.Balance
         eController = Controller.BPEController
         Return Execute(Method.Balance, Parameters)
     End Function
-
     Public Function IElectronicMealVoucherClosure_Closure(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherClosure.Closure
         eController = Controller.BPEController
         Return Execute(Method.Closure, Parameters)
@@ -704,7 +1025,14 @@ Public Class Controller
     Public Function IElectronicMealVoucherTotals_Totals(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherTotals.Totals
         Return Execute(Method.Totals, Parameters)
     End Function
-
+    Public Function ValidationValassis(ByRef Parameters As Dictionary(Of String, Object)) As IValassisCouponReturnCode Implements IValassisCouponValidation.ValidationValassis
+        eController = Controller.ValassisCouponController
+        Return Execute(Method.ValidationValassis, Parameters)
+    End Function
+    Public Function NotificationValassis(ByRef Parameters As Dictionary(Of String, Object)) As IValassisCouponReturnCode Implements IValassisCouponNotification.NotificationValassis
+        eController = Controller.ValassisCouponController
+        Return Execute(Method.NotificationValassis, Parameters)
+    End Function
 
 #Region "Check"
     Public Function ElectronicFundsTransferPay_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicFundsTransferReturnCode Implements IElectronicFundsTransferPay.Check
@@ -735,7 +1063,6 @@ Public Class Controller
     Private Function IElectronicMealVoucherTotals_Check(ByRef Parameters As Dictionary(Of String, Object)) As IElectronicMealVoucherReturnCode Implements IElectronicMealVoucherTotals.Check
         Return IElectronicMealVoucherReturnCode.OK
     End Function
-
 #End Region
 #End Region
 

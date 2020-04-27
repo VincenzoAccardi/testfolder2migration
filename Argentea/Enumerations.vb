@@ -84,6 +84,8 @@ Public Enum InternalArgenteaFunctionTypes
     BPCeliacPayment
     BPCeliacVoid
 
+    ValidationValassis
+    NotificationValassis
 End Enum
 
 Public Enum ArgenteaFunctionsReturnCode
