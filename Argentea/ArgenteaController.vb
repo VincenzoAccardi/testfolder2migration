@@ -589,6 +589,12 @@ Public Class Controller
                         showValassisErrorMessage(argenteaFunctionReturnObject(0), cmd)
                         Return False
                     End If
+
+                    If Not argenteaFunctionReturnObject(0).Successfull AndAlso
+                        MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_CUSTOMER Then
+                        Return False
+                    End If
+
                     Dim szXMLNode As String = argenteaFunctionReturnObject(0).NodeXML.ToString()
                     If String.IsNullOrEmpty(szXMLNode) Then Return True
 
