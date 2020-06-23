@@ -56,9 +56,10 @@ Public Class ValassisCouponController
             LOG_Error(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". CouponCode: " & szCouponCode & ", Customer: " & szCustomerID & ". Output: " & szMessageOut)
             If response.ReturnCode <> ArgenteaFunctionsReturnCode.OK Then
                 szMessageOut = "KO;;" + szMessageOut + ";;;;"
-            Else
-                TheModCntr.ObjectCash("Valassis_Progressive") = taobj.lactTaNmbr.ToString + "." + (lProgressive + 1).ToString
             End If
+
+            TheModCntr.ObjectCash("Valassis_Progressive") = taobj.lactTaNmbr.ToString + "." + (lProgressive + 1).ToString
+
             response.MessageOut = szMessageOut
             response.CharSeparator = CharSeparator.Semicolon
             response.FunctionType = InternalArgenteaFunctionTypes.ValidationValassis
@@ -146,9 +147,9 @@ Public Class ValassisCouponController
             LOG_Debug(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". Output: " & szMessageOut)
             If response.ReturnCode <> ArgenteaFunctionsReturnCode.OK Then
                 szMessageOut = "KO;;" + szMessageOut + ";;;;"
-            Else
-                TheModCntr.ObjectCash("Valassis_Progressive") = taobj.lactTaNmbr.ToString + "." + (lProgressive + 1).ToString
             End If
+            TheModCntr.ObjectCash("Valassis_Progressive") = taobj.lactTaNmbr.ToString + "." + (lProgressive + 1).ToString
+
             response.MessageOut = szMessageOut
             response.CharSeparator = CharSeparator.Semicolon
             response.FunctionType = InternalArgenteaFunctionTypes.NotificationValassis

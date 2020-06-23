@@ -624,7 +624,7 @@ Public Class Controller
                         Dim lSkuSaleNum As Integer = CInt(xEl.Element("SKU_SALE_NUM").Value.ToString())
                         Dim lSkuSaleMode As Integer = CInt(xEl.Element("SKU_SALE_MODE").Value.ToString())
                         Dim lCouponType As Integer = CInt(xEl.Element("COUPON_TYPE").Value.ToString())
-                        If argenteaFunctionReturnObject(index).CodeResult = IValassisValudatioCouponResultCode.OK Then
+                        If argenteaFunctionReturnObject(index).CodeResult = IValassisValidationCouponResultCode.OK Then
                             CheckConditionValassis(lMinRecpAmt, lCouponType, dTaTotal, szSkuList, lSkuSaleNum, lSkuSaleMode, taobj.TAtoXDocument(False, 0, False), argenteaFunctionReturnObject(index), response)
                         End If
 
@@ -694,6 +694,25 @@ Public Class Controller
                             Next
                         End If
                         Return HandlerAfterInvoke
+                    ElseIf (MyCurrentDetailRec IsNot Nothing AndAlso MyCurrentDetailRec.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_CUSTOMER) Then
+                        Dim szXMLNode As String = argenteaFunctionReturnObject(0).NodeXML.ToString()
+                        If String.IsNullOrEmpty(szXMLNode) Then Return True
+                        Dim xdoc As XDocument = XDocument.Parse(szXMLNode, LoadOptions.None)
+                        Dim szTransID As String = xdoc.XPathSelectElement("VCA_CONF_RESP/COUPON_RESULT/TRANS_ID").Value.ToString()
+                        For Each base As TPDotnet.Pos.TaBaseRec In taobj.taCollection
+                            If base.sid = TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_EXTERNAL_SERVICE Then
+                                Dim szCouponTransID As String = IIf(base.ExistField("szCouponTransID"), base.GetPropertybyName("szCouponTransID"), "")
+                                Dim szCouponCancelReason As String = IIf(base.ExistField("szCouponCancelReason"), base.GetPropertybyName("szCouponCancelReason"), "0")
+
+                                If (szCouponTransID = szTransID) AndAlso szCouponCancelReason <> "0" Then
+                                    If argenteaFunctionReturnObject(0).Successfull Then
+                                        Dim myBaseExtRec As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(base, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
+                                        myBaseExtRec.szStatus = TaExternalServiceRec.ExternalServiceStatus.Deleted.ToString
+                                    End If
+                                End If
+                            End If
+                        Next
+                        Return True
                     End If
                 End If
                 HandlerAfterInvoke = True
@@ -711,7 +730,7 @@ Public Class Controller
 #Region "Valassis Handler"
     Private Function showValassisErrorMessage(argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, cmd As TPDotnet.IT.Common.Pos.Common) As Boolean
         Select Case argenteaFunctionReturnObject.CodeResult
-            Case IValassisValudatioCouponResultCode.OK
+            Case IValassisCouponReturnCode.OK
                 If Not String.IsNullOrEmpty(argenteaFunctionReturnObject.CouponCancelReason) Then
                     Dim defaultError As String = CType([Enum].Parse(GetType(IValassisNotificationCancelReasonCode), argenteaFunctionReturnObject.CouponCancelReason), IValassisNotificationCancelReasonCode).ToString()
                     cmd.ShowError(TheModCntr, defaultError, "LevelITCommonArgenteaCouponValassisCancelError_" + CInt(argenteaFunctionReturnObject.CouponCancelReason).ToString)
@@ -721,7 +740,7 @@ Public Class Controller
                 cmd.ShowError(TheModCntr, argenteaFunctionReturnObject.Description, "LevelITCommonArgenteaValassisError")
                 Return False
             Case Else
-                Dim defaultError As String = CType([Enum].Parse(GetType(IValassisValudatioCouponResultCode), argenteaFunctionReturnObject.CodeResult), IValassisValudatioCouponResultCode).ToString()
+                Dim defaultError As String = CType([Enum].Parse(GetType(IValassisValidationCouponResultCode), argenteaFunctionReturnObject.CodeResult), IValassisValidationCouponResultCode).ToString()
                 cmd.ShowError(TheModCntr, defaultError, "LevelITCommonArgenteaValassisError_" + argenteaFunctionReturnObject.CodeResult)
                 Return False
         End Select
@@ -749,7 +768,7 @@ Public Class Controller
         CheckConditionCouponTypeValassis = True
         If lCouponType <> 1 Then
             argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
-            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
             CheckConditionCouponTypeValassis = False
         End If
@@ -758,7 +777,7 @@ Public Class Controller
         CheckConditionTypeValassis = True
         If lMinRecpAmt > 0 Then
             argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
-            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
             CheckConditionTypeValassis = False
         End If
@@ -822,7 +841,7 @@ Public Class Controller
         Next
 
         If (lArtCount < lSkuSaleNum) Then
-            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
             argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.SKUNOTSOLD).ToString
             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
             For Each lTaCreateNmbr As Integer In ListArt.Keys
@@ -858,7 +877,7 @@ Public Class Controller
             End If
         End If
         If Not bisPayable Then
-            argenteaFunctionReturnObject.CodeResult = CInt(ArgenteaFunctionsReturnCode.KO).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
             argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONGREATHERTHENTOTAMOUNT).ToString
             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
         End If
