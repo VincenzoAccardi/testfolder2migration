@@ -50,7 +50,7 @@ Public Enum IValassisNotificationCancelReasonCode
     COUPONTYPENOTMANAGED = 10
 End Enum
 
-Public Enum IValassisValudatioCouponResultCode
+Public Enum IValassisValidationCouponResultCode
     ''' <summary>
     '''    OK
     ''' </summary>
