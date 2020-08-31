@@ -49,6 +49,15 @@ Public Class ART : Inherits TPDotnet.Pos.ART
         End Set
     End Property
 
+    Public Overridable Property bITLocked() As Integer
+        Get
+            bITLocked = m.Fields_Value("bITLocked")
+        End Get
+        Set(value As Integer)
+            m.Fields_Value("bITLocked") = value
+        End Set
+    End Property
+
 #End Region
 
 #Region "Overrides"
@@ -59,6 +68,7 @@ Public Class ART : Inherits TPDotnet.Pos.ART
         m.Append("szITWeightTemplate", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
         m.Append("szITSpecialItemType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
         m.Append("szITSpecialItemType1", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+        m.Append("bITLocked", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
     End Sub
 
@@ -293,7 +303,11 @@ Public Class ART : Inherits TPDotnet.Pos.ART
                 m.Fields_Value("szITSpecialItemType1") = ARTRECSET.Fields_value("szITSpecialItemType1")
             End If
 
-
+            If IsDBNull(ARTRECSET.Fields_value("bITLocked")) Then
+                m.Fields_Value("bITLocked") = 0
+            Else
+                m.Fields_Value("bITLocked") = ARTRECSET.Fields_value("bITLocked")
+            End If
 
         Catch ex As Exception
             Try
