@@ -600,8 +600,15 @@ Public Class Controller
 
                     Dim szTerminalID As String = argenteaFunctionReturnObject(0).TerminalID
                     Dim szClientCode As String = argenteaFunctionReturnObject(0).ClientCode
+
                     Dim xdoc As XDocument = XDocument.Parse(szXMLNode, LoadOptions.None)
 
+                    Dim szPosData As String = String.Empty
+                    Try
+                        szPosData = xdoc.Element("VCA_AUTH_RESP").Element("POS_DATA").Value.ToString()
+                    Catch ex As Exception
+                        szPosData = String.Empty
+                    End Try
                     If xdoc.Elements.Descendants("COUPON").Count > 1 Then ReDim Preserve argenteaFunctionReturnObject(xdoc.Elements.Descendants("COUPON").Count - 1)
                     Dim dTaTotal As Decimal = taobj.GetTotal
                     For Each xEl As XElement In xdoc.Elements.Descendants("COUPON").ToList()
@@ -612,6 +619,7 @@ Public Class Controller
                         argenteaFunctionReturnObject(index).ArgenteaFunction = InternalArgenteaFunctionTypes.ValidationValassis
                         argenteaFunctionReturnObject(index).TerminalID = szTerminalID
                         argenteaFunctionReturnObject(index).ClientCode = szClientCode
+                        argenteaFunctionReturnObject(index).PosData = szPosData
 
                         argenteaFunctionReturnObject(index).CouponCode = xEl.Element("COUPON_CODE").Value.ToString()
                         argenteaFunctionReturnObject(index).CodeResult = xEl.Element("RESULT_CODE").Value.ToString()
@@ -956,6 +964,11 @@ Public Class Controller
                 If Not TaExternalServiceRec.ExistField("szClientCode") Then TaExternalServiceRec.AddField("szClientCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
                 TaExternalServiceRec.setPropertybyName("szClientCode", argenteaFunctionReturnObject(i).ClientCode.ToString)
             End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).PosData) Then
+                If Not TaExternalServiceRec.ExistField("szPosData") Then TaExternalServiceRec.AddField("szPosData", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szPosData", argenteaFunctionReturnObject(i).PosData.ToString)
+            End If
+
 
             With TaExternalServiceRec
                 ' only for coupon valassis. I need to stored the external service even if the coupon is not used

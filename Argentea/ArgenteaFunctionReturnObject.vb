@@ -283,6 +283,7 @@ Public Class ArgenteaFunctionReturnObject
     Public SkuList As String = ""
     Public SkuSaleNum As String = ""
     Public ClientCode As String = ""
+    Public PosData As String = ""
 #End Region
 
 End Class
