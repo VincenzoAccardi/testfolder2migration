@@ -144,7 +144,7 @@ Public Class ValassisCouponController
             LOG_Error(getLocationString(funcName), "Request: Progressive: " + lProgressive.ToString + ", szTaNmbr: " + szTaNmbr.ToString + ", szRequestNumberID: " + szRequestNumberID.ToString + ",szNodeXML :" + szNodeXML.ToString)
 
             response.ReturnCode = ArgenteaCOMObject.NotificationValassis(lProgressive, szTaNmbr, szRequestNumberID, szNodeXML, szMessageOut)
-            LOG_Debug(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". Output: " & szMessageOut)
+            LOG_Error(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". Output: " & szMessageOut)
             If response.ReturnCode <> ArgenteaFunctionsReturnCode.OK Then
                 szMessageOut = "KO;;" + szMessageOut + ";;;;"
             End If

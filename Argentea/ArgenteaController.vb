@@ -800,10 +800,10 @@ Public Class Controller
         Dim ListArt As New Dictionary(Of Integer, Integer)
         For Each szSku As String In szSkuList.Split(",")
 
-            If (lArtCount >= lSkuSaleNum) Then
-                szSkuNotSold = szSkuNotSold + szSku + ","
-                Continue For
-            End If
+            'If (lArtCount >= lSkuSaleNum) Then
+            '    szSkuNotSold = szSkuNotSold + szSku + ","
+            '    Continue For
+            'End If
             Dim xElList As List(Of XElement) = New List(Of XElement)
             If szSku.EndsWith("*") Then
                 xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode[starts-with(.," + szSku.ToString.Replace("*", "") + ")]) and (not(bIsInValassisSkuSold))] ").ToList
@@ -814,8 +814,15 @@ Public Class Controller
             End If
             If xElList.Count > 0 Then
 
+                If (lArtCount >= lSkuSaleNum) Then
+                    szSkuNotSold = szSkuNotSold + szSku + ","
+                    Continue For
+                End If
+
+
                 'Dim xEl As XElement = xElList.FirstOrDefault()
                 For Each xEl As XElement In xElList
+
                     If lArtCount = lSkuSaleNum Then
                         Exit For
                     End If
@@ -843,7 +850,7 @@ Public Class Controller
                     lArtInList = lArtCount
                 End If
             Else
-                szSkuNotSold = szSkuNotSold + szSku + ","
+                ' szSkuNotSold = szSkuNotSold + szSku + ","
             End If
 
         Next
