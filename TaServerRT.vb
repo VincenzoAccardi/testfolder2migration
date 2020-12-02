@@ -81,12 +81,12 @@ Public Class TaServerRT
         End Set
 
     End Property
-    Public Overridable Property szLotteryCustomerCode() As String
+    Public Overridable Property szLotteryCode() As String
         Get
-            Return m.Fields_Value("szLotteryCustomerCode")
+            Return m.Fields_Value("szLotteryCode")
         End Get
         Set(ByVal value As String)
-            m.Fields_Value("szLotteryCustomerCode") = value
+            m.Fields_Value("szLotteryCode") = value
         End Set
 
     End Property
@@ -150,6 +150,14 @@ Public Class TaServerRT
             m.Fields_Value("szRTFileName") = value
         End Set
     End Property
+    Public Overridable Property TransactionType() As String
+        Get
+            Return m.Fields_Value("TransactionType")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("TransactionType") = value
+        End Set
+    End Property
 #End Region
 
 #Region "New/Finalize"
@@ -172,7 +180,7 @@ Public Class TaServerRT
             '' ---------------
             m.Append("szServerRTName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szFiscalCodeOrVatNumber", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
-            m.Append("szLotteryCustomerCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szLotteryCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szLotteryStoreCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szLotteryServerRTCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("lNumeroAzzeramento", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
@@ -181,6 +189,7 @@ Public Class TaServerRT
             m.Append("szTaType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szDate", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szRTFileName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("TransactionType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
