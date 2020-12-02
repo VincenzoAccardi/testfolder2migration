@@ -158,6 +158,14 @@ Public Class TaServerRT
             m.Fields_Value("TransactionType") = value
         End Set
     End Property
+    Public Overridable Property szOriginalRTDate() As String
+        Get
+            Return m.Fields_Value("szOriginalRTDate")
+        End Get
+        Set(ByVal value As String)
+            m.Fields_Value("szOriginalRTDate") = value
+        End Set
+    End Property
 #End Region
 
 #Region "New/Finalize"
@@ -190,6 +198,7 @@ Public Class TaServerRT
             m.Append("szDate", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szRTFileName", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("TransactionType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szOriginalRTDate", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
         Catch ex As Exception
             Try
