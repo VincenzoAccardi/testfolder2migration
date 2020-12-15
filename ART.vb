@@ -58,6 +58,16 @@ Public Class ART : Inherits TPDotnet.Pos.ART
         End Set
     End Property
 
+    Public Overridable Property bITServiceItem() As Integer
+        Get
+            bITServiceItem = m.Fields_Value("bITServiceItem")
+        End Get
+        Set(value As Integer)
+            m.Fields_Value("bITServiceItem") = value
+        End Set
+    End Property
+
+
 #End Region
 
 #Region "Overrides"
@@ -69,6 +79,7 @@ Public Class ART : Inherits TPDotnet.Pos.ART
         m.Append("szITSpecialItemType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
         m.Append("szITSpecialItemType1", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
         m.Append("bITLocked", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+        m.Append("bITServiceItem", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
 
     End Sub
 
@@ -303,11 +314,26 @@ Public Class ART : Inherits TPDotnet.Pos.ART
                 m.Fields_Value("szITSpecialItemType1") = ARTRECSET.Fields_value("szITSpecialItemType1")
             End If
 
-            If IsDBNull(ARTRECSET.Fields_value("bITLocked")) Then
+            Try
+                If IsDBNull(ARTRECSET.Fields_value("bITLocked")) Then
+                    m.Fields_Value("bITLocked") = 0
+                Else
+                    m.Fields_Value("bITLocked") = ARTRECSET.Fields_value("bITLocked")
+                End If
+            Catch ex As Exception
                 m.Fields_Value("bITLocked") = 0
-            Else
-                m.Fields_Value("bITLocked") = ARTRECSET.Fields_value("bITLocked")
-            End If
+            End Try
+
+            Try
+                If IsDBNull(ARTRECSET.Fields_value("bITServiceItem")) Then
+                    m.Fields_Value("bITServiceItem") = 0
+                Else
+                    m.Fields_Value("bITServiceItem") = ARTRECSET.Fields_value("bITServiceItem")
+                End If
+            Catch ex As Exception
+                m.Fields_Value("bITServiceItem") = 0
+            End Try
+
 
         Catch ex As Exception
             Try
