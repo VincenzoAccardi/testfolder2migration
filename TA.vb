@@ -80,7 +80,18 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
             End If
 
         Catch ex As Exception
-            Throw ex
+            If obj.sid = TPDotnet.Pos.TARecTypes.iTA_HEADER Then
+                LOG_Error(getLocationString(funcName), ex.Message)
+                LOG_Error(getLocationString(funcName), "Error unknown on header. Try to add the header again.")
+                Try
+                    MyBase.AddObject(obj, iPos)
+                Catch ex2 As Exception
+                    LOG_Error(getLocationString(funcName), "ex 2: " + ex2.Message)
+                End Try
+            Else
+                Throw ex
+
+            End If
         End Try
 
     End Sub
@@ -951,13 +962,14 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
             LOG_FuncStart(getLocationString("Reorg"))
 
+            ReorgForWebService()
+
             i = 0
             j = TARecords.Count()
             ' less than 2 elements
             If j < 2 Then
                 Exit Sub
             End If
-
             Do While i < j
                 aktsid = 0
                 For i = 1 To j
@@ -1148,6 +1160,121 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         Finally
             LOG_FuncExit(getLocationString("Reorg"), "")
         End Try
+    End Sub
+
+    Protected Overridable Function GetTAParams(ByRef szKey As String) As String
+
+        Dim RECSET As New ADODB_Recordset
+        Dim SqlString As String
+
+        GetTAParams = String.Empty
+
+        ' fill the FooterLines in taobj from database store
+        Try
+            LOG_FuncStart(getLocationString("GetMaskFields"))
+
+            ' read data
+            ' =========
+            ' read transaction counter
+            ' ========================
+            SqlString = "SELECT * FROM Parameter " &
+                         "WHERE lRetailStoreID = " & lRetailStoreID & "  " &
+                           "AND szWorkstationGroupID = '" & szWorkstationGroupID & "' " &
+                           "AND szObject = 'TA' " &
+                           "AND szDllName = 'STPOSMOD' " &
+                           "AND szKey LIKE '" & szKey & "' "
+
+
+            LOG_Debug(getLocationString("GetLastTransactionNmbr"), SqlString)
+            RECSET.Open(SqlString, conTPPosDB, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+            If RECSET.EOF Then
+                GetTAParams = String.Empty
+                RECSET.Close()
+                Exit Function
+            End If
+
+            While Not RECSET.EOF
+                GetTAParams = RECSET.Fields_value("szContents").ToString.Trim
+                RECSET.MoveNext()
+            End While
+
+            RECSET.Close()
+            RECSET = Nothing
+
+            Exit Function
+
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString("GetMaskFields"), ex)
+
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString("GetMaskFields"), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString("GetMaskFields"), "Function GetMaskFields returns")
+        End Try
+
+    End Function
+    Private Sub ReorgForWebService()
+        Dim i As Short
+        Dim j As Short
+
+        Dim aktsid As Short
+        Dim lastsId As Short
+        Try
+
+            LOG_FuncStart(getLocationString("ReorgForWebService"))
+
+            i = 0
+            j = TARecords.Count()
+            ' less than 2 elements
+            If j < 2 Then
+                Exit Sub
+            End If
+
+            Dim szParam As String = GetTAParams("ALLOW_REORG_FOR_WEBSERVICE")
+
+            Dim bAllowReorgForWebService As Boolean = IIf(szParam.Trim.Equals("Y"), True, False)
+
+            If Not bAllowReorgForWebService Then Exit Sub
+
+            Dim ReorgHeader As Boolean = IIf(CType(TARecords.Item(1), TaBaseRec).sid = PosDef.TARecTypes.iTA_HEADER, False, True)
+            Dim ReorgStatistik As Boolean = IIf(CType(TARecords.Item(2), TaBaseRec).sid = PosDef.TARecTypes.iTA_STATISTIK, False, True)
+
+            Do While i < j
+                aktsid = 0
+                For i = 1 To j
+                    lastsId = aktsid
+                    aktsid = CType(TARecords.Item(i), TaBaseRec).sid
+                    ' Reorg TA_HEADER
+                    If aktsid = PosDef.TARecTypes.iTA_HEADER AndAlso ReorgHeader Then
+                        TaChangeRec(1, i)
+                        i = 0
+                        ReorgHeader = False
+                        Exit For
+                    End If
+                    'Reorg iTA_STATISTIK
+                    If aktsid = PosDef.TARecTypes.iTA_STATISTIK AndAlso ReorgStatistik Then
+                        TaChangeRec(2, i)
+                        i = 0
+                        ReorgStatistik = False
+                        Exit For
+                    End If
+                    ' we will delete the second TA_CUSTOMER
+                    If aktsid = PosDef.TARecTypes.iTA_CUSTOMER AndAlso lastsId = PosDef.TARecTypes.iTA_CUSTOMER Then
+                        Remove(i - 1)
+                        j = j - 1 ' because we have removed 1 record
+                        i = 0
+                        Exit For
+                    End If
+                Next
+            Loop
+        Catch InnerEx As Exception
+            LOG_ErrorInTry(getLocationString("ReorgForWebService"), InnerEx)
+        Finally
+            LOG_FuncExit(getLocationString("ReorgForWebService"), "")
+        End Try
+
     End Sub
 
     Public Overridable Function getLastTaxIncludedRecNr() As Short
