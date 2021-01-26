@@ -241,6 +241,7 @@
     <Compile Include="TaFiscalNonFiscalInfoRec.vb" />
     <Compile Include="TaFtrRec.vb" />
     <Compile Include="TaHelloWorldRec.vb" />
+    <Compile Include="TaMediaGroupRec.vb" />
     <Compile Include="TaMediaRec.vb" />
     <Compile Include="TaPrinterRT.vb" />
     <Compile Include="TaServerRT.vb" />
