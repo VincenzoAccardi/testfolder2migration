@@ -279,11 +279,19 @@ Public Class ArgenteaFunctionReturnObject
     Public CouponCode As String = ""
     Public CouponCancelReason As String = ""
     Public CouponTransID As String = ""
+#Region "valassis properties"
     Public SkuSold As String = ""
     Public SkuList As String = ""
     Public SkuSaleNum As String = ""
+    Public szSkuList As String = ""
+    Public szMinRecpAmt As String = ""
+    Public szSkuSaleNum As String = ""
+    Public szSkuSaleMode As String = ""
+    Public szCouponType As String = ""
+
     Public ClientCode As String = ""
     Public PosData As String = ""
+#End Region
 #End Region
 
 End Class

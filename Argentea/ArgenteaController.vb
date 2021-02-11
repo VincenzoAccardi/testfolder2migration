@@ -583,8 +583,8 @@ Public Class Controller
 
                 If eMethod = Method.ValidationValassis Then
 
-                    If response.ReturnCode = ArgenteaFunctionsReturnCode.KO AndAlso
-                        String.IsNullOrEmpty(argenteaFunctionReturnObject(0).CodeResult.ToString) AndAlso
+                    If Not argenteaFunctionReturnObject(0).Successfull AndAlso
+                    Not String.IsNullOrEmpty(argenteaFunctionReturnObject(0).CodeResult.ToString) AndAlso
                         MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
                         showValassisErrorMessage(argenteaFunctionReturnObject(0), cmd)
                         Return False
@@ -627,13 +627,19 @@ Public Class Controller
                         argenteaFunctionReturnObject(index).CouponTransID = xEl.Element("TRANS_ID").Value.ToString()
                         argenteaFunctionReturnObject(index).CouponCancelReason = String.Empty
                         argenteaFunctionReturnObject(index).SkuSaleNum = xEl.Element("SKU_SALE_NUM").Value.ToString()
-                        Dim szSkuList As String = xEl.Element("SKU_LIST").Value.ToString()
-                        Dim lMinRecpAmt As Integer = CInt(xEl.Element("MIN_RECP_AMT").Value.ToString())
-                        Dim lSkuSaleNum As Integer = CInt(xEl.Element("SKU_SALE_NUM").Value.ToString())
-                        Dim lSkuSaleMode As Integer = CInt(xEl.Element("SKU_SALE_MODE").Value.ToString())
-                        Dim lCouponType As Integer = CInt(xEl.Element("COUPON_TYPE").Value.ToString())
-                        If argenteaFunctionReturnObject(index).CodeResult = IValassisValidationCouponResultCode.OK Then
-                            CheckConditionValassis(lMinRecpAmt, lCouponType, dTaTotal, szSkuList, lSkuSaleNum, lSkuSaleMode, taobj.TAtoXDocument(False, 0, False), argenteaFunctionReturnObject(index), response)
+                        argenteaFunctionReturnObject(index).szSkuList = xEl.Element("SKU_LIST").Value.ToString()
+                        argenteaFunctionReturnObject(index).szMinRecpAmt = xEl.Element("MIN_RECP_AMT").Value.ToString()
+                        argenteaFunctionReturnObject(index).szSkuSaleNum = xEl.Element("SKU_SALE_NUM").Value.ToString()
+                        argenteaFunctionReturnObject(index).szSkuSaleMode = xEl.Element("SKU_SALE_MODE").Value.ToString()
+                        argenteaFunctionReturnObject(index).szCouponType = xEl.Element("COUPON_TYPE").Value.ToString()
+
+                        Dim szSkuList As String = argenteaFunctionReturnObject(index).szSkuList
+                        Dim lMinRecpAmt As Integer = CInt(argenteaFunctionReturnObject(index).szMinRecpAmt)
+                        Dim lSkuSaleNum As Integer = CInt(argenteaFunctionReturnObject(index).szSkuSaleNum)
+                        Dim lSkuSaleMode As Integer = CInt(argenteaFunctionReturnObject(index).szSkuSaleMode)
+                        Dim lCouponType As Integer = CInt(argenteaFunctionReturnObject(index).szCouponType)
+                        If argenteaFunctionReturnObject(index).CodeResult = IValassisValidationCouponResultCode.OK AndAlso MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
+                            CheckConditionValassis(lMinRecpAmt, lCouponType, dTaTotal, szSkuList, lSkuSaleNum, lSkuSaleMode, argenteaFunctionReturnObject(index), response)
                         End If
 
                         If MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
@@ -656,8 +662,10 @@ Public Class Controller
                                         Dim szSkuSold As String = base.GetPropertybyName("szSkuSold")
                                         Dim lSkuSaleNum As Integer = CInt(base.GetPropertybyName("szSkuSaleNum"))
                                         Dim lArtCount As Integer = 0
+
                                         For Each szSku As String In szSkuSold.Split(",")
                                             Dim xElList As List(Of XElement) = New List(Of XElement)
+                                            If szSku.Length = 0 Then Continue For
                                             If szSku.EndsWith("*") Then
                                                 xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode[starts-with(.," + szSku.ToString.Replace("*", "") + ")]) and (bIsInValassisSkuSold=1 or lValassisSkuSoldCount>0)] ").ToList
                                             Else
@@ -754,149 +762,42 @@ Public Class Controller
         End Select
         Return True
     End Function
-    Private Sub CheckConditionValassis(lMinRecpAmt As Integer, lCouponType As Integer, ByRef dTaTotal As Decimal, szSkuList As String, lSkuSaleNum As Integer, lSkuSaleMode As Integer, xDocument As XDocument, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse)
+    Private Sub CheckConditionValassis(lMinRecpAmt As Integer, lCouponType As Integer, ByRef dTaTotal As Decimal, szSkuList As String, lSkuSaleNum As Integer, lSkuSaleMode As Integer, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse)
 
-        If Not CheckConditionCouponTypeValassis(lCouponType, argenteaFunctionReturnObject, response) Then
-            Exit Sub
-        End If
-
-        If Not CheckConditionTypeValassis(lMinRecpAmt, argenteaFunctionReturnObject, response) Then
-            Exit Sub
-        End If
-
-        If Not CheckConditionSkuValassis(szSkuList, lSkuSaleNum, lSkuSaleMode, taobj.TAtoXDocument(False, 0, False), argenteaFunctionReturnObject, response) Then
-            Exit Sub
-        End If
-
-        If Not CheckConditionAmountValassis(dTaTotal, argenteaFunctionReturnObject, response) Then
-            Exit Sub
-        End If
-    End Sub
-    Private Function CheckConditionCouponTypeValassis(lCouponType As Integer, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
-        CheckConditionCouponTypeValassis = True
-        If lCouponType <> 1 Then
-            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
-            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
-            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
-            CheckConditionCouponTypeValassis = False
-        End If
-    End Function
-    Private Function CheckConditionTypeValassis(lMinRecpAmt As Integer, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
-        CheckConditionTypeValassis = True
-        If lMinRecpAmt > 0 Then
-            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
-            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
-            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
-            CheckConditionTypeValassis = False
-        End If
-    End Function
-    Private Function CheckConditionSkuValassis(szSkuList As String, lSkuSaleNum As Integer, lSkuSaleMode As Integer, xDocument As XDocument, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
-        CheckConditionSkuValassis = True
-        Dim lArtCount As Integer = 0
-        Dim lArtInList As Integer = 0
         Dim szSkuSold As String = String.Empty
         Dim szSkuNotSold As String = String.Empty
-        Dim lSkuSoldCount As Integer = 0
-        Dim ListArt As New Dictionary(Of Integer, Integer)
-        For Each szSku As String In szSkuList.Split(",")
-
-            'If (lArtCount >= lSkuSaleNum) Then
-            '    szSkuNotSold = szSkuNotSold + szSku + ","
-            '    Continue For
-            'End If
-            Dim xElList As List(Of XElement) = New List(Of XElement)
-            If szSku.EndsWith("*") Then
-                xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode[starts-with(.," + szSku.ToString.Replace("*", "") + ")]) and (not(bIsInValassisSkuSold))] ").ToList
-                'lArtCount = xElList.Count
-            Else
-                xElList = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/ART_SALE[(szItemLookupCode=" + szSku.ToString + ") and (not(bIsInValassisSkuSold))]").ToList
-                'lArtCount = xElList.Count
-            End If
-            If xElList.Count > 0 Then
-
-                If (lArtCount >= lSkuSaleNum) Then
-                    szSkuNotSold = szSkuNotSold + szSku + ","
-                    Continue For
-                End If
-
-
-                'Dim xEl As XElement = xElList.FirstOrDefault()
-                For Each xEl As XElement In xElList
-
-                    If lArtCount = lSkuSaleNum Then
-                        Exit For
-                    End If
-                    Dim lTaCreateNmbr As Integer = CInt(xEl.XPathSelectElement("Hdr/lTaCreateNmbr").Value)
-                    Dim myBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.GetPositionFromCreationNmbr(lTaCreateNmbr))
-                    If Not myBaseRec.ExistField("bIsInValassisSkuSold") Then myBaseRec.AddField("bIsInValassisSkuSold", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-                    If Not myBaseRec.ExistField("lValassisSkuSoldCount") Then myBaseRec.AddField("lValassisSkuSoldCount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-                    Integer.TryParse(myBaseRec.GetPropertybyName("lValassisSkuSoldCount"), lSkuSoldCount)
-                    ListArt.Add(lTaCreateNmbr, lSkuSoldCount)
-                    Dim skuConditionSold As Integer = Math.Min((CInt(myBaseRec.GetPropertybyName("dQuantityEntry")) - lSkuSoldCount), (lSkuSaleNum - lArtCount))
-                    lSkuSoldCount = lSkuSoldCount + skuConditionSold
-                    myBaseRec.setPropertybyName("lValassisSkuSoldCount", lSkuSoldCount.ToString)
-                    If lSkuSoldCount = CInt(myBaseRec.GetPropertybyName("dQuantityEntry")) Then
-                        myBaseRec.setPropertybyName("bIsInValassisSkuSold", True)
-                    Else
-
-                    End If
-                    lArtCount += skuConditionSold
-                Next
-
-                szSkuSold = szSkuSold + szSku + ","
-                If lSkuSaleMode = 1 Then
-                    lArtInList = lArtInList + 1
-                Else
-                    lArtInList = lArtCount
-                End If
-            Else
-                ' szSkuNotSold = szSkuNotSold + szSku + ","
-            End If
-
-        Next
-
-        If (lArtCount < lSkuSaleNum) Then
+        If Not Common.CheckConditionCouponTypeValassis(lCouponType) Then
+            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
             argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
-            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.SKUNOTSOLD).ToString
             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
-            For Each lTaCreateNmbr As Integer In ListArt.Keys
-                Dim myBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(taobj.GetPositionFromCreationNmbr(lTaCreateNmbr))
-                If Not myBaseRec.ExistField("bIsInValassisSkuSold") Then myBaseRec.AddField("bIsInValassisSkuSold", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-                If Not myBaseRec.ExistField("lValassisSkuSoldCount") Then myBaseRec.AddField("lValassisSkuSoldCount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-                myBaseRec.setPropertybyName("lValassisSkuSoldCount", ListArt(lTaCreateNmbr).ToString)
-                If ListArt(lTaCreateNmbr) <> CInt(myBaseRec.GetPropertybyName("dQuantityEntry")) Then
-                    myBaseRec.setPropertybyName("bIsInValassisSkuSold", False)
-                End If
-            Next
-            CheckConditionSkuValassis = False
+            Exit Sub
+        End If
+
+        If Not Common.CheckConditionTypeValassis(lMinRecpAmt) Then
+            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONTYPENOTMANAGED).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
+            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+            Exit Sub
+        End If
+
+        If Not Common.CheckConditionSkuValassis(szSkuList, lSkuSaleNum, lSkuSaleMode, taobj, szSkuSold, szSkuNotSold) Then
+            argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.SKUNOTSOLD).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
+            response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+            Exit Sub
         Else
-            If Not String.IsNullOrEmpty(szSkuSold) Then szSkuSold = szSkuSold.Substring(0, szSkuSold.Length - 1)
-            If Not String.IsNullOrEmpty(szSkuNotSold) Then szSkuNotSold = szSkuNotSold.Substring(0, szSkuNotSold.Length - 1)
             argenteaFunctionReturnObject.SkuSold = szSkuSold
             argenteaFunctionReturnObject.SkuList = szSkuNotSold
         End If
 
-    End Function
-    Private Function CheckConditionAmountValassis(ByRef dTaTotal As Decimal, argenteaFunctionReturnObject As ArgenteaFunctionReturnObject, response As ArgenteaResponse) As Boolean
-        Dim bisPayable As Boolean = True
-        If MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
-            Dim myMedia As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
-            If myMedia.dTaPaid < CDec(argenteaFunctionReturnObject.Amount / 100) Then
-                bisPayable = False
-            End If
-        Else
-            If dTaTotal < CDec(argenteaFunctionReturnObject.Amount / 100) Then
-                bisPayable = False
-            Else
-                dTaTotal = dTaTotal - CDec(argenteaFunctionReturnObject.Amount / 100)
-            End If
-        End If
-        If Not bisPayable Then
-            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
+        If Not Common.CheckConditionAmountValassis(dTaTotal, MyCurrentRecord, argenteaFunctionReturnObject.Amount) Then
             argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.COUPONGREATHERTHENTOTAMOUNT).ToString
+            argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
+            Exit Sub
         End If
-    End Function
+    End Sub
+
 #End Region
     Private Sub FillExternalServiceRecord(argenteaFunctionReturnObject() As ArgenteaFunctionReturnObject, response As ArgenteaResponse, eMethod As Method)
         For i As Integer = 0 To argenteaFunctionReturnObject.GetUpperBound(0)
@@ -976,6 +877,29 @@ Public Class Controller
                 TaExternalServiceRec.setPropertybyName("szPosData", argenteaFunctionReturnObject(i).PosData.ToString)
             End If
 
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).szSkuList) Then
+                If Not TaExternalServiceRec.ExistField("szSkuList") Then TaExternalServiceRec.AddField("szSkuList", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szSkuList", argenteaFunctionReturnObject(i).szSkuList.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).szMinRecpAmt) Then
+                If Not TaExternalServiceRec.ExistField("szMinRecpAmt") Then TaExternalServiceRec.AddField("szMinRecpAmt", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szMinRecpAmt", argenteaFunctionReturnObject(i).szMinRecpAmt.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).szSkuSaleNum) Then
+                If Not TaExternalServiceRec.ExistField("szSkuSaleNum") Then TaExternalServiceRec.AddField("szSkuSaleNum", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szSkuSaleNum", argenteaFunctionReturnObject(i).szSkuSaleNum.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).szSkuSaleMode) Then
+                If Not TaExternalServiceRec.ExistField("szSkuSaleMode") Then TaExternalServiceRec.AddField("szSkuSaleMode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szSkuSaleMode", argenteaFunctionReturnObject(i).szSkuSaleMode.ToString)
+            End If
+            If Not String.IsNullOrEmpty(argenteaFunctionReturnObject(i).szCouponType) Then
+                If Not TaExternalServiceRec.ExistField("szCouponType") Then TaExternalServiceRec.AddField("szCouponType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+                TaExternalServiceRec.setPropertybyName("szCouponType", argenteaFunctionReturnObject(i).szCouponType.ToString)
+            End If
+
+            If Not TaExternalServiceRec.ExistField("szFunctionType") Then TaExternalServiceRec.AddField("szFunctionType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            TaExternalServiceRec.setPropertybyName("szFunctionType", response.FunctionType.ToString)
 
             With TaExternalServiceRec
                 ' only for coupon valassis. I need to stored the external service even if the coupon is not used

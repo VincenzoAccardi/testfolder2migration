@@ -457,7 +457,10 @@ Public Class GiftCardController
 
             For i As Integer = taobj.taCollection.Count To 1 Step -1
                 Dim MyTaBaseRec As TPDotnet.Pos.TaBaseRec = taobj.GetTALine(i)
-                If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE AndAlso MyTaBaseRec.theHdr.lTaRefToCreateNmbr = MyTaMediaRec.theHdr.lTaCreateNmbr Then
+                If MyTaBaseRec.sid = TPDotnet.IT.Common.Pos.TARecTypes.iTA_EXTERNAL_SERVICE AndAlso
+                    MyTaBaseRec.theHdr.lTaRefToCreateNmbr = MyTaMediaRec.theHdr.lTaCreateNmbr AndAlso
+                    (MyTaBaseRec.ExistField("szStatus") AndAlso
+                    MyTaBaseRec.GetPropertybyName("szStatus") = TPDotnet.IT.Common.Pos.TaExternalServiceRec.ExternalServiceStatus.Activated.ToString) Then
                     myTaExternalService = CType(MyTaBaseRec, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
                     Exit For
                 End If

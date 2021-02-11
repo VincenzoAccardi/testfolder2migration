@@ -127,6 +127,7 @@
     <Reference Include="TPDotnet.Pos.BarcodeDefinitions, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.BarcodeDefinitions.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.Pos.BarcodeTemplate">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.BarcodeTemplate.dll</HintPath>
@@ -183,6 +184,7 @@
     <Reference Include="TPDotnet.Pos.ModPrintFloat, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModPrintFloat.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.Pos.ModShortSignOff, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
@@ -197,6 +199,7 @@
     <Reference Include="TPDotnet.Pos.ModTrainingStatistic, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModTrainingStatistic.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="TPDotnet.Pos.ModUtils">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModUtils.dll</HintPath>
@@ -207,7 +210,10 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.PosModeBase, Version=5.0.1.7, Culture=neutral, PublicKeyToken=null" />
+    <Reference Include="TPDotnet.Pos.PosModeBase, Version=5.0.1.7, Culture=neutral, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="TPDotnet.Pos.Shared">
       <HintPath>..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.Shared.dll</HintPath>
       <SpecificVersion>False</SpecificVersion>
@@ -242,6 +248,7 @@
     <Reference Include="USR_FormBuonoChiaro, Version=50.17.2.4, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\..\TPDev5017\TPActDev\dev.net\Pos\Bin\USR_FormBuonoChiaro.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

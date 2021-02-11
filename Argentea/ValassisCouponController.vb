@@ -6,6 +6,7 @@ Imports System
 Imports System.Collections.Generic
 Imports System.Xml.XPath
 Imports System.Linq
+Imports System.IO
 
 Public Class ValassisCouponController
 #Region "IValassisCouponValidation"
@@ -51,12 +52,23 @@ Public Class ValassisCouponController
 
             response.ReturnCode = ArgenteaCOMObject.ValidationValassis(lProgressive, szCouponCode, szNFCData, szWalletID, szWorkstationNmbr, szOperationID, szTaNmbr, szCustomerID, szMessageOut)
 
-            szMessageOut = System.Net.WebUtility.HtmlDecode(szMessageOut)
 
-            LOG_Error(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". CouponCode: " & szCouponCode & ", Customer: " & szCustomerID & ". Output: " & szMessageOut)
             If response.ReturnCode <> ArgenteaFunctionsReturnCode.OK Then
                 szMessageOut = "KO;;" + szMessageOut + ";;;;"
+            Else
+                Dim szFileName As String = TheModCntr.getParam(PARAMETER_DLL_NAME + ".Valassis.ReponseFile").Trim()
+                szMessageOut = String.Empty
+                If File.Exists(szFileName) Then
+                    Dim lines() As String = File.ReadAllLines(szFileName)
+                    For Each line As String In lines
+                        szMessageOut += line
+                    Next
+                End If
+                szMessageOut = System.Net.WebUtility.HtmlDecode(szMessageOut)
+
             End If
+
+            LOG_Error(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". CouponCode: " & szCouponCode & ", Customer: " & szCustomerID & ". Output: " & szMessageOut)
 
             TheModCntr.ObjectCash("Valassis_Progressive") = taobj.lactTaNmbr.ToString + "." + (lProgressive + 1).ToString
 
@@ -144,10 +156,23 @@ Public Class ValassisCouponController
             LOG_Error(getLocationString(funcName), "Request: Progressive: " + lProgressive.ToString + ", szTaNmbr: " + szTaNmbr.ToString + ", szRequestNumberID: " + szRequestNumberID.ToString + ",szNodeXML :" + szNodeXML.ToString)
 
             response.ReturnCode = ArgenteaCOMObject.NotificationValassis(lProgressive, szTaNmbr, szRequestNumberID, szNodeXML, szMessageOut)
-            LOG_Error(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". Output: " & szMessageOut)
+
             If response.ReturnCode <> ArgenteaFunctionsReturnCode.OK Then
                 szMessageOut = "KO;;" + szMessageOut + ";;;;"
+            Else
+                Dim szFileName As String = TheModCntr.getParam(PARAMETER_DLL_NAME + ".Valassis.ReponseFile").Trim()
+                szMessageOut = String.Empty
+                If File.Exists(szFileName) Then
+                    Dim lines() As String = File.ReadAllLines(szFileName)
+                    For Each line As String In lines
+                        szMessageOut += line
+                    Next
+                End If
+                szMessageOut = System.Net.WebUtility.HtmlDecode(szMessageOut)
             End If
+
+            LOG_Error(getLocationString(funcName), "ReturnCode: " & response.ReturnCode.ToString & ". Output: " & szMessageOut)
+
             TheModCntr.ObjectCash("Valassis_Progressive") = taobj.lactTaNmbr.ToString + "." + (lProgressive + 1).ToString
 
             response.MessageOut = szMessageOut
