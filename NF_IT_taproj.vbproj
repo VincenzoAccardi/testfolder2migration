@@ -251,6 +251,7 @@
     <Compile Include="TaVLLCustBalanceRec.vb" />
     <Compile Include="TaVLLCustMessageRec.vb" />
     <Compile Include="TaVLLPrize.vb" />
+    <Compile Include="TAX.vb" />
     <Compile Include="TaZReportRec.vb" />
   </ItemGroup>
   <ItemGroup>

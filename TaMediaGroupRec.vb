@@ -62,6 +62,15 @@ Public Class TaMediaGroupRec
         End Set
     End Property
 
+    Public Overridable Property szPrintCode() As String
+        Get
+            szPrintCode = m.Fields_Value("szPrintCode")
+        End Get
+        Set(ByVal Value As String)
+            m.Fields_Value("szPrintCode") = Value
+        End Set
+    End Property
+
 
 #Region "New/Finalize"
 
@@ -83,6 +92,7 @@ Public Class TaMediaGroupRec
             m.Append("szDescription", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szMediaType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             m.Append("szGroupType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            m.Append("szPrintCode", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
         Catch ex As Exception
             Try
                 LOG_Error(getLocationString("DefineFields"), ex)
