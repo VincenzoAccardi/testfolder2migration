@@ -90,7 +90,14 @@ Public Class Controller
         {"EXTERNALGIFTCARD", Controller.ExternalGiftCardController},
         {"PHONERECHARGE", Controller.PhoneRechargeController},
         {"SIGNOFF", Controller.EFTController},
-        {"EMEAL", Controller.BPEController}
+        {"EMEAL", Controller.BPEController},
+        {"SATISPAYQRC", Controller.ADVController},
+        {"CONADPAY", Controller.ADVController},
+        {"TINABA", Controller.ADVController},
+        {"ALIPAY", Controller.ADVController},
+        {"WECHAT", Controller.ADVController},
+        {"POSTEPAY", Controller.ADVController},
+        {"FIERAPAY", Controller.ADVController}
     }
 
     Protected GetStatus As New Dictionary(Of Method, TaExternalServiceRec.ExternalServiceStatus) From {
@@ -366,11 +373,12 @@ Public Class Controller
         Dim funcName As String = "GetService"
         Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, ElectronicFundsTransferMedia,
             ElectronicMealVoucherCeliacMedia, ElectronicMealVoucherMedia,
-            PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem, "SIGNOFF", ValassisCoupon, ValassisCouponMedia}
+            PayFastMedia, PhoneRechargeItem, ExternalGiftCardItem, GiftCardItem, "SIGNOFF", ValassisCoupon, ValassisCouponMedia,
+           SatispayQRCodeMedia, ConadPayMedia, TinabaMedia, AliPayMedia, WeChatMedia, PostePayMedia, FieraPayMedia}
 
         Try
             ' get & check the current payment service
-            GetService = availableServices.Where(Function(s) szExternalID.StartsWith(s.ToUpper)).FirstOrDefault
+            GetService = availableServices.OrderByDescending(Function(x) x).Where(Function(s) szExternalID.StartsWith(s.ToUpper)).FirstOrDefault
 
         Catch ex As Exception
             Try

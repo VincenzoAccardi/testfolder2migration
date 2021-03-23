@@ -19,6 +19,13 @@ Public Class ADVController
         JIFFY = 1
         SATISPAY = 2
         BITCOIN = 3
+        SATISPAYQRC = 4
+        CONADPAY = 5
+        TINABA = 6
+        ALIPAY = 7
+        WECHAT = 8
+        POSTEPAY = 9
+        FIERAPAY = 10
     End Enum
 
     Public Function Payment(ByRef ArgenteaCOMObject As ARGLIB.argpay,
@@ -76,12 +83,12 @@ Public Class ADVController
     Private Function GetOperationType(ByVal szExternalID As String) As Integer
         Dim GetService As String
         Dim funcName As String = "GetService"
-        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia}
+        Dim availableServices As String() = {JiffyMedia, SatispayMedia, BitCoinMedia, SatispayQRCodeMedia, ConadPayMedia, TinabaMedia, AliPayMedia, WeChatMedia, PostePayMedia, FieraPayMedia}
 
         Try
 
             ' get & check the current payment service
-            GetService = availableServices.Where(Function(s) szExternalID.StartsWith(s.ToUpper)).FirstOrDefault
+            GetService = availableServices.OrderByDescending(Function(x) x).Where(Function(s) szExternalID.StartsWith(s.ToUpper)).FirstOrDefault
             If String.IsNullOrEmpty(GetService) Then Exit Function
 
             Return DirectCast([Enum].Parse(GetType(PaymentAdv), GetService), PaymentAdv)
