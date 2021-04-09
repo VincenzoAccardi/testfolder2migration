@@ -374,6 +374,29 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         End Try
     End Function
 
+    Public Overrides Function FillTaxAtEnd() As Boolean
+        Dim funcName As String = "FillTaxAtEnd"
+
+        Try
+
+            If getLastTaxIncludedRecNr() > 0 Then
+                Return True
+            End If
+
+            FillTaxAtEnd = MyBase.FillTaxAtEnd()
+
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString(funcName), ex)
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString(funcName), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString("GetFiscalReturns"), "Function GetFiscalReturns returns " & GetFiscalReturns.ToString)
+        End Try
+
+    End Function
+
     Public Overridable Function GetPayedValueForMediaMember(ByVal lMediaMember As Integer) As Decimal Implements IFiscalTA.GetPayedValueForMediaMember
 
         Dim MyTaMediaRec As TaMediaRec
