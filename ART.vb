@@ -83,8 +83,8 @@ Public Class ART : Inherits TPDotnet.Pos.ART
 
     End Sub
 
-    Public Overrides Function DBRead(ByRef ActCon As ADODB_Connection, _
-                               ByRef ArtKey As String, _
+    Public Overrides Function DBRead(ByRef ActCon As ADODB_Connection,
+                               ByRef ArtKey As String,
                                ByVal lRetailStoreID As Integer) As Short
 
         ' fields for check the livetime
@@ -94,6 +94,8 @@ Public Class ART : Inherits TPDotnet.Pos.ART
         Dim szTmpTimeValidTo As String
 
         Dim ARTRECSET As New ADODB_Recordset
+        Dim ARTRECLOOKUP As New ADODB_Recordset                 '[CO 20210510]
+        Dim bFoundItemMasterEANLookupCode As Boolean = True     '[CO 20210510]
         Dim bRet As Boolean
 
         DBRead = 0
@@ -104,9 +106,9 @@ Public Class ART : Inherits TPDotnet.Pos.ART
 
 
             ' to do : improve the dbread 
-            SqlString = "SELECT * FROM ItemLookupCode " & _
-                            "WHERE szItemLookupCode = '" & ArtKey.Replace("'", "''") & "'" & _
-                             " AND lRetailStoreID = " & lRetailStoreID & _
+            SqlString = "SELECT * FROM ItemLookupCode " &
+                            "WHERE szItemLookupCode = '" & ArtKey.Replace("'", "''") & "'" &
+                             " AND lRetailStoreID = " & lRetailStoreID &
                              " AND bLocked = 0"
             ARTRECSET.Close()
             LOG_Debug(getLocationString("DBRead"), SqlString)
@@ -127,13 +129,12 @@ Public Class ART : Inherits TPDotnet.Pos.ART
 
                 ArtKey = ARTRECSET.Fields_value("szPOSItemID") ' with this key now to Art
             End If
-
             ' with the ArtNmbr from ArtEan , we read in Art
             ARTRECSET.Close()
-            SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " & _
-                         "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType , POSIdentity.szITSpecialItemType1 as szITSpecialItemType1  FROM Item " & _
-                         "INNER JOIN POSIdentity ON Item.szItemID = POSIdentity.szItemId " & _
-                         "WHERE szPOSItemID = '" & ArtKey.Replace("'", "''") & "'" & _
+            SqlString = "SELECT * , POSIdentity.bLocked as PosIdentitybLocked, " &
+                         "POSIdentity.szITWeightTemplate as szITWeightTemplate, POSIdentity.szITSpecialItemType as szITSpecialItemType , POSIdentity.szITSpecialItemType1 as szITSpecialItemType1  FROM Item " &
+                         "INNER JOIN POSIdentity ON Item.szItemID = POSIdentity.szItemId " &
+                         "WHERE szPOSItemID = '" & ArtKey.Replace("'", "''") & "'" &
                           " AND lRetailStoreID = " & lRetailStoreID
             LOG_Debug(getLocationString("DBRead"), SqlString)
             ARTRECSET.Open(SqlString, ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
@@ -144,6 +145,23 @@ Public Class ART : Inherits TPDotnet.Pos.ART
                 ' ok , we have found the article in table Art
                 If Not IsDBNull(ARTRECSET.Fields_value("szITMasterEan")) AndAlso String.IsNullOrEmpty(szItemLookupCode) Then
                     szItemLookupCode = ARTRECSET.Fields_value("szITMasterEan")
+                    '[CO 20210510 Begin] Check if szItemLookupCode exit from Master Ean Code
+                    ARTRECLOOKUP.Open($"SELECT szItemLookupCode FROM ItemLookupCode WHERE szItemLookupCode = '{szItemLookupCode}'", ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+                    If (ARTRECLOOKUP.EOF) Then bFoundItemMasterEANLookupCode = False
+                    If (ARTRECLOOKUP.State = ADODB_ObjectStateEnum.adStateOpen) Then
+                        ARTRECLOOKUP.Close()
+                    End If
+                    If (Not bFoundItemMasterEANLookupCode) Then
+                        DBRead = 0
+                        Exit Function
+                    End If
+                ElseIf IsDBNull(ARTRECSET.Fields_value("szITMasterEan")) AndAlso String.IsNullOrEmpty(szItemLookupCode) Then
+                    If (ARTRECSET.State = ADODB_ObjectStateEnum.adStateOpen) Then
+                        ARTRECSET.Close()
+                    End If
+                    DBRead = 0
+                    Exit Function
+                    '[CO 20210510 End]
                 End If
             End If
 
