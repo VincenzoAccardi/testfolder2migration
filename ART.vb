@@ -96,6 +96,9 @@ Public Class ART : Inherits TPDotnet.Pos.ART
         Dim ARTRECSET As New ADODB_Recordset
         Dim ARTRECLOOKUP As New ADODB_Recordset                 '[CO 20210510]
         Dim bFoundItemMasterEANLookupCode As Boolean = True     '[CO 20210510]
+        Dim PARAMETERREC As New ADODB_Recordset                 '[CO 20210525]
+        Dim szMasterEanParameter As String = String.Empty       '[CO 20210525]
+        Dim bCheckMasterEan As Boolean = False                  '[CO 20210525]
         Dim bRet As Boolean
 
         DBRead = 0
@@ -145,7 +148,24 @@ Public Class ART : Inherits TPDotnet.Pos.ART
                 ' ok , we have found the article in table Art
                 If Not IsDBNull(ARTRECSET.Fields_value("szITMasterEan")) AndAlso String.IsNullOrEmpty(szItemLookupCode) Then
                     szItemLookupCode = ARTRECSET.Fields_value("szITMasterEan")
-                    '[CO 20210510 Begin] Check if szItemLookupCode exit from Master Ean Code
+                End If
+
+                '[CO 20210525 Begin] Check  MasterEan Cod (submit to CHECK_MASTEREANCODE parameter = Y)
+                PARAMETERREC.Open("SELECT szContents FROM ITParameter WHERE szObject = 'Art' AND szDllName = 'StPosMod' AND szKey = 'CHECK_MASTEREANCODE' ", ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+                If (Not PARAMETERREC.EOF) Then
+                    szMasterEanParameter = PARAMETERREC.Fields_value("szContents").ToString().ToUpper()
+                    bCheckMasterEan = IIf(szMasterEanParameter = "Y", True, False)
+                    If (PARAMETERREC.State = ADODB_ObjectStateEnum.adStateOpen) Then PARAMETERREC.Close()
+                Else
+                    If (PARAMETERREC.State = ADODB_ObjectStateEnum.adStateOpen) Then PARAMETERREC.Close()
+                    PARAMETERREC.Open("SELECT szContents FROM Parameter WHERE szObject = 'Art' AND szDllName = 'StPosMod' AND szKey = 'CHECK_MASTEREANCODE' ", ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
+                    If (Not PARAMETERREC.EOF) Then
+                        szMasterEanParameter = PARAMETERREC.Fields_value("szContents").ToString().ToUpper()
+                        bCheckMasterEan = IIf(szMasterEanParameter = "Y", True, False)
+                    End If
+                    If (PARAMETERREC.State = ADODB_ObjectStateEnum.adStateOpen) Then PARAMETERREC.Close()
+                End If
+                If (bCheckMasterEan AndAlso (Not String.IsNullOrEmpty(szItemLookupCode))) Then
                     ARTRECLOOKUP.Open($"SELECT szItemLookupCode FROM ItemLookupCode WHERE szItemLookupCode = '{szItemLookupCode}'", ActCon, ADODB_CursorTypeEnum.adOpenForwardOnly, ADODB_LockTypeEnum.adLockReadOnly)
                     If (ARTRECLOOKUP.EOF) Then bFoundItemMasterEANLookupCode = False
                     If (ARTRECLOOKUP.State = ADODB_ObjectStateEnum.adStateOpen) Then
@@ -155,14 +175,8 @@ Public Class ART : Inherits TPDotnet.Pos.ART
                         DBRead = 0
                         Exit Function
                     End If
-                ElseIf IsDBNull(ARTRECSET.Fields_value("szITMasterEan")) AndAlso String.IsNullOrEmpty(szItemLookupCode) Then
-                    If (ARTRECSET.State = ADODB_ObjectStateEnum.adStateOpen) Then
-                        ARTRECSET.Close()
-                    End If
-                    DBRead = 0
-                    Exit Function
-                    '[CO 20210510 End]
                 End If
+                '[CO 20210525 End]
             End If
 
             If Not String.IsNullOrEmpty(szItemLookupCode) Then
