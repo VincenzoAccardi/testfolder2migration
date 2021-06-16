@@ -617,8 +617,17 @@ Public Class Controller
                     Catch ex As Exception
                         szPosData = String.Empty
                     End Try
-                    If xdoc.Elements.Descendants("COUPON").Count > 1 Then ReDim Preserve argenteaFunctionReturnObject(xdoc.Elements.Descendants("COUPON").Count - 1)
+                    Dim bMultiCoupon As Boolean = False
+                    If xdoc.Elements.Descendants("COUPON").Count > 1 Then
+                        ReDim Preserve argenteaFunctionReturnObject(xdoc.Elements.Descendants("COUPON").Count - 1)
+                        If MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
+                            bMultiCoupon = True
+                        End If
+
+                    End If
                     Dim dTaTotal As Decimal = taobj.GetTotal
+                    Dim TotAmount As Integer = 0
+
                     For Each xEl As XElement In xdoc.Elements.Descendants("COUPON").ToList()
                         Dim index As Integer = xdoc.Elements.Descendants("COUPON").ToList().IndexOf(xEl)
                         If index <> 0 Then argenteaFunctionReturnObject(index) = New ArgenteaFunctionReturnObject
@@ -650,10 +659,18 @@ Public Class Controller
                             CheckConditionValassis(lMinRecpAmt, lCouponType, dTaTotal, szSkuList, lSkuSaleNum, lSkuSaleMode, argenteaFunctionReturnObject(index), response)
                         End If
 
-                        If MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
+                        If MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA AndAlso Not bMultiCoupon Then
                             If Not showValassisErrorMessage(argenteaFunctionReturnObject(index), cmd) Then Return False
                         End If
+                        If String.IsNullOrEmpty(argenteaFunctionReturnObject(index).CouponCancelReason) Then
+                            TotAmount = TotAmount + CInt(argenteaFunctionReturnObject(index).Amount)
+                        End If
                     Next
+                    If bMultiCoupon Then
+                        response.ReturnCode = ArgenteaFunctionsReturnCode.OK
+                        response.SetProperty("lTotAmount", TotAmount.ToString)
+                    End If
+
                 End If
                 If eMethod = Method.NotificationValassis Then
                     If MyCurrentRecord.sid = TPDotnet.Pos.PosDef.TARecTypes.iTA_MEDIA Then
@@ -788,7 +805,7 @@ Public Class Controller
             Exit Sub
         End If
 
-        If Not Common.CheckConditionSkuValassis(szSkuList, lSkuSaleNum, lSkuSaleMode, taobj, szSkuSold, szSkuNotSold) Then
+        If Not Common.CheckConditionSkuValassis(szSkuList, lSkuSaleNum, lSkuSaleMode, taobj, szSkuSold, szSkuNotSold, lCouponType, argenteaFunctionReturnObject.Amount) Then
             argenteaFunctionReturnObject.CouponCancelReason = CInt(IValassisNotificationCancelReasonCode.SKUNOTSOLD).ToString
             argenteaFunctionReturnObject.CodeResult = CInt(IValassisValidationCouponResultCode.OK).ToString
             response.ReturnCode = ArgenteaFunctionsReturnCode.KO
@@ -839,6 +856,7 @@ Public Class Controller
             Dim TaExternalServiceRec As TaExternalServiceRec = taobj.CreateTaObject(Of TaExternalServiceRec)(Italy_PosDef.TARecTypes.iTA_EXTERNAL_SERVICE)
             If Not TaExternalServiceRec.ExistField("szCardType") Then TaExternalServiceRec.AddField("szCardType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             If Not TaExternalServiceRec.ExistField("szOperationResult") Then TaExternalServiceRec.AddField("szOperationResult", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
+            If Not TaExternalServiceRec.ExistField("lAmount") Then TaExternalServiceRec.AddField("lAmount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             If Not TaExternalServiceRec.ExistField("lAmount") Then TaExternalServiceRec.AddField("lAmount", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
             If Not TaExternalServiceRec.ExistField("szTransactionID") Then TaExternalServiceRec.AddField("szTransactionID", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
 
@@ -909,6 +927,8 @@ Public Class Controller
             If Not TaExternalServiceRec.ExistField("szFunctionType") Then TaExternalServiceRec.AddField("szFunctionType", DataField.FIELD_TYPES.FIELD_TYPE_STRING)
             TaExternalServiceRec.setPropertybyName("szFunctionType", response.FunctionType.ToString)
 
+            If Not TaExternalServiceRec.ExistField("bIsMultimedia") Then TaExternalServiceRec.AddField("bIsMultimedia", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
+            TaExternalServiceRec.setPropertybyName("bIsMultimedia", paramArg.MultiMedia.ToString)
             With TaExternalServiceRec
                 ' only for coupon valassis. I need to stored the external service even if the coupon is not used
                 If String.IsNullOrEmpty(argenteaFunctionReturnObject(i).CouponCancelReason) Then .theHdr.lTaRefToCreateNmbr = MyCurrentRecord.theHdr.lTaCreateNmbr
@@ -926,6 +946,9 @@ Public Class Controller
 
             If MyCurrentRecord.sid = TPDotnet.Pos.TARecTypes.iTA_MEDIA Then
                 Dim MyTaMediaRec As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
+                If response.ExistProperty("lTotAmount") Then
+                    lAmount = response.GetProperty("lTotAmount")
+                End If
                 With MyTaMediaRec
                     .dTaPaidTotal = CDec(lAmount / 100)
                     .dTaPaid = CDec(lAmount / 100)

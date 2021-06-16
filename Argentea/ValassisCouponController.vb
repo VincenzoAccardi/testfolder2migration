@@ -78,6 +78,7 @@ Public Class ValassisCouponController
 
             paramArg.Copies = 0
             paramArg.PrintWithinTA = True
+            'paramArg.MultiMedia = True
 
         Catch ex As Exception
             LOG_Error(getLocationString(funcName), ex.Message)
