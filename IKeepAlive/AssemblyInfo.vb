@@ -11,7 +11,7 @@ Imports System.Runtime.InteropServices
 ' TODO: Review the values of the assembly attributes
 
 
-<Assembly: AssemblyTitle("Interface GiftCard Objects")> 
+<Assembly: AssemblyTitle("Interface Keep Alive Objects")>
 <Assembly: AssemblyDescription("POS Program")> 
 <Assembly: AssemblyCompany("Wincor Nixdorf")>
 <Assembly: AssemblyProduct("TP.Net")> 
