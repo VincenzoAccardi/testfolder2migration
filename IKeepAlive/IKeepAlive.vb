@@ -11,6 +11,6 @@
 #End Region
 #Region "IKeepAlive"
 Public Interface IKeepAlive
-    Sub Run(ByRef TheModCntr As TPDotnet.Pos.ModCntr, ByRef taobj As TPDotnet.Pos.TA)
+    Sub Run(ByVal TheModCntr As TPDotnet.Pos.ModCntr, ByVal taobj As TPDotnet.Pos.TA)
 End Interface
 #End Region
