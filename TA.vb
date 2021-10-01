@@ -1,17 +1,15 @@
 Option Strict Off
 Option Explicit On
 Imports System
-Imports Microsoft.VisualBasic
-Imports TPDotnet.Pos
+Imports System.Collections
 Imports System.Collections.Generic
+Imports System.Windows.Forms
 Imports System.Xml.Linq
 Imports System.Xml.XPath
-Imports System.Linq
-Imports System.Windows.Forms
-Imports TPDotnet.IT.Common.Pos
-Imports System.Collections
+Imports Microsoft.VisualBasic
+Imports TPDotnet.Pos
 
-Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA, IPluggableTransaction
+Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA, TPDotnet.IT.Common.Pos.IPluggableTransaction
 
 #Region "Documentation"
     ' ********** ********** ********** **********
@@ -48,7 +46,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         End Set
     End Property
 
-    Public Property bIsMainTransaction() As Boolean Implements IPluggableTransaction.bIsMainTransaction
+    Public Property bIsMainTransaction() As Boolean Implements TPDotnet.IT.Common.Pos.IPluggableTransaction.bIsMainTransaction
         Get
             Return m_bIsMainTransaction
         End Get
