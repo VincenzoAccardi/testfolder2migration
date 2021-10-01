@@ -173,11 +173,6 @@
     <Reference Include="System">
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.ModCntr, Version=5017.2.44.1, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.ModCntr.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="TPDotnet.Pos.taproj, Version=5.0.1.7, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\..\TPActDev\dev.net\Pos\Bin\TPDotnet.Pos.taproj.dll</HintPath>
@@ -193,6 +188,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="My Project\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Base\ModCntr\NF_IT_ModCntr.vbproj">
+      <Project>{9e89a562-2c41-4584-a619-46ea160c36fb}</Project>
+      <Name>NF_IT_ModCntr</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
