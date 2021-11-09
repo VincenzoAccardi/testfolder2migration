@@ -960,6 +960,18 @@ Public Class Controller
             taobj.Add(TaExternalServiceRec)
         Next
 
+        '[CO 20211104 - START] UPDATE lTaRefToCreateNmbr OF <EXTERNAL_SERVICE> WHEN THIS SECTION IS LINKED TO VALASSIS VERSO VOUCHER
+        If (taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/MEDIA[PAYMENT/szPayDesc='Valassis']/Hdr/lTaCreateNmbr").Count > 0) Then
+            Dim lTaRefToCreateNmbr As Integer = 0
+            Dim taExternalService As TaExternalServiceRec = New TaExternalServiceRec()
+
+            lTaRefToCreateNmbr = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/MEDIA[PAYMENT/szPayDesc='Valassis']/Hdr/lTaCreateNmbr").FirstOrDefault().Value
+            taExternalService = CType(taobj.GetTALine(taobj.GetPositionFromCreationNmbr(
+                                taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/EXTERNAL_SERVICE[szServiceType='VALASSISCOUPGALLERY']/Hdr/lTaCreateNmbr").FirstOrDefault().Value.ToString())), TaExternalServiceRec)
+            taExternalService.theHdr.lTaRefToCreateNmbr = lTaRefToCreateNmbr
+        End If
+        '[CO 20211104 - END] UPDATE lTaRefToCreateNmbr OF <EXTERNAL_SERVICE> WHEN THIS SECTION IS LINKED TO VALASSIS VERSO VOUCHER
+
     End Sub
 
 #End Region
