@@ -350,7 +350,7 @@ Public Class GiftCardController
             Dim MyTaMediaRec As TPDotnet.Pos.TaMediaRec = CType(MyCurrentRecord, TPDotnet.Pos.TaMediaRec)
 
             Dim szBarcode As String = MyCurrentRecord.GetPropertybyName("szITGiftCardEAN")
-            Dim lValue As Integer = CInt(MyTaMediaRec.dTaPaidTotal * 100)
+            Dim lValue As Integer = CInt(MyTaMediaRec.dTaPaid * 100) '[CO 20220307] From MyTaMediaRec.dTaPaidTotal To MyTaMediaRec.dTaPaid
             Dim szMessageOut As String = String.Empty
             Dim szErrorMessage As String = String.Empty
             response.ReturnCode = ArgenteaCOMObject.GiftCardRedeem(lValue, 0, szBarcode, response.TransactionID, szErrorMessage, szMessageOut)

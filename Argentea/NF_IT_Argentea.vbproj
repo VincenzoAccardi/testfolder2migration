@@ -303,9 +303,11 @@
     <Compile Include="ValassisCouponController.vb" />
     <EmbeddedResource Include="FormArgenteaItemInput.resx">
       <DependentUpon>FormArgenteaItemInput.vb</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="FormEFTFunctions.resx">
       <DependentUpon>FormEFTFunctions.vb</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="FormEftInProgress.resx">
       <DependentUpon>FormEftInProgress.vb</DependentUpon>
