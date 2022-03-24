@@ -7,6 +7,7 @@ Imports System.Collections.Generic
 Imports System.Xml.XPath
 Imports System.Linq
 Imports System.IO
+Imports System.Xml.Linq
 
 Public Class ValassisCouponController
 #Region "IValassisCouponValidation"
@@ -146,6 +147,16 @@ Public Class ValassisCouponController
                 ElseIf base.sid = TPDotnet.IT.Common.Pos.Italy_PosDef.TARecTypes.iTA_EXTERNAL_SERVICE Then
                     Dim myExtService As TPDotnet.IT.Common.Pos.TaExternalServiceRec = CType(base, TPDotnet.IT.Common.Pos.TaExternalServiceRec)
                     If (myExtService.ExistField("szTransactionID") AndAlso szRequestNumberID = myExtService.GetPropertybyName("szTransactionID")) Then
+                        'cambio il riferimento dell'external service per la gallery coupon. Viene legato direttamente al pagamento e non più al customer in fase di notification.
+                        If myExtService.szServiceType = Italy_PosDef.ValassisCoupon Then
+                            Dim szBarcode As String = IIf(myExtService.ExistField("szBarcode"), myExtService.GetPropertybyName("szBarcode"), String.Empty)
+                            Dim lTaRefToCreateNmbr As Integer = 0
+                            Dim xElMedia As XElement = taobj.TAtoXDocument(False, 0, False).XPathSelectElements("/TAS/NEW_TA/MEDIA[szBarcode='" + szBarcode + "']/Hdr/lTaCreateNmbr").FirstOrDefault()
+                            If xElMedia IsNot Nothing Then
+                                lTaRefToCreateNmbr = xElMedia.Value
+                                myExtService.theHdr.lTaRefToCreateNmbr = lTaRefToCreateNmbr
+                            End If
+                        End If
                         myTa.Add(base)
                     End If
                 End If
