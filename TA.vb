@@ -64,8 +64,8 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
         MyBase.TaFromLineafterLine(deleteLine, InsertAfterLine)
     End Sub
 
+    '[CO-202000504 Add Overrides of TAfromDBShare and modified a segment of internal code (see comment)]
     Protected Overrides Function TAfromDBShare(ByRef searchedDateTime As String, ByRef searchedRetailStore As String, ByRef searchedPosNmbr As Integer, ByRef searchedTaNmbr As Integer, ByRef bReload As Boolean) As String
-        ' Return MyBase.TAfromDBShare(searchedDateTime, searchedRetailStore, searchedPosNmbr, searchedTaNmbr, bReload)
         Dim szDirNormalName As String
 
         Dim szFileName() As String
@@ -99,6 +99,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                 Stop
             End If
 
+            '[CO-202000504 Start - Cheracter Bracket to protected di character underscore (_), because it's a SQL wildcard]
             If Len(searchedDateTime) < 8 Then
                 ' no date to now the directory, go through all directories
                 szDirNormalName = szDirNormalName & "*\"
@@ -110,6 +111,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                 szHelp = searchedRetailStore & "[_]" & Trim(Str(searchedPosNmbr)) & "[_]" & Trim(Str(searchedTaNmbr)) & "[_]" & Trim(Str(Convert.ToDecimal(searchedDateTime)))
 
             End If
+            '[CO-202000504 End]
 
             ReDim szFileName(0)
             szFileName = Utils.Directory_GetFiles(szDirNormalName, szHelp & "*.xml")
