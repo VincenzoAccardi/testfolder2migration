@@ -8,6 +8,7 @@ Imports System.Xml.Linq
 Imports System.Xml.XPath
 Imports Microsoft.VisualBasic
 Imports TPDotnet.Pos
+Imports TPDotnet.TechServices.ShareDBFiles.Utilities
 
 Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.IFiscalTA, TPDotnet.IT.Common.Pos.IPluggableTransaction
 
@@ -62,6 +63,87 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
     Public Overridable Sub TaReorgLine(ByRef deleteLine As Short, ByRef InsertAfterLine As Short)
         MyBase.TaFromLineafterLine(deleteLine, InsertAfterLine)
     End Sub
+
+    Protected Overrides Function TAfromDBShare(ByRef searchedDateTime As String, ByRef searchedRetailStore As String, ByRef searchedPosNmbr As Integer, ByRef searchedTaNmbr As Integer, ByRef bReload As Boolean) As String
+        ' Return MyBase.TAfromDBShare(searchedDateTime, searchedRetailStore, searchedPosNmbr, searchedTaNmbr, bReload)
+        Dim szDirNormalName As String
+
+        Dim szFileName() As String
+        Dim szHelp As String
+        Dim szDate As String
+        Dim bRet As Boolean = False
+
+        TAfromDBShare = ""
+
+#If CF_FRAMEWORK = True Then
+        Return ""
+#Else
+
+
+        Try
+            ' error code
+            m_sErrTAfromFile = ERR_NO_RECEIPT_FOUND
+
+            ' only own retail store possible
+            If CheckRetailStore(searchedRetailStore, "TAfromGlobalFile") = False Then
+                Exit Function
+            End If
+
+            ' in DBShare we only store the normal transaction, processed could not be reached,
+            ' because not stored inside DBShare
+            ' ================================================================================
+            szDirNormalName = getServerTransactionNormalPath() & "\"
+            If szDirNormalName = "\" Then
+                LOG_Error(getLocationString("TAfromGlobalFile"), "sNode not found in registry")
+                MsgBox("sNode not found in Registry", MsgBoxStyle.SystemModal)
+                Stop
+            End If
+
+            If Len(searchedDateTime) < 8 Then
+                ' no date to now the directory, go through all directories
+                szDirNormalName = szDirNormalName & "*\"
+                szHelp = searchedRetailStore & "[_]" & Trim(Str(searchedPosNmbr)) & "[_]" & Trim(Str(searchedTaNmbr)) & "[_]*"
+            Else
+                ' know directory and file
+                szDate = Left(searchedDateTime, 8)
+                szDirNormalName = szDirNormalName & szDate & "\"
+                szHelp = searchedRetailStore & "[_]" & Trim(Str(searchedPosNmbr)) & "[_]" & Trim(Str(searchedTaNmbr)) & "[_]" & Trim(Str(Convert.ToDecimal(searchedDateTime)))
+
+            End If
+
+            ReDim szFileName(0)
+            szFileName = Utils.Directory_GetFiles(szDirNormalName, szHelp & "*.xml")
+
+            If szFileName.Length > 0 Then
+                If bReload = True Then
+                    Dim szFileStream As String = Utils.ReadUTF8File(szFileName(0))
+                    If Not String.IsNullOrEmpty(szFileStream) Then
+
+                        bRet = Me.TAfromFile(szFileStream, False, False, True, True, False, True, True)
+                    End If
+                Else
+                    bRet = True ' do not load , only come back with the name
+                End If
+            End If
+
+            If bRet = True Then
+                TAfromDBShare = szFileName(0)
+            End If
+#End If
+
+        Catch ex As Exception
+            Try
+                LOG_Error(getLocationString("TAfromDBShare"), ex)
+                TAfromDBShare = ""
+
+            Catch InnerEx As Exception
+                LOG_ErrorInTry(getLocationString("TAfromDBShare"), InnerEx)
+            End Try
+        Finally
+            LOG_FuncExit(getLocationString("TAfromDBShare"), String.Concat("Function TAfromDBShare returns ", TAfromDBShare.ToString))
+        End Try
+
+    End Function
     Public Overrides Sub AddObject(ByRef obj As TPDotnet.Pos.TaBaseRec, iPos As Short)
         Dim funcName As String = "AddObject"
         Dim parameters As Dictionary(Of String, Object)
@@ -468,7 +550,6 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
 
         TAfromFile = False
         Try
-
             Dim xmlDoc As System.Xml.Linq.XDocument
             Dim myXMLRootNode As System.Xml.Linq.XElement = Nothing
             Dim myXMLNewTANode As System.Xml.Linq.XElement = Nothing
