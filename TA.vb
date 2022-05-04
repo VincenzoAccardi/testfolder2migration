@@ -99,7 +99,7 @@ Public Class TA : Inherits TPDotnet.Pos.TA : Implements TPDotnet.IT.Common.Pos.I
                 Stop
             End If
 
-            '[CO-202000504 Start - Cheracter Bracket to protected di character underscore (_), because it's a SQL wildcard]
+            '[CO-202000504 Start - Inserted bracket character to protect character underscore (_), because it's a SQL wildcard]
             If Len(searchedDateTime) < 8 Then
                 ' no date to now the directory, go through all directories
                 szDirNormalName = szDirNormalName & "*\"
