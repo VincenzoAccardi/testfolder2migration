@@ -153,10 +153,6 @@
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
     </Reference>
-    <Reference Include="TPDotnet.Pos.FormBase, Version=3.7.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="TPDotnet.Pos.GUICntr, Version=5.0.1.7, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <Private>False</Private>
@@ -362,6 +358,10 @@
       <Project>{4a9fad32-a950-4dfb-bb81-d355417bf380}</Project>
       <Name>NF_IT_Constants</Name>
       <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Base\FormBase\NF_FIX_FormBase.vbproj">
+      <Project>{47b1a5d5-f841-4afa-863a-a718b40dbb2f}</Project>
+      <Name>NF_FIX_FormBase</Name>
     </ProjectReference>
     <ProjectReference Include="..\..\Base\ModCntr\NF_IT_ModCntr.vbproj">
       <Project>{9e89a562-2c41-4584-a619-46ea160c36fb}</Project>
