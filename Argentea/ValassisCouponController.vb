@@ -48,6 +48,7 @@ Public Class ValassisCouponController
                 szCouponCode = MyCurrentRecord.GetPropertybyName("szBarcode")
             Else
                 Dim MyTaCustRec As TPDotnet.Pos.TaCustomerRec = CType(taobj.GetTALine(taobj.getCustRecNr), TPDotnet.Pos.TaCustomerRec)
+                If MyTaCustRec Is Nothing Then MyTaCustRec = CType(MyCurrentRecord, TPDotnet.Pos.TaCustomerRec)
                 szCustomerID = MyTaCustRec.CUSTinCustomer.szCustomerID
             End If
 

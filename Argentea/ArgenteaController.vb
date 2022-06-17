@@ -932,7 +932,7 @@ Public Class Controller
             TaExternalServiceRec.setPropertybyName("szFunctionType", response.FunctionType.ToString)
 
             If Not TaExternalServiceRec.ExistField("bIsMultimedia") Then TaExternalServiceRec.AddField("bIsMultimedia", DataField.FIELD_TYPES.FIELD_TYPE_INTEGER)
-            TaExternalServiceRec.setPropertybyName("bIsMultimedia", paramArg.MultiMedia.ToString)
+            TaExternalServiceRec.setPropertybyName("bIsMultimedia", paramArg.MultiMedia)
             With TaExternalServiceRec
                 ' only for coupon valassis. I need to stored the external service even if the coupon is not used
                 If String.IsNullOrEmpty(argenteaFunctionReturnObject(i).CouponCancelReason) Then .theHdr.lTaRefToCreateNmbr = MyCurrentRecord.theHdr.lTaCreateNmbr
