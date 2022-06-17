@@ -21,10 +21,10 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
     ' -----------------------------------
 #End Region
 
-    Protected m_bITFiscalNotPaid As Integer
-    Protected m_dITTxHALO As Decimal
-    Protected m_bITCheckCashHalo As Decimal
-    Protected m_bPaymentRoundableAt5Cent As Integer
+    'Protected m_bITFiscalNotPaid As Integer
+    'Protected m_dITTxHALO As Decimal
+    'Protected m_bITCheckCashHalo As Decimal
+    'Protected m_bPaymentRoundableAt5Cent As Integer
 
 #Region "PAYMENT Properties"
 
@@ -37,10 +37,9 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
     ''' <remarks></remarks>
     Public Overridable Property bITCheckCashHalo() As Integer Implements IFiscalPAYMENT.bITCheckCashHalo
         Get
-            bITCheckCashHalo = m_bITCheckCashHalo
+            bITCheckCashHalo = m.Fields_Value("bITCheckCashHalo")
         End Get
         Set(ByVal value As Integer)
-            m_bITCheckCashHalo = value
             m.Fields_Value("bITCheckCashHalo") = value
         End Set
     End Property
@@ -53,10 +52,9 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
     ''' <remarks></remarks>
     Public Overridable Property dITTxHALO() As Decimal Implements IFiscalPAYMENT.dITTxHALO
         Get
-            dITTxHALO = m_dITTxHALO
+            dITTxHALO = m.Fields_Value("dITTxHALO")
         End Get
         Set(ByVal value As Decimal)
-            m_dITTxHALO = value
             m.Fields_Value("dITTxHALO") = value
         End Set
     End Property
@@ -70,10 +68,9 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
     ''' <remarks></remarks>
     Public Overridable Property bITFiscalNotPaid() As Integer Implements IFiscalPAYMENT.bITFiscalNotPaid
         Get
-            bITFiscalNotPaid = m_bITFiscalNotPaid
+            bITFiscalNotPaid = m.Fields_Value("bITFiscalNotPaid")
         End Get
         Set(ByVal value As Integer)
-            m_bITFiscalNotPaid = value
             m.Fields_Value("bITFiscalNotPaid") = value
         End Set
     End Property
@@ -87,10 +84,9 @@ Public Class PAYMENT : Inherits TPDotnet.Pos.PAYMENT : Implements TPDotnet.IT.Co
     ''' <remarks></remarks>
     Public Overridable Property bPaymentRoundableAt5Cent() As Integer Implements IFiscalPAYMENT.bPaymentRoundableAt5Cent
         Get
-            bPaymentRoundableAt5Cent = m_bPaymentRoundableAt5Cent
+            bPaymentRoundableAt5Cent = m.Fields_Value("bPaymentRoundableAt5Cent")
         End Get
         Set(ByVal value As Integer)
-            m_bPaymentRoundableAt5Cent = value
             m.Fields_Value("bPaymentRoundableAt5Cent") = value
         End Set
     End Property
