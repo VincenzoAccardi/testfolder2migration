@@ -1,0 +1,76 @@
+3.7.1.7 GE
+	- Creation
+	- Reset transaction number by date
+3.7.1.8 GE
+    - Added TaDiscInfoRec to handle presentation for return article with discounts
+3.7.1.9 GE
+    - Added TaZReportRec 
+3.7.1.10 GE
+    - Added TaVatExmptionReductionRec
+3.7.1.11 GE
+	- Add : TaSignOffRec - store the sum of each declared value into dValPaySummarized
+3.7.1.12 GE
+    - TaVatExmptionReductionRec : GetPresentation - add szItemTaxGroupID specific lines
+3.7.1.13 GE
+    - TaArtReturnRec : Added to test the total "discountable" amount
+3.7.1.14 GE
+	- BugFix : ART record - Removed Rinascente specific part
+3.7.1.15 GE
+	- Add : handling for PAST TA
+37.19.1.16 GE 20110927
+	- Change : new version signature
+	- Add : PAYMENT class
+	- Add : PAYMENT.bITFiscalNotPaid property
+37.19.1.17 GE 20111014
+	- Change : Changes in order to solve the invalid transaction problem because szTransactionID is missing
+37.19.1.18 GE 20111222
+	- Add : PAYMENT.dITTxHALO property
+	- Add : function TA.GetPayedValueForMediaMember
+37.19.1.19 GE 20120118
+	- Add : CUST class
+	- Add : TaCustDataRegRec class
+	- Add : PAYMENT.bITCheckCashHalo property
+40.26.0.0 GE 20120209
+	- Porting to 4.0.2.6
+	- Notes: some registry data has been moved to the database (tx number, rollover tx, ...)
+40.26.0.1 GE 20120510
+	- Change : class TaZReportRec - szObjectName changed from "ZREPORT" to "IT_ZREPORT"
+40.26.0.2 GE 20120716
+	- Change : TaDiscInfoRec.GetPresentation - suppress line if dDiscValue and dTotalDiscount are set to zero
+40.26.0.3 GE 20120718
+	- Change : TA.AddTotalDiscInfo - round total discount and spreads the discount value 
+40.26.0.4 GE 20120910
+	- Bugfix : TA.AddTotalDiscInfo - round total discount considering the qty. This should reduce the possibility of errors on multiple qty sell.
+40.26.0.5 GE 20121011
+	- Bugfix : TA.AddTotalDiscInfo - recalculate taxes after spreading the discount value 
+40.26.0.6 GE 20121116
+	- Change : TA - Implements TPDotnet.IT.Common.Pos.IFiscalTA
+	- Change : PAYMENT - Implements TPDotnet.IT.Common.Pos.IFiscalPAYMENT
+	- Bugfix : TaCustDataReg.CreateMe - return New TaCustDataRegRec instead of TaZReportRec
+40.26.0.7 GE 20121130
+	- Bugfix : rounding errors on multiple qty sell. In order to reduce the error, we split the article into two article lines and we assign the left amount to the single item.
+		Change - TA.AddTotalDiscInfo 
+		Add - TA.SplitArticleIfNeededForTotalDiscountRounding
+40.26.0.8 GE 20130103
+	- Change : TaZReport - Implements TPDotnet.IT.Common.Pos.ITaZReportRec
+40.26.0.9 GE 20130118
+	- Change : TaCustDataReg - Implements TPDotnet.IT.Common.Pos.ITaCustDataReg
+50.00.0.0 GE 20130809
+	- Porting to version 5.0.0.0
+50.17.02.08
+	- Removed iTA_VAT_EXEMPTION_REDUCTION & ".1" from GetPresentation
+50.17.02.11
+	-Change: Replace TaBaseRec in TPDotNet.Pos.TaBaseRec
+	-Fix: Add dynamic object when load TA from file
+50.17.02.12
+	-Improvement : Add dynamic object when load TA from file (lOriginalOperatorID)
+50.17.02.13 - VA 20151013
+	- Added TaVLLPrize
+50.17.02.14 - VA 20151106
+	- Improvements : Search article in itemlookupcode table for first.
+50.17.02.15 - VA 20151211
+	- Improvements : Added szLinkToFileName in TAExternalTaRec
+50.17.02.16 - VA 20160211
+	- Improvements : Added bIsVisible property in TAVLLCustomer
+50.17.02.17 - VA 20160211
+	- Improvements : Added szMovePath in TAExternalTaRec
